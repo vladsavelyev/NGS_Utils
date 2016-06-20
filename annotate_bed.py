@@ -8,7 +8,7 @@ from pybedtools import BedTool
 
 from Utils.Region import SortableByChrom
 from Utils.file_utils import verify_file
-from Utils.logger import critical, info, warn
+from Utils.logger import critical, info, warn, debug
 from Utils.utils import OrderedDefaultDict
 
 
@@ -29,7 +29,7 @@ def bed_chrom_order(bed_fpath):
 
 def annotate(input_bed_fpath, features_fpath, output_fpath, reuse=False):
     if reuse and isfile(output_fpath) and verify_file(output_fpath):
-        info(output_fpath + ' exists, reusing.')
+        debug(output_fpath + ' exists, reusing.')
         return output_fpath
 
     chr_order = bed_chrom_order(input_bed_fpath)

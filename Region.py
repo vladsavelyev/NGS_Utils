@@ -5,11 +5,11 @@ from os.path import isfile
 
 from Utils.file_utils import file_transaction, verify_file, adjust_path
 from Utils.logger import info, err, critical
-from Utils.utils import get_chr_lengths_from_seq
+import Utils.reference_data as ref
 
 
-def get_chrom_order(fai_fpath):
-    chr_lengths = get_chr_lengths_from_seq(adjust_path(fai_fpath))
+def get_chrom_order(genome=None, fai_fpath=None):
+    chr_lengths = ref.get_chrom_lengths(genome, fai_fpath)
     chr_order = {c: i for i, (c, l) in enumerate(chr_lengths)}
     return chr_order
 
@@ -294,7 +294,7 @@ def build_gene_objects_list(sample_name, features_bed, gene_keys_list):
 
     info('Building the Gene objects list based on target')
     if features_bed and gene_by_name_and_chrom:
-        info()
+        # info()
         # info('Filtering exon bed file to have only gene records...')
         # exons_only_genes_bed = intermediate_fname(cnf, exons_bed, 'only_genes')
         # call(cnf, 'grep -w Gene ' + exons_bed, output_fpath=exons_only_genes_bed)
@@ -305,7 +305,7 @@ def build_gene_objects_list(sample_name, features_bed, gene_keys_list):
         i = 0
         with open(features_bed) as f:
             for l in f:
-                if '\tTranscript\t' in l:
+                if 'Transcript' in l.split('\t'):
                     l = l.strip()
                     if l and not l.startswith('#'):
                         fs = l.split('\t')

@@ -9,7 +9,7 @@ from Utils.logger import info, critical, err
 def read_samples(args):
     bam_by_sample = find_bams(args)
     if bam_by_sample:
-        info('Found ' + str(len(bam_by_sample)) + ' BAMs')
+        info('Found ' + str(len(bam_by_sample)) + ' BAM file' + ('s' if len(bam_by_sample) > 1 else ''))
 
     input_not_bam = [verify_file(fpath) for fpath in args if adjust_path(fpath) not in bam_by_sample]
     input_not_bam = [fpath for fpath in input_not_bam if fpath]

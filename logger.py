@@ -46,8 +46,7 @@ def info(msg='', ending='\n', print_date=True, severity='info'):
 
 
 def debug(msg='', ending='\n', print_date=True, severity='debug'):
-    if is_debug:
-        _log(sys.stdout, msg, ending, print_date, severity=severity)
+    _log(sys.stdout, msg, ending, print_date, severity=severity)
 
 
 def warn(msg='', ending='\n', print_date=True, severity='warning'):
@@ -60,6 +59,17 @@ def silent_err(msg='', ending='\n', print_date=True, severity='silent_err'):
 
 def err(msg='', ending='\n', print_date=True, severity='error'):
     warn(msg, ending, print_date, severity=severity)
+
+
+def critical(msg=''):
+    if isinstance(msg, basestring):
+        err(msg, severity='critical')
+    else:
+        if not msg:
+            return
+        for m in msg:
+            err(m, severity='critical')
+    raise CriticalError(msg)
 
 
 def send_email(msg_other='', subj='', only_me=False, email_by_prid=None):
@@ -163,24 +173,20 @@ class CriticalError(Exception):
     pass
 
 
-def critical(msg=''):
-    if isinstance(msg, basestring):
-        err(msg, severity='critical')
-    else:
-        if not msg:
-            return
-        for m in msg:
-            err(m, severity='critical')
-    raise CriticalError(msg)
-
-
 def _log(out, msg='', ending='\n', print_date=True, severity=None):
+    msg_debug = str(msg)
     msg = str(msg)
 
     if print_date:
-        msg = timestamp() + '  ' + msg
+        msg_debug = timestamp() + '  ' + msg
 
-    out.write(msg + ending)
+    if is_debug:
+        msg_debug = severity + ' ' * (12 - len(severity)) + msg_debug
+
+    if is_debug:
+        out.write(msg_debug + ending)
+    elif severity != 'debug':
+        out.write(msg + ending)
 
     if severity == 'critical':
         critical_msgs.append(msg)
@@ -196,10 +202,10 @@ def _log(out, msg='', ending='\n', print_date=True, severity=None):
 
     if log_fpath:
         try:
-            open(log_fpath, 'a').write(msg + ending)
+            open(log_fpath, 'a').write(msg_debug + ending)
         except IOError:
             sys.stderr.write('Logging: cannot append to ' + log_fpath + '\n')
             try:
-                open(log_fpath, 'w').write(msg + '\n')
+                open(log_fpath, 'w').write(msg_debug + '\n')
             except IOError:
                 sys.stderr.write('Logging: cannot write to ' + log_fpath + '\n')

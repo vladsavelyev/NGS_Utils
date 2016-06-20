@@ -15,8 +15,7 @@ import collections
 import fnmatch
 import time
 
-from Utils.logger import info, err, warn, critical
-
+from Utils.logger import info, err, warn, critical, debug
 
 try:
     from concurrent import futures
@@ -780,7 +779,7 @@ def convert_file(work_dir, input_fpath, convert_file_fn, suffix=None, output_fpa
                  check_result=True, overwrite=False, reuse=True, ctx=None):
     output_fpath = output_fpath or intermediate_fname(work_dir, input_fpath, suf=suffix or 'tmp')
     if output_fpath.endswith('.gz'):
-        info('output_fpath is .gz, but writing to uncompressed.')
+        debug('output_fpath is .gz, but writing to uncompressed.')
         output_fpath = splitext(output_fpath)[0]
 
     if islink(output_fpath):
@@ -789,12 +788,12 @@ def convert_file(work_dir, input_fpath, convert_file_fn, suffix=None, output_fpa
     if (suffix or output_fpath) and reuse and not overwrite and \
             (file_exists(output_fpath) or file_exists(output_fpath + '.gz')):
         if file_exists(output_fpath):
-            info(output_fpath + ' exists, reusing')
+            debug(output_fpath + ' exists, reusing')
         if file_exists(output_fpath + '.gz'):
-            info(output_fpath + '.gz exists, reusing')
+            debug(output_fpath + '.gz exists, reusing')
         return output_fpath
     else:
-        info('Writing to ' + output_fpath)
+        debug('Writing to ' + output_fpath)
 
     with file_transaction(work_dir, output_fpath) as tx_fpath:
         with open_gzipsafe(input_fpath) as inp_f, open(tx_fpath, 'w') as out_f:
@@ -804,7 +803,7 @@ def convert_file(work_dir, input_fpath, convert_file_fn, suffix=None, output_fpa
                 convert_file_fn(inp_f, out_f)
 
     if suffix or output_fpath:
-        info('Saved to ' + output_fpath)
+        debug('Saved to ' + output_fpath)
 
     verify_file(output_fpath, is_critical=check_result)
     return output_fpath
@@ -833,11 +832,11 @@ def iterate_file(work_dir, input_fpath, proc_line_fun,
 
             if len(bunch) >= max_bunch_size:
                 out_f.writelines(bunch)
-                info('Written lines: ' + str(written_lines))
+                debug('Written lines: ' + str(written_lines))
                 bunch = []
 
         out_f.writelines(bunch)
-        info('Written lines: ' + str(written_lines))
+        debug('Written lines: ' + str(written_lines))
 
     return convert_file(work_dir, input_fpath, _proc_file,
         suffix=suffix, output_fpath=output_fpath, check_result=check_result, reuse=reuse, **kwargs)

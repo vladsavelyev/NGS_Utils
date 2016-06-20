@@ -7,6 +7,8 @@ from json import load, dump
 from math import floor
 import traceback
 import datetime
+
+import itertools
 import jsontemplate
 
 from Utils.file_utils import file_transaction, verify_file, safe_mkdir
@@ -315,7 +317,7 @@ class BaseReport:
         raise NotImplementedError()
 
     def get_rows_of_records(self, sections=list()):  # TODO: move logic from flatten here, use this method both in flatten and save_html
-        return NotImplementedError()
+        raise NotImplementedError()
 
     def save_txt(self, output_fpath, sections=None):
         safe_mkdir(dirname(output_fpath))
@@ -439,23 +441,22 @@ class SampleReport(BaseReport):
         return rec
 
     def flatten(self, sections=None, human_readable=True):
-        flat_rows = []
-
+        header_rows = []
         for m in self.metric_storage.general_section.metrics:
             r = BaseReport.find_record(self.records, m.name)
             if r:
                 if human_readable:
-                    flat_rows.append(['## ' + m.name + ': ' + r.format(human_readable=True)])
+                    header_rows.append(['## ' + m.name + ': ' + r.format(human_readable=True)])
                 else:
-                    flat_rows.append(['##' + m.name + '=' + r.format(human_readable=False)])
+                    header_rows.append(['##' + m.name + '=' + r.format(human_readable=False)])
 
-        flat_rows.append(['Sample', self.display_name])
+        flat_rows = [['Sample', self.display_name]]
         for metric in self.metric_storage.get_metrics(sections, skip_general_section=True):
             vals = [metric.name]
             rec = BaseReport.find_record(self.records, metric.name)
             vals.append(rec.format(human_readable=human_readable) if rec is not None else '.')
             flat_rows.append(vals)
-        return flat_rows
+        return header_rows, flat_rows
 
     def save_html(self, output_fpath, caption='', #type_=None,
             extra_js_fpaths=list(), extra_css_fpaths=list(),
@@ -494,16 +495,16 @@ class PerRegionSampleReport(SampleReport):
         return row
 
     def flatten(self, sections=None, human_readable=True):
-        flat_rows = []
-
+        header_rows = []
         for m in self.metric_storage.general_section.metrics:
             rec = BaseReport.find_record(self.records, m.name)
             if rec:
                 if human_readable:
-                    flat_rows.append(['## ' + m.name + ': ' + rec.format(human_readable=True)])
+                    header_rows.append(['## ' + m.name + ': ' + rec.format(human_readable=True)])
                 else:
-                    flat_rows.append(['##' + m.name + '=' + rec.format(human_readable=False)])
+                    header_rows.append(['##' + m.name + '=' + rec.format(human_readable=False)])
 
+        flat_rows = []
         header_row = []
         metrics = self.metric_storage.get_metrics(sections, skip_general_section=True)
         for i, m in enumerate(metrics):
@@ -518,7 +519,6 @@ class PerRegionSampleReport(SampleReport):
                     flat_row.append(rec.format(human_readable=human_readable))
                 else:
                     pass
-
             flat_rows.append(flat_row)
 
         # next_list_value = next((r.value for r in self.records if isinstance(r.value, list)), None)
@@ -540,7 +540,7 @@ class PerRegionSampleReport(SampleReport):
         #                 header_row.append('-')  # if no record for the metric
         #         rows.append(header_row)
 
-        return flat_rows
+        return header_rows, flat_rows
 
     def get_rows_of_records(self, sections=None):  # TODO: move logic from flatten here, use this method both in flatten and save_html
         if not sections:
@@ -649,21 +649,18 @@ class FullReport(BaseReport):
             err('No sample reports found: summary will not be produced.')
             return []
 
-        rows = []
-
+        header_rows = []
         some_rep = self.sample_reports[0]
         for m in self.metric_storage.general_section.metrics:
             rec = BaseReport.find_record(some_rep.records, m.name)
             if rec:
                 if human_readable:
-                    rows.append(['## ' + m.name + ': ' + rec.format(human_readable=True)])
+                    header_rows.append(['## ' + m.name + ': ' + rec.format(human_readable=True)])
                 else:
-                    rows.append(['##' + m.name + '=' + rec.format(human_readable=False)])
+                    header_rows.append(['##' + m.name + '=' + rec.format(human_readable=False)])
 
-        rows.append(['Sample'] + [rep.display_name for rep in self.sample_reports])
-
+        rows = [['Sample'] + [rep.display_name for rep in self.sample_reports]]
         # rows_of_records = self.get_rows_of_records(sections) # TODO: use logic from get_rows_of_records
-
         for metric in self.metric_storage.get_metrics(sections, skip_general_section=True):
             if not metric.name == 'Sample':
                 row = [metric.name]
@@ -671,7 +668,7 @@ class FullReport(BaseReport):
                     rec = BaseReport.find_record(sr.records, metric.name)
                     row.append(rec.format(human_readable=human_readable) if rec is not None else '.')
                 rows.append(row)
-        return rows
+        return header_rows, rows
 
     def get_rows_of_records(self, sections=None):  # TODO: move logic from flatten here, use this method both in flatten and save_html
         if not sections:
@@ -927,42 +924,41 @@ def load_records(json_fpath):
 #             for sample_name, fpaths in report_fpath_by_sample.items()])
 
 
-def write_txt_rows(rows, output_fpath, col_widths=None):
+def write_txt_rows((header_rows, rows), output_fpath):
     if not rows:
         return None
 
     # output_fpath = join(output_dirpath, base_fname + '.txt')
-    if not col_widths:
-        col_widths = get_col_widths(rows)
+    col_widths = get_col_widths(rows)
 
     with open(output_fpath, 'w') as out:
-        for row in rows:
-            if row[0].startswith('##'):
-                out.write(row[0])
-            else:
-                for val, w in izip(row, col_widths):
-                    out.write(val + (' ' * (w - len(val) + 2)))
+        for r in header_rows:
+            out.write(r[0] + '\n')
+
+        for row in itertools.chain(header_rows, rows):
+            for val, w in izip(row, col_widths):
+                out.write(val + (' ' * (w - len(val) + 2)))
             out.write('\n')
 
     return output_fpath
 
 
-def write_tsv_rows(rows, output_fpath):
+def write_tsv_rows((header_rows, rows), output_fpath):
     if not rows:
         return None
 
     with open(output_fpath, 'w') as out:
-        for row in rows:
+        for row in itertools.chain(header_rows, rows):
             out.write('\t'.join([val for val in row]) + '\n')
 
     return output_fpath
 
 
 def get_col_widths(rows):
-    col_widths = repeat(0)
+    col_widths = None
     for row in rows:
         if not row[0].startswith('##'):
-            col_widths = [max(len(v), w) for v, w in izip(row, col_widths)]
+            col_widths = [max(len(v), w) for v, w in izip(row, col_widths or repeat(0))]
 
     return col_widths
 

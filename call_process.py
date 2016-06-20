@@ -15,10 +15,10 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
     """
     if output_fpath and reuse:
         if verify_file(output_fpath, silent=True):
-            info(output_fpath + ' exists, reusing')
+            debug(output_fpath + ' exists, reusing')
             return output_fpath
         if not output_fpath.endswith('.gz') and verify_file(output_fpath + '.gz', silent=True):
-            info(output_fpath + '.gz exists, reusing')
+            debug(output_fpath + '.gz exists, reusing')
             return output_fpath
 
     env = os.environ.copy()

@@ -5,7 +5,7 @@ import re
 from collections import OrderedDict
 from os.path import join, basename, splitext
 
-from logger import info, critical, err
+from logger import info, critical, err, debug
 from file_utils import file_exists, verify_file, file_transaction, adjust_path
 
 
@@ -50,33 +50,6 @@ def human_sorted(l):
     """
     l.sort(key=_alphanum_key)
     return l
-
-
-def get_chr_lengths_from_seq(seq_fpath):
-    chr_lengths = []
-
-    if seq_fpath.endswith('.fai'):
-        seq_fpath = splitext(seq_fpath)[0]
-
-    if verify_file(seq_fpath + '.fai', silent=True):
-        info('Reading genome index file (.fai) to get chromosome lengths')
-        with open(adjust_path(seq_fpath + '.fai'), 'r') as handle:
-            for line in handle:
-                line = line.strip()
-                if line:
-                    chrom, length = line.split()[0], line.split()[1]
-                    chr_lengths.append((chrom, length))
-    elif verify_file(seq_fpath, silent=True):
-        info('Reading genome sequence (.fa) to get chromosome lengths')
-        with open(adjust_path(seq_fpath), 'r') as handle:
-            from Bio import SeqIO
-            reference_records = SeqIO.parse(handle, 'fasta')
-            for record in reference_records:
-                chrom = record.id
-                chr_lengths.append((chrom, len(record.seq)))
-    else:
-        critical('Can\'t find ' + seq_fpath + ' and ' + seq_fpath + '.fai')
-    return chr_lengths
 
 
 def get_ext_tools_dirname(is_common_file=False):

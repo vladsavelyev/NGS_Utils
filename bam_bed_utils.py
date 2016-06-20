@@ -8,9 +8,9 @@ from Utils.annotate_bed import annotate
 from Utils.file_utils import intermediate_fname, iterate_file, splitext_plus, verify_file, adjust_path, add_suffix, \
     safe_mkdir, file_transaction, which
 from Utils.logger import info, critical, warn, err, debug
-from Utils import fai
+from Utils import reference_data as ref
 from Utils.Region import SortableByChrom, get_chrom_order
-from Utils.utils import get_chr_lengths_from_seq, md5, get_chr_lengths_from_seq, get_ext_tools_dirname
+from Utils.utils import md5
 
 
 def index_bam(bam_fpath, sambamba=None, samtools=None):
@@ -117,36 +117,32 @@ def prepare_beds(work_dir, fai_fpath=None, features_bed=None, target_bed=None, s
     if features_bed:
         features_bed = verify_bed(features_bed, is_critical=True)
 
-    # if features_bed and target_bed and abspath(features_bed) == abspath(target_bed):
-    #     warn('Same file used for exons and amplicons: ' + features_bed)
-
-    # Features
-    features_no_genes_bed = None
-    if features_bed:
-        # info()
-        # info('Merging regions within genes...')
-        # exons_bed = group_and_merge_regions_by_gene(cnf, exons_bed, keep_genes=True)
-        #
-        # info()
-        # info('Sorting exons by (chrom, gene name, start)')
-        # exons_bed = sort_bed(cnf, exons_bed)
-
-        info()
-        info('Filtering the features bed file to have only non-gene and no-transcript records...')
-        features_no_genes_bed = intermediate_fname(work_dir, features_bed, 'no_genes')
-        call_process.run('grep -vw Gene ' + features_bed + ' | grep -vw Transcript', output_fpath=features_no_genes_bed, reuse=reuse)
+    # # Features
+    # features_no_genes_bed = None
+    # if features_bed:
+    #     # info()
+    #     # info('Merging regions within genes...')
+    #     # exons_bed = group_and_merge_regions_by_gene(cnf, exons_bed, keep_genes=True)
+    #     #
+    #     # info()
+    #     # info('Sorting exons by (chrom, gene name, start)')
+    #     # exons_bed = sort_bed(cnf, exons_bed)
+    #
+    #     debug('Filtering the features bed file to have only non-gene and no-transcript records...')
+    #     features_no_genes_bed = intermediate_fname(work_dir, features_bed, 'no_genes')
+    #     call_process.run('grep -vw Gene ' + features_bed + ' | grep -vw Transcript', output_fpath=features_no_genes_bed, reuse=reuse)
 
     ori_target_bed_path = target_bed
     if target_bed:
-        info()
+        debug()
         info('Remove comments in target...')
         target_bed = remove_comments(work_dir, target_bed, reuse=reuse)
 
-        info()
-        info('Cutting target...')
+        debug()
+        debug('Cutting target...')
         target_bed = cut(target_bed, 4, reuse=reuse)
 
-        info()
+        debug()
         info('Sorting target...')
         target_bed = sort_bed(target_bed, work_dir=work_dir, fai_fpath=fai_fpath, reuse=reuse)
 
@@ -163,51 +159,51 @@ def prepare_beds(work_dir, fai_fpath=None, features_bed=None, target_bed=None, s
         else: return l
 
     if not seq2c_bed and target_bed or seq2c_bed and seq2c_bed == ori_target_bed_path:
-        info('Seq2C bed: remove regions with no gene annotation')
+        debug('Seq2C bed: removing regions with no gene annotation...')
         seq2c_bed = target_bed
         seq2c_bed = iterate_file(work_dir, seq2c_bed, remove_no_anno, suffix='filt', reuse=reuse)
 
     elif seq2c_bed:
-        info()
-        info('Remove comments in seq2c bed...')
+        debug()
+        debug('Remove comments in Seq2C bed...')
         seq2c_bed = remove_comments(work_dir, seq2c_bed, reuse=reuse)
 
-        info()
-        info('Sorting seq2c bed...')
+        debug()
+        debug('Sorting Seq2C bed...')
         seq2c_bed = sort_bed(seq2c_bed, work_dir=work_dir, fai_fpath=fai_fpath, reuse=reuse)
 
         cols = count_bed_cols(seq2c_bed)
         if cols < 4:
-            info()
-            info('Number columns in SV bed is ' + str(cols) + '. Annotating amplicons with gene names...')
+            debug()
+            debug('Number columns in SV bed is ' + str(cols) + '. Annotating amplicons with gene names...')
             seq2c_bed = annotate(seq2c_bed, features_bed, add_suffix(target_bed, 'ann'), reuse=reuse)
         elif 8 > cols > 4:
             seq2c_bed = cut(seq2c_bed, 4)
         elif cols > 8:
             seq2c_bed = cut(seq2c_bed, 8)
-        info('Filtering non-annotated entries in seq2c bed')
+        debug('Filtering non-annotated entries in seq2c bed')
         seq2c_bed = iterate_file(work_dir, seq2c_bed, remove_no_anno, suffix='filt', reuse=reuse)
 
     else:
         seq2c_bed = verify_bed(cds_bed_fpath)
 
-    if target_bed:
-        info()
+    # if target_bed:
+    #     info()
         # info('Merging amplicons...')
         # target_bed = group_and_merge_regions_by_gene(cnf, target_bed, keep_genes=False)
 
-        info('Sorting target by (chrom, gene name, start)')
-        target_bed = sort_bed(target_bed, work_dir=work_dir, fai_fpath=fai_fpath, reuse=reuse)
+        # info('Sorting target by (chrom, gene name, start)')
+        # target_bed = sort_bed(target_bed, work_dir=work_dir, fai_fpath=fai_fpath, reuse=reuse)
 
-    return features_bed, features_no_genes_bed, target_bed, seq2c_bed
+    return features_bed, target_bed, seq2c_bed
 
 
-def extract_gene_names_and_filter_exons(work_dir, target_bed, features_bed, features_no_genes_bed, reuse=False):
+def extract_gene_names_and_filter_exons(work_dir, target_bed, features_bed, reuse=False):
     gene_key_set = set()
     gene_key_list = []
 
-    info()
-    info('Getting gene list')
+    debug()
+    debug('Getting gene list')
 
     # if genes_fpath:
     #     with open(genes_fpath) as f:
@@ -222,37 +218,37 @@ def extract_gene_names_and_filter_exons(work_dir, target_bed, features_bed, feat
     # else:
 
     if target_bed:
-        info()
+        debug()
         gene_key_set, gene_key_list = get_gene_keys(target_bed)
-        info('Using genes from the amplicons list ' + target_bed)
+        debug('Using genes from the target ' + target_bed)
         if features_bed:
-            info('Trying filtering exons with these ' + str(len(gene_key_list)) + ' genes.')
+            debug('Trying filtering exons with these ' + str(len(gene_key_list)) + ' genes.')
             features_filt_bed = filter_bed_with_gene_set(work_dir, features_bed, gene_key_set, suffix='target_genes_1st_round', reuse=reuse)
             if not verify_file(features_filt_bed):
-                info()
-                warn('No gene symbols from the capture BED file was found in the features BED file. Re-annotating target...')
+                debug()
+                warn('No gene symbols from the target BED file was found in the RefSeq features. Re-annotating target...')
                 target_bed = annotate(work_dir, target_bed, add_suffix(target_bed, 'ann'), reuse=reuse)
                 #info('Merging regions within genes...')
                 #target_bed = group_and_merge_regions_by_gene(cnf, target_bed, keep_genes=False)
-                info('Sorting amplicons_bed by (chrom, gene_name, start)')
-                target_bed = sort_bed(work_dir, target_bed)
-                info('Getting gene names again...')
+                # debug('Sorting amplicons_bed by (chrom, gene_name, start)')
+                # target_bed = sort_bed(work_dir, target_bed)
+                debug('Getting gene names again...')
                 gene_key_set, gene_key_list = get_gene_keys(target_bed)
-                info()
-                info('Using genes from the new amplicons list, filtering features with this genes again.')
+                debug()
+                debug('Using genes from the new amplicons list, filtering features with this genes again.')
                 features_filt_bed = filter_bed_with_gene_set(work_dir, features_bed, gene_key_set, suffix='target_genes_2nd_round', reuse=reuse)
                 if not verify_file(features_filt_bed):
-                    critical('No gene symbols from the capture BED file was found in the features BED.')
+                    critical('No gene symbols from the target BED file was found in the RefSeq features.')
             features_bed = features_filt_bed
             info('Filtering the full features file including gene records.')
-            features_no_genes_bed = filter_bed_with_gene_set(work_dir, features_no_genes_bed, gene_key_set, suffix='target_genes', reuse=reuse)
-    elif features_no_genes_bed:
+            # features_no_genes_bed = filter_bed_with_gene_set(work_dir, features_no_genes_bed, gene_key_set, suffix='target_genes', reuse=reuse)
+    elif features_bed:
         info()
         info('No target (WGS), getting the gene names from the full features list...')
-        gene_key_set, gene_key_list = get_gene_keys(features_no_genes_bed)
+        gene_key_set, gene_key_list = get_gene_keys(features_bed)
     info()
 
-    return gene_key_set, gene_key_list, target_bed, features_bed, features_no_genes_bed
+    return gene_key_set, gene_key_list, target_bed, features_bed
 
 
 def calc_region_number(bed_fpath):
@@ -365,16 +361,14 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
     if fai_fpath:
         fai_fpath = verify_file(fai_fpath)
     elif genome:
-        fai_fpath = verify_file(join(dirname(fai.__file__), fai.FAI.format(genome=genome)))
-        if not fai_fpath:
-            critical('Genome ' + genome + ' is not supported. Supported: ' + ', '.join(fai.SUPPORTED_GENOMES))
+        fai_fpath = verify_file(ref.get_fai(genome))
     else:
         critical('fai or genome build name must be specified')
-    chr_order = get_chrom_order(fai_fpath)
+    chr_order = get_chrom_order(fai_fpath=fai_fpath)
 
-    info('Sorting regions in ' + input_bed_fpath)
+    debug('Sorting regions in ' + input_bed_fpath)
     if reuse and isfile(output_bed_fpath) and verify_bed(output_bed_fpath):
-        info(output_bed_fpath + ' exists, reusing')
+        debug(output_bed_fpath + ' exists, reusing')
         return output_bed_fpath
 
     with open(input_bed_fpath) as f:
@@ -400,22 +394,22 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
                     fs.extend(region.other_fields)
                     out.write('\t'.join(fs) + '\n')
 
-    info('Sorted ' + str(len(regions)) + ' regions, saved to ' + output_bed_fpath)
+    debug('Sorted ' + str(len(regions)) + ' regions, saved to ' + output_bed_fpath)
     return output_bed_fpath
 
 
 def total_merge_bed(cnf, bed_fpath):
-    bedops = get_system_path(cnf, 'bedops')
+    bedops = 'bedops'
     if bedops:
         cmdline = '{bedops} --merge {bed_fpath}'.format(**locals())
         output_fpath = intermediate_fname(cnf, bed_fpath, 'total_merged')
-        call(cnf, cmdline, output_fpath)
+        call_process.run(cmdline, output_fpath)
         return output_fpath
     else:
-        bedtools = get_system_path(cnf, 'bedtools')
+        bedtools = 'bedtools'
         cmdline = '{bedtools} merge -i {bed_fpath}'.format(**locals())
         output_fpath = intermediate_fname(cnf, bed_fpath, 'total_merged')
-        call(cnf, cmdline, output_fpath)
+        call_process.run(cnf, cmdline, output_fpath)
         return output_fpath
 
 
@@ -457,6 +451,7 @@ def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', reuse=Fal
     index_bam(bam_fpath)
     cmdl = 'sambamba ' + cmdl
     call_process.run(cmdl, output_fpath=output_fpath, reuse=reuse)
+    return output_fpath
 
 
 def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only_depth=False, sample_name=None, reuse=False):
@@ -466,14 +461,15 @@ def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only
             splitext_plus(basename(bed))[0] + '_' + sample_name + '_sambamba_depth.txt')
 
     if reuse and verify_file(output_fpath, silent=True):
-        info(output_fpath + ' exists, reusing.')
+        debug(output_fpath + ' exists, reusing.')
         return output_fpath
     thresholds_str = ''
     if not only_depth:
         thresholds_str = '-T ' + ' -T'.join([str(d) for d in depth_thresholds])
     cmdline = 'depth region -F "not duplicate and not failed_quality_control" -L {bed} {thresholds_str} {bam}'.format(**locals())
 
-    return call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath)
+    call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath)
+    return output_fpath
 
 
 def remove_dups(bam, output_fpath, sambamba=None, reuse=False):
@@ -547,7 +543,7 @@ def _fix_bam_for_picard(cnf, bam_fpath):
             correct_pairs.sort(key=lambda pair: pair[0].split('\t')[4] + pair[1].split('\t')[4], reverse=True)
         return [correct_pairs[0][0], correct_pairs[0][1]]
 
-    samtools = get_system_path(cnf, 'samtools')
+    samtools = 'samtools'
     try:
         import pysam
         without_pysam = False
@@ -777,7 +773,7 @@ def check_md5(work_dir, fpath, file_type, silent=False):
 
     if prev_md5 == new_md5:
         if not silent:
-            info('Reusing previous ' + file_type.upper() + ' files.')
+            debug('Reusing previous ' + file_type.upper() + ' files.')
         return True
     else:
         if not silent:
