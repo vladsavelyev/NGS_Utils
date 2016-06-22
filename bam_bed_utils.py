@@ -4,7 +4,6 @@ from os.path import isfile, join, abspath, basename, dirname, getctime, getmtime
 from subprocess import check_output
 
 from Utils import call_process
-from Utils.annotate_bed import annotate
 from Utils.file_utils import intermediate_fname, iterate_file, splitext_plus, verify_file, adjust_path, add_suffix, \
     safe_mkdir, file_transaction, which
 from Utils.logger import info, critical, warn, err, debug
@@ -104,103 +103,10 @@ def remove_comments(work_dir, bed_fpath, reuse=False):
     return iterate_file(work_dir, bed_fpath, f, suffix='rmcmt', reuse=reuse)
 
 
-def prepare_beds(work_dir, fai_fpath=None, features_bed=None, target_bed=None, seq2c_bed=None, cds_bed_fpath=None, reuse=False):
-    if features_bed is None and target_bed is None:
-        warn('No input target BED, and no features BED in the system config specified. Not making detailed per-gene reports.')
-
-    if target_bed:
-        target_bed = verify_bed(target_bed, is_critical=True)
-
-    if seq2c_bed:
-        seq2c_bed = verify_bed(seq2c_bed, is_critical=True)
-
-    if features_bed:
-        features_bed = verify_bed(features_bed, is_critical=True)
-
-    # # Features
-    # features_no_genes_bed = None
-    # if features_bed:
-    #     # info()
-    #     # info('Merging regions within genes...')
-    #     # exons_bed = group_and_merge_regions_by_gene(cnf, exons_bed, keep_genes=True)
-    #     #
-    #     # info()
-    #     # info('Sorting exons by (chrom, gene name, start)')
-    #     # exons_bed = sort_bed(cnf, exons_bed)
-    #
-    #     debug('Filtering the features bed file to have only non-gene and no-transcript records...')
-    #     features_no_genes_bed = intermediate_fname(work_dir, features_bed, 'no_genes')
-    #     call_process.run('grep -vw Gene ' + features_bed + ' | grep -vw Transcript', output_fpath=features_no_genes_bed, reuse=reuse)
-
-    ori_target_bed_path = target_bed
-    if target_bed:
-        debug()
-        info('Remove comments in target...')
-        target_bed = remove_comments(work_dir, target_bed, reuse=reuse)
-
-        debug()
-        debug('Cutting target...')
-        target_bed = cut(target_bed, 4, reuse=reuse)
-
-        debug()
-        info('Sorting target...')
-        target_bed = sort_bed(target_bed, work_dir=work_dir, fai_fpath=fai_fpath, reuse=reuse)
-
-        cols = count_bed_cols(target_bed)
-
-        if not features_bed:
-            warn('Cannot re-annotate BED file without features')
-        else:
-            info('Annotating target...')
-            target_bed = annotate(target_bed, features_bed, add_suffix(target_bed, 'ann'), reuse=reuse)
-
-    def remove_no_anno(l, i):
-        if l.split('\t')[3].strip() == '.': return None
-        else: return l
-
-    if not seq2c_bed and target_bed or seq2c_bed and seq2c_bed == ori_target_bed_path:
-        debug('Seq2C bed: removing regions with no gene annotation...')
-        seq2c_bed = target_bed
-        seq2c_bed = iterate_file(work_dir, seq2c_bed, remove_no_anno, suffix='filt', reuse=reuse)
-
-    elif seq2c_bed:
-        debug()
-        debug('Remove comments in Seq2C bed...')
-        seq2c_bed = remove_comments(work_dir, seq2c_bed, reuse=reuse)
-
-        debug()
-        debug('Sorting Seq2C bed...')
-        seq2c_bed = sort_bed(seq2c_bed, work_dir=work_dir, fai_fpath=fai_fpath, reuse=reuse)
-
-        cols = count_bed_cols(seq2c_bed)
-        if cols < 4:
-            debug()
-            debug('Number columns in SV bed is ' + str(cols) + '. Annotating amplicons with gene names...')
-            seq2c_bed = annotate(seq2c_bed, features_bed, add_suffix(target_bed, 'ann'), reuse=reuse)
-        elif 8 > cols > 4:
-            seq2c_bed = cut(seq2c_bed, 4)
-        elif cols > 8:
-            seq2c_bed = cut(seq2c_bed, 8)
-        debug('Filtering non-annotated entries in seq2c bed')
-        seq2c_bed = iterate_file(work_dir, seq2c_bed, remove_no_anno, suffix='filt', reuse=reuse)
-
-    else:
-        seq2c_bed = verify_bed(cds_bed_fpath)
-
-    # if target_bed:
-    #     info()
-        # info('Merging amplicons...')
-        # target_bed = group_and_merge_regions_by_gene(cnf, target_bed, keep_genes=False)
-
-        # info('Sorting target by (chrom, gene name, start)')
-        # target_bed = sort_bed(target_bed, work_dir=work_dir, fai_fpath=fai_fpath, reuse=reuse)
-
-    return features_bed, target_bed, seq2c_bed
-
-
 def extract_gene_names_and_filter_exons(work_dir, target_bed, features_bed, reuse=False):
     gene_key_set = set()
     gene_key_list = []
+    genes_not_in_refseq = set()
 
     debug()
     debug('Getting gene list')
@@ -223,11 +129,11 @@ def extract_gene_names_and_filter_exons(work_dir, target_bed, features_bed, reus
         debug('Using genes from the target ' + target_bed)
         if features_bed:
             debug('Trying filtering exons with these ' + str(len(gene_key_list)) + ' genes.')
-            features_filt_bed = filter_bed_with_gene_set(work_dir, features_bed, gene_key_set, suffix='target_genes_1st_round', reuse=reuse)
-            if not verify_file(features_filt_bed):
+            features_filt_bed, genes_in_refseq = filter_bed_with_gene_set(work_dir, features_bed, gene_key_set, suffix='target_genes_1st_round', reuse=reuse)
+            if not genes_in_refseq:
                 debug()
                 warn('No gene symbols from the target BED file was found in the RefSeq features. Re-annotating target...')
-                target_bed = annotate(work_dir, target_bed, add_suffix(target_bed, 'ann'), reuse=reuse)
+                target_bed = annotate(target_bed, features_bed, add_suffix(target_bed, 'ann'), reuse=reuse)
                 #info('Merging regions within genes...')
                 #target_bed = group_and_merge_regions_by_gene(cnf, target_bed, keep_genes=False)
                 # debug('Sorting amplicons_bed by (chrom, gene_name, start)')
@@ -236,19 +142,20 @@ def extract_gene_names_and_filter_exons(work_dir, target_bed, features_bed, reus
                 gene_key_set, gene_key_list = get_gene_keys(target_bed)
                 debug()
                 debug('Using genes from the new amplicons list, filtering features with this genes again.')
-                features_filt_bed = filter_bed_with_gene_set(work_dir, features_bed, gene_key_set, suffix='target_genes_2nd_round', reuse=reuse)
-                if not verify_file(features_filt_bed):
+                features_filt_bed, genes_in_refseq = filter_bed_with_gene_set(work_dir, features_bed, gene_key_set, suffix='target_genes_2nd_round', reuse=reuse)
+                if not genes_in_refseq:
                     critical('No gene symbols from the target BED file was found in the RefSeq features.')
             features_bed = features_filt_bed
-            info('Filtering the full features file including gene records.')
-            # features_no_genes_bed = filter_bed_with_gene_set(work_dir, features_no_genes_bed, gene_key_set, suffix='target_genes', reuse=reuse)
+            genes_not_in_refseq = gene_key_set - genes_in_refseq
+
     elif features_bed:
         info()
-        info('No target (WGS), getting the gene names from the full features list...')
+        info('No target (probably WGS), getting the gene names from the full features list...')
         gene_key_set, gene_key_list = get_gene_keys(features_bed)
+        genes_not_in_refseq = set()
     info()
 
-    return gene_key_set, gene_key_list, target_bed, features_bed
+    return gene_key_set, gene_key_list, genes_not_in_refseq, target_bed, features_bed
 
 
 def calc_region_number(bed_fpath):
@@ -324,6 +231,8 @@ def prep_bed_for_seq2c(work_dir, bed_fpath, reuse=False):
 
 
 def filter_bed_with_gene_set(work_dir, bed_fpath, gene_keys_set, suffix=None, reuse=False):
+    met_genes = set()
+
     def fn(l, i):
         if l:
             fs = l.split('\t')
@@ -334,10 +243,12 @@ def filter_bed_with_gene_set(work_dir, bed_fpath, gene_keys_set, suffix=None, re
             for g in fs[3].split(','):
                 if (g, c) in gene_keys_set:
                     new_gns.append(g)
+                    met_genes.add((g, c))
             if new_gns:
                 return l.replace(fs[3], ','.join(new_gns))
 
-    return iterate_file(work_dir, bed_fpath, fn, suffix=suffix or 'filt_genes', check_result=False, reuse=reuse)
+    res_fpath = iterate_file(work_dir, bed_fpath, fn, suffix=suffix or 'filt_genes', check_result=False)
+    return res_fpath, met_genes
 
 
 def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=None, genome=None, reuse=False):
@@ -465,7 +376,7 @@ def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only
         return output_fpath
     thresholds_str = ''
     if not only_depth:
-        thresholds_str = '-T ' + ' -T'.join([str(d) for d in depth_thresholds])
+        thresholds_str = [' -T' + str(d) for d in depth_thresholds]
     cmdline = 'depth region -F "not duplicate and not failed_quality_control" -L {bed} {thresholds_str} {bam}'.format(**locals())
 
     call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath)
@@ -511,103 +422,103 @@ def remove_dups(bam, output_fpath, sambamba=None, reuse=False):
 #         return None
 
 
-def _fix_bam_for_picard(cnf, bam_fpath):
-    def __process_problem_read_aligns(read_aligns):
-        # each alignment: 0:NAME 1:FLAG 2:CHR 3:COORD 4:MAPQUAL 5:CIGAR 6:MATE_CHR 7:MATE_COORD TLEN SEQ ...
-        def __get_key(align):
-            return align.split('\t')[2] + '@' + align.split('\t')[3]
-
-        def __get_mate_key(align):
-            return (align.split('\t')[6] if align.split('\t')[2] != '=' else align.split('\t')[2]) \
-                   + '@' + align.split('\t')[7]
-
-        chr_coord = OrderedDict()
-        for align in read_aligns:
-            key = __get_key(align)
-            if key not in chr_coord:
-                chr_coord[key] = []
-            chr_coord[key].append(align)
-        correct_pairs = []
-        for align in read_aligns:
-            mate_key = __get_mate_key(align)
-            if mate_key in chr_coord:
-                for pair_align in chr_coord[mate_key]:
-                    if read_aligns.index(pair_align) <= read_aligns.index(align):
-                        continue
-                    if __get_mate_key(pair_align) == __get_key(align):
-                        correct_pairs.append((align, pair_align))
-        if not correct_pairs:
-            return []
-        if len(correct_pairs) > 1:
-            # sort by sum of mapping quality of both alignments
-            correct_pairs.sort(key=lambda pair: pair[0].split('\t')[4] + pair[1].split('\t')[4], reverse=True)
-        return [correct_pairs[0][0], correct_pairs[0][1]]
-
-    samtools = 'samtools'
-    try:
-        import pysam
-        without_pysam = False
-    except ImportError:
-        without_pysam = True
-
-    # find reads presented more than twice in input BAM
-    if without_pysam:
-        qname_sorted_sam_fpath = intermediate_fname(cnf, bam_fpath, 'qname_sorted')[:-len('bam')] + 'sam'
-        # queryname sorting; output is SAM
-        cmdline = '{samtools} view {bam_fpath} | sort '.format(**locals())
-        call(cnf, cmdline, qname_sorted_sam_fpath)
-        qname_sorted_file = open(qname_sorted_sam_fpath, 'r')
-    else:
-        qname_sorted_bam_fpath = intermediate_fname(cnf, bam_fpath, 'qname_sorted')
-        # queryname sorting (-n), to stdout (-o), 'prefix' is not used; output is BAM
-        cmdline = '{samtools} sort -n -o {bam_fpath} prefix'.format(**locals())
-        call(cnf, cmdline, qname_sorted_bam_fpath)
-        qname_sorted_file = pysam.Samfile(qname_sorted_bam_fpath, 'rb')
-    problem_reads = dict()
-    cur_read_aligns = []
-    for line in qname_sorted_file:
-        line = str(line)
-        if cur_read_aligns:
-            if line.split('\t')[0] != cur_read_aligns[0].split('\t')[0]:
-                if len(cur_read_aligns) > 2:
-                    problem_reads[cur_read_aligns[0].split('\t')[0]] = cur_read_aligns
-                cur_read_aligns = []
-        flag = int(line.split('\t')[1])
-        cur_read_aligns.append(line)
-    if len(cur_read_aligns) > 2:
-        problem_reads[cur_read_aligns[0].split('\t')[0]] = cur_read_aligns
-    qname_sorted_file.close()
-
-    for read_id, read_aligns in problem_reads.items():
-        problem_reads[read_id] = __process_problem_read_aligns(read_aligns)
-
-    # correct input BAM
-    fixed_bam_fpath = intermediate_fname(cnf, bam_fpath, 'fixed_for_picard')
-    fixed_sam_fpath = fixed_bam_fpath[:-len('bam')] + 'sam'
-    if without_pysam:
-        sam_fpath = intermediate_fname(cnf, bam_fpath, 'tmp')[:-len('bam')] + 'sam'
-        cmdline = '{samtools} view -h {bam_fpath}'.format(**locals())
-        call(cnf, cmdline, sam_fpath)
-        input_file = open(sam_fpath, 'r')
-        fixed_file = open(fixed_sam_fpath, 'w')
-    else:
-        input_file = pysam.Samfile(bam_fpath, 'rb')
-        fixed_file = pysam.Samfile(fixed_bam_fpath, 'wb', template=input_file)
-    for line in input_file:
-        if without_pysam and line.startswith('@'):  # header
-            fixed_file.write(line)
-            continue
-        read_name = str(line).split('\t')[0]
-        if read_name in problem_reads and str(line) not in problem_reads[read_name]:
-            continue
-        fixed_file.write(line)
-    input_file.close()
-    fixed_file.close()
-    if without_pysam:
-        cmdline = '{samtools} view -bS {fixed_sam_fpath}'.format(**locals())
-        call(cnf, cmdline, fixed_bam_fpath)
-
-    return fixed_bam_fpath
+# def _fix_bam_for_picard(cnf, bam_fpath):
+#     def __process_problem_read_aligns(read_aligns):
+#         # each alignment: 0:NAME 1:FLAG 2:CHR 3:COORD 4:MAPQUAL 5:CIGAR 6:MATE_CHR 7:MATE_COORD TLEN SEQ ...
+#         def __get_key(align):
+#             return align.split('\t')[2] + '@' + align.split('\t')[3]
+#
+#         def __get_mate_key(align):
+#             return (align.split('\t')[6] if align.split('\t')[2] != '=' else align.split('\t')[2]) \
+#                    + '@' + align.split('\t')[7]
+#
+#         chr_coord = OrderedDict()
+#         for align in read_aligns:
+#             key = __get_key(align)
+#             if key not in chr_coord:
+#                 chr_coord[key] = []
+#             chr_coord[key].append(align)
+#         correct_pairs = []
+#         for align in read_aligns:
+#             mate_key = __get_mate_key(align)
+#             if mate_key in chr_coord:
+#                 for pair_align in chr_coord[mate_key]:
+#                     if read_aligns.index(pair_align) <= read_aligns.index(align):
+#                         continue
+#                     if __get_mate_key(pair_align) == __get_key(align):
+#                         correct_pairs.append((align, pair_align))
+#         if not correct_pairs:
+#             return []
+#         if len(correct_pairs) > 1:
+#             # sort by sum of mapping quality of both alignments
+#             correct_pairs.sort(key=lambda pair: pair[0].split('\t')[4] + pair[1].split('\t')[4], reverse=True)
+#         return [correct_pairs[0][0], correct_pairs[0][1]]
+#
+#     samtools = 'samtools'
+#     try:
+#         import pysam
+#         without_pysam = False
+#     except ImportError:
+#         without_pysam = True
+#
+#     # find reads presented more than twice in input BAM
+#     if without_pysam:
+#         qname_sorted_sam_fpath = intermediate_fname(cnf, bam_fpath, 'qname_sorted')[:-len('bam')] + 'sam'
+#         # queryname sorting; output is SAM
+#         cmdline = '{samtools} view {bam_fpath} | sort '.format(**locals())
+#         call(cnf, cmdline, qname_sorted_sam_fpath)
+#         qname_sorted_file = open(qname_sorted_sam_fpath, 'r')
+#     else:
+#         qname_sorted_bam_fpath = intermediate_fname(cnf, bam_fpath, 'qname_sorted')
+#         # queryname sorting (-n), to stdout (-o), 'prefix' is not used; output is BAM
+#         cmdline = '{samtools} sort -n -o {bam_fpath} prefix'.format(**locals())
+#         call(cnf, cmdline, qname_sorted_bam_fpath)
+#         qname_sorted_file = pysam.Samfile(qname_sorted_bam_fpath, 'rb')
+#     problem_reads = dict()
+#     cur_read_aligns = []
+#     for line in qname_sorted_file:
+#         line = str(line)
+#         if cur_read_aligns:
+#             if line.split('\t')[0] != cur_read_aligns[0].split('\t')[0]:
+#                 if len(cur_read_aligns) > 2:
+#                     problem_reads[cur_read_aligns[0].split('\t')[0]] = cur_read_aligns
+#                 cur_read_aligns = []
+#         flag = int(line.split('\t')[1])
+#         cur_read_aligns.append(line)
+#     if len(cur_read_aligns) > 2:
+#         problem_reads[cur_read_aligns[0].split('\t')[0]] = cur_read_aligns
+#     qname_sorted_file.close()
+#
+#     for read_id, read_aligns in problem_reads.items():
+#         problem_reads[read_id] = __process_problem_read_aligns(read_aligns)
+#
+#     # correct input BAM
+#     fixed_bam_fpath = intermediate_fname(cnf, bam_fpath, 'fixed_for_picard')
+#     fixed_sam_fpath = fixed_bam_fpath[:-len('bam')] + 'sam'
+#     if without_pysam:
+#         sam_fpath = intermediate_fname(cnf, bam_fpath, 'tmp')[:-len('bam')] + 'sam'
+#         cmdline = '{samtools} view -h {bam_fpath}'.format(**locals())
+#         call(cnf, cmdline, sam_fpath)
+#         input_file = open(sam_fpath, 'r')
+#         fixed_file = open(fixed_sam_fpath, 'w')
+#     else:
+#         input_file = pysam.Samfile(bam_fpath, 'rb')
+#         fixed_file = pysam.Samfile(fixed_bam_fpath, 'wb', template=input_file)
+#     for line in input_file:
+#         if without_pysam and line.startswith('@'):  # header
+#             fixed_file.write(line)
+#             continue
+#         read_name = str(line).split('\t')[0]
+#         if read_name in problem_reads and str(line) not in problem_reads[read_name]:
+#             continue
+#         fixed_file.write(line)
+#     input_file.close()
+#     fixed_file.close()
+#     if without_pysam:
+#         cmdline = '{samtools} view -bS {fixed_sam_fpath}'.format(**locals())
+#         call(cnf, cmdline, fixed_bam_fpath)
+#
+#     return fixed_bam_fpath
 
 
 def _parse_picard_dup_report(dup_report_fpath):

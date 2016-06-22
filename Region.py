@@ -105,6 +105,9 @@ class Region:
               self.gene_name, self.feature]
         return '"' + '\t'.join(map(str, ts)) + '"'
 
+    def to_bed_str(self):
+        return '\t'.join([self.chrom, str(self.start), str(self.end), self.gene_name] + '\n')
+
     def __repr__(self):
         return self.__str__()
 
