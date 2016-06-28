@@ -308,19 +308,17 @@ def build_gene_objects_list(sample_name, features_bed, gene_keys_list):
         i = 0
         with open(features_bed) as f:
             for l in f:
-                if 'Transcript' in l.split('\t'):
-                    l = l.strip()
-                    if l and not l.startswith('#'):
-                        fs = l.split('\t')
-                        chrom, start, end, symbol = fs[:4]
+                l = l.strip()
+                if l and not l.startswith('#'):
+                    chrom, start, end, symbol, _, strand, feature, biotype, transcript = l.split('\t')
+                    if feature == 'Transcript':
                         gene_by_name_and_chrom[(symbol, chrom)].chrom = chrom
                         gene_by_name_and_chrom[(symbol, chrom)].start = int(start)
                         gene_by_name_and_chrom[(symbol, chrom)].end = int(end)
                         gene_by_name_and_chrom[(symbol, chrom)].size = int(end) - int(start)
-                        if len(fs) >= 8:
-                            gene_by_name_and_chrom[(symbol, chrom)].biotype = fs[7]
-                        if len(fs) >= 9:
-                            gene_by_name_and_chrom[(symbol, chrom)].transcript_id = fs[8]
+                        gene_by_name_and_chrom[(symbol, chrom)].strand = strand
+                        gene_by_name_and_chrom[(symbol, chrom)].biotype = biotype
+                        gene_by_name_and_chrom[(symbol, chrom)].transcript_id = transcript
                         i += 1
         info('Processed ' + str(i) + ' genes')
         info()

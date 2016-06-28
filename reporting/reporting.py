@@ -146,6 +146,7 @@ class Metric:
             common=False,
             ok_threshold=None,
             bottom=None,
+            top=None,
             is_hidden=False,
             with_heatmap=True,
             style='',
@@ -171,7 +172,9 @@ class Metric:
             low_inner_fence=None,
             top_inner_fence=None,
             top_outer_fence=None,
-            all_values_equal=False):  # TODO: get read of those
+
+            multiqc=None
+        ):
         self.name = name
         self.short_name = short_name
         self.description = description
@@ -180,6 +183,7 @@ class Metric:
         self.unit = unit
         self.ok_threshold = ok_threshold
         self.bottom = bottom
+        self.top = top
         self.is_hidden = is_hidden
         self.with_heatmap = with_heatmap
         self.style = style
@@ -203,6 +207,8 @@ class Metric:
         self.top_inner_fence = top_inner_fence
         self.top_outer_fence = top_outer_fence
         self.all_values_equal = False
+
+        self.multiqc = multiqc or dict()
 
     def get_display_name(self):
         return self.short_name if self.short_name is not None else self.name
@@ -1451,7 +1457,6 @@ def calc_cell_contents(report, rows):
                 row = calc_heatmap_stats(row)
     else:
         for metric in metrics:
-            if metric.name == 'Types of recurrent alterations': pass
             if metric.numbers and metric.with_heatmap:
                 # For metrics where we know the "normal value" - we want to color everything above normal white,
                 #   and everything below - red, starting from normal, finishing with bottom

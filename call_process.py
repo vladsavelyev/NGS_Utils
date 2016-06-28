@@ -46,6 +46,10 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
         with file_transaction(None, output_fpath) as tx_out_file:
             if stdout_to_outputfile:
                 cmd += ' > ' + tx_out_file
+            else:
+                cmd = cmd.replace(output_fpath + ' ', tx_out_file + ' ') \
+                         .replace(output_fpath + '" ', tx_out_file + '" ') \
+                         .replace(output_fpath + '\' ', tx_out_file + '\' ')
             _try_run(cmd, tx_out_file, input_fpath)
 
     else:

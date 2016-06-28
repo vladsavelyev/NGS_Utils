@@ -376,7 +376,7 @@ def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only
         return output_fpath
     thresholds_str = ''
     if not only_depth:
-        thresholds_str = [' -T' + str(d) for d in depth_thresholds]
+        thresholds_str = ''.join([' -T' + str(d) for d in depth_thresholds])
     cmdline = 'depth region -F "not duplicate and not failed_quality_control" -L {bed} {thresholds_str} {bam}'.format(**locals())
 
     call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath)
