@@ -1704,8 +1704,8 @@ def _embed_css_and_scripts(html, report_dirpath,
             l_tag_formatted = l_tag.format(name=rel_fpath)
 
             if debug:  # not embedding, just adding links
-                fpath = relpath(fpath, report_dirpath)
-                line_formatted = line.replace(rel_fpath, fpath)
+                link = relpath(fpath, report_dirpath)
+                line_formatted = line.replace(rel_fpath, link)
                 html = html.replace(line, line_formatted)
 
             else:
