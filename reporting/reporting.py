@@ -173,6 +173,7 @@ class Metric:
             top_inner_fence=None,
             top_outer_fence=None,
 
+            section_name=None,
             multiqc=None
         ):
         self.name = name
@@ -208,6 +209,7 @@ class Metric:
         self.top_outer_fence = top_outer_fence
         self.all_values_equal = False
 
+        self.section_name = section_name
         self.multiqc = multiqc or dict()
 
     def get_display_name(self):
@@ -474,16 +476,16 @@ class SampleReport(BaseReport):
     def __repr__(self):
         return self.display_name + (', ' + self.report_name if self.report_name else '')
 
-    # @staticmethod
-    # def load(data, sample=None, bcbio_structure=None):
-    #     data['sample'] = sample or BCBioSample.load(data['sample'], bcbio_structure)
-    #     data['records'] = [Record.load(d) for d in data['records']]
-    #     data['metric_storage'] = MetricStorage.load(data['metric_storage'])
-    #
-    #     rep = SampleReport(**data)
-    #     for rec in rep.records:
-    #         rec.metric = rep.metric_storage.find_metric(rec.metric.name)
-    #     return rep
+    @staticmethod
+    def load(data, sample=None, bcbio_structure=None):
+        data['sample'] = sample  # or BCBioSample.load(data['sample'], bcbio_structure)
+        data['records'] = [Record.load(d) for d in data['records']]
+        data['metric_storage'] = MetricStorage.load(data['metric_storage'])
+
+        rep = SampleReport(**data)
+        for rec in rep.records:
+            rec.metric = rep.metric_storage.find_metric(rec.metric.name)
+        return rep
 
 
 class PerRegionSampleReport(SampleReport):
@@ -781,6 +783,8 @@ class ReportSection:
         self.title = title
         self.metrics = metrics or []
         self.metrics_by_name = dict((m.name, m) for m in metrics)
+        for m in metrics:
+            m.section_name = name
 
     def add_metric(self, metric, prepend=False):
         if not prepend:
@@ -788,6 +792,7 @@ class ReportSection:
         else:
             self.metrics = [metric] + self.metrics
         self.metrics_by_name[metric.name] = metric
+        metric.section_name = self.name
 
     def get_metrics(self):
         return self.metrics

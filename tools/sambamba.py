@@ -1,13 +1,11 @@
 #!/usr/bin/env python
-import bcbio_postproc  # do not remove it: checking for python version and adding site dirs inside
 
 import sys
 import os
-import shlex
 import subprocess
 from os.path import basename, join, isfile, getctime
 
-from source.logger import err
+from Utils.logger import err
 
 
 def main():
