@@ -26,7 +26,7 @@ class SortableByChrom:
 class Region:
     def __init__(self, sample_name=None, gene_name=None, transcript_id=None,
                  exon_num=None, strand=None, biotype=None, feature=None, extra_fields=list(),
-                 chrom=None, start=None, end=None, size=None, min_depth=None,
+                 chrom=None, start=None, end=None, size=None, min_depth=None, median_depth=None,
                  avg_depth=None, std_dev=None, rate_within_normal=None, bases_by_depth=None):
 
         self.sample_name = sample_name
@@ -47,6 +47,7 @@ class Region:
 
         # Calculated once on "sum_up()", when all self.bases_by_depth are there:
         self.avg_depth = avg_depth  # float
+        self.median_depth = median_depth
         self.std_dev = std_dev
         self.rate_within_normal = rate_within_normal
         self.bases_within_threshs = None    # OrderedDict((depth, 0) for depth in depth_thresholds)
