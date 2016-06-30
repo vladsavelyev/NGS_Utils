@@ -179,9 +179,8 @@ def _log(out, msg='', ending='\n', print_date=True, severity=None):
 
     if print_date:
         msg_debug = timestamp() + '  ' + msg
-
-    if is_debug:
-        msg_debug = severity + ' ' * (12 - len(severity)) + msg_debug
+        if is_debug:
+            msg_debug = severity + ' ' * (12 - len(severity)) + msg_debug
 
     if is_debug:
         out.write(msg_debug + ending)

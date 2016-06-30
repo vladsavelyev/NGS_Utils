@@ -4,7 +4,7 @@ from collections import defaultdict, OrderedDict
 from os.path import isfile
 
 from Utils.file_utils import file_transaction, verify_file, adjust_path
-from Utils.logger import info, err, critical
+from Utils.logger import info, err, critical, debug
 import Utils.reference_data as ref
 
 
@@ -289,13 +289,12 @@ def build_gene_objects_list(sample_name, features_bed, gene_keys_list):
 
     info('Building the Gene objects list based on target')
     if gene_keys_list:
-        info()
-        info('Init the Gene object dict')
+        debug()
+        debug('Initiate the Gene object dict')
         for gn, chrom in gene_keys_list:
             gene_by_name_and_chrom[(gn, chrom)] = GeneInfo(sample_name=sample_name, gene_name=gn, chrom=chrom)
-        info('Processed ' + str(len(gene_keys_list)) + ' gene records -> ' + str(len(gene_by_name_and_chrom)) + ' uniq gene sybmols')
+        debug('Processed ' + str(len(gene_keys_list)) + ' gene records -> ' + str(len(gene_by_name_and_chrom)) + ' uniq gene sybmols')
 
-    info('Building the Gene objects list based on target')
     if features_bed and gene_by_name_and_chrom:
         # info()
         # info('Filtering exon bed file to have only gene records...')
@@ -303,8 +302,8 @@ def build_gene_objects_list(sample_name, features_bed, gene_keys_list):
         # call(cnf, 'grep -w Gene ' + exons_bed, output_fpath=exons_only_genes_bed)
         # info('Saved genes to ' + exons_only_genes_bed)
 
-        info()
-        info('Setting start and end for the genes (based only on the target gene names found in the features list)')
+        debug()
+        debug('Setting start and end for the genes (based only on the target gene names found in the features list)')
         i = 0
         with open(features_bed) as f:
             for l in f:
@@ -320,8 +319,8 @@ def build_gene_objects_list(sample_name, features_bed, gene_keys_list):
                         gene_by_name_and_chrom[(symbol, chrom)].biotype = biotype
                         gene_by_name_and_chrom[(symbol, chrom)].transcript_id = transcript
                         i += 1
-        info('Processed ' + str(i) + ' genes')
-        info()
+        debug('Processed ' + str(i) + ' genes')
+        debug()
 
     if not gene_by_name_and_chrom:
         critical('Err: no genes in the list')
