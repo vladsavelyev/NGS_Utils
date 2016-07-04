@@ -1,0 +1,3 @@
+[submodule "sambamba"]
+	path = sambamba
+	url = https://github.com/AstraZeneca-NGS/sambamba

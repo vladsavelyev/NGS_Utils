@@ -1,22 +1,41 @@
+import subprocess
 from os.path import join, dirname, abspath, basename, isfile, getmtime
 from sys import platform as _platform
 
 from Utils.call_process import run
 from Utils.file_utils import verify_file, splitext_plus, which
-from Utils.logger import debug, warn
+from Utils.logger import debug, warn, err, critical
 
 
 def get_executable():
-    if 'darwin' in _platform:
-        path = abspath(join(dirname(__file__), 'sambamba_osx'))
+    sambamba = abspath(join(dirname(__file__), 'sambamba', 'build', 'sambamba'))
+    if isfile(sambamba):
+        return sambamba
     else:
-        path = abspath(join(dirname(__file__), 'sambamba_lnx'))
-    if isfile(path):
-        return path
-    else:
-        sys_path = which('sambamba')
-        warn('Sambamba executable not found in ' + path + ', using system sambamba ' + sys_path)
-        return sys_path
+        try:
+            run('cd sambamba; make sambamba-ldmd2-64; cd ..')
+        except subprocess.CalledProcessError as e:
+            err('Could not compile sambamba.\n' + e.cmd)
+        else:
+            if isfile(sambamba):
+                return sambamba
+            else:
+                err('Compilation failed, can not find binary ' + sambamba)
+
+    # if 'darwin' in _platform:
+    #     path = abspath(join(dirname(__file__), 'sambamba_osx'))
+    # else:
+    #     path = abspath(join(dirname(__file__), 'sambamba_lnx'))
+    # if isfile(path):
+    #     return path
+    # else:
+    #     sys_path = which('sambamba')
+    #     warn('Sambamba executable not found in ' + path + ', using system sambamba ' + sys_path)
+    #     return sys_path
+    sambamba = which('sambamba')
+    if not sambamba:
+        critical('Could not compile sambamba, and sambabma not found in $PATH')
+    return sambamba
 
 
 def index_bam(bam_fpath, sambamba=None, samtools=None):
