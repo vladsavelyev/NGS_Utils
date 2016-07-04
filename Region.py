@@ -47,7 +47,7 @@ class Region:
 
         # Calculated once on "sum_up()", when all self.bases_by_depth are there:
         self.avg_depth = avg_depth  # float
-        self.median_depth = median_depth
+        self.median_depth = median_depth  # float
         self.std_dev = std_dev
         self.rate_within_normal = rate_within_normal
         self.bases_within_threshs = None    # OrderedDict((depth, 0) for depth in depth_thresholds)
@@ -226,9 +226,9 @@ class GeneInfo(Region):
         - Supports extending with exons in sorted by starting position order;
           when adding a new exon, recalculates start, end, size and based_by_depth.
     """
-    def __init__(self, sample_name, gene_name, chrom=None, strand=None, feature='Gene-Exon', exon_num=None):
+    def __init__(self, gene_name, chrom=None, strand=None, feature='Gene-Exon', exon_num=None):
         Region.__init__(self,
-            sample_name=sample_name, gene_name=gene_name, exon_num=exon_num, strand=strand,
+            sample_name=None, gene_name=gene_name, exon_num=exon_num, strand=strand,
             feature=feature, chrom=chrom)
         self.exons = []
         self.amplicons = []
@@ -275,7 +275,7 @@ class GeneInfo(Region):
             self.min_depth = min(self.min_depth, amplicon.min_depth) if self.min_depth else amplicon.min_depth
 
 
-def build_gene_objects_list(sample_name, features_bed, gene_keys_list):
+def build_gene_objects_list(features_bed, gene_keys_list):
     # info('Making unique gene list without affecting the order')
     # fixed_gene_names_list = []
     # added_gene_names_set = set()
@@ -288,12 +288,11 @@ def build_gene_objects_list(sample_name, features_bed, gene_keys_list):
     # info('Uniq gene list contains ' + str(len(gene_names_list)) + ' genes')
     gene_by_name_and_chrom = OrderedDict()
 
-    info('Building the Gene objects list based on target')
     if gene_keys_list:
         debug()
         debug('Initiate the Gene object dict')
         for gn, chrom in gene_keys_list:
-            gene_by_name_and_chrom[(gn, chrom)] = GeneInfo(sample_name=sample_name, gene_name=gn, chrom=chrom)
+            gene_by_name_and_chrom[(gn, chrom)] = GeneInfo(gene_name=gn, chrom=chrom)
         debug('Processed ' + str(len(gene_keys_list)) + ' gene records -> ' + str(len(gene_by_name_and_chrom)) + ' uniq gene sybmols')
 
     if features_bed and gene_by_name_and_chrom:

@@ -10,7 +10,7 @@ def get_executable():
     if 'darwin' in _platform:
         path = abspath(join(dirname(__file__), 'sambamba_osx'))
     else:
-        path = abspath(join(dirname(__file__), 'sambamba'))
+        path = abspath(join(dirname(__file__), 'sambamba_lnx'))
     if isfile(path):
         return path
     else:

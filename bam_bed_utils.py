@@ -88,67 +88,12 @@ def remove_comments(work_dir, bed_fpath, reuse=False):
     return iterate_file(work_dir, bed_fpath, f, suffix='rmcmt', reuse=reuse)
 
 
-def extract_gene_names_and_filter_exons(work_dir, target_bed, features_bed, reuse=False):
-    gene_key_set = set()
-    gene_key_list = []
-    genes_not_in_refseq = set()
-
-    debug()
-    debug('Getting gene list')
-
-    # if genes_fpath:
-    #     with open(genes_fpath) as f:
-    #         gene_key_list = [g.strip() for g in f.read().split('\n') if g]
-    #         gene_key_set = set(gene_key_list)
-    #     info('Using genes from ' + genes_fpath + ', filtering exons and amplicons with this genes.')
-    #     if target_bed:
-    #         target_bed = filter_bed_with_gene_set(cnf, target_bed, gene_key_set)
-    #     if exons_bed:
-    #         exons_bed = filter_bed_with_gene_set(cnf, exons_bed, gene_key_set)
-    #         exons_no_genes_bed = filter_bed_with_gene_set(cnf, exons_no_genes_bed, gene_key_set)
-    # else:
-
-    if target_bed:
-        debug()
-        gene_key_set, gene_key_list = get_gene_keys(target_bed)
-        debug('Using genes from the target ' + target_bed)
-        if features_bed:
-            debug('Trying filtering exons with these ' + str(len(gene_key_list)) + ' genes.')
-            features_filt_bed, genes_in_refseq = filter_bed_with_gene_set(work_dir, features_bed, gene_key_set, suffix='target_genes_1st_round', reuse=reuse)
-            if not genes_in_refseq:
-                debug()
-                warn('No gene symbols from the target BED file was found in the RefSeq features. Re-annotating target...')
-                target_bed = annotate(target_bed, features_bed, add_suffix(target_bed, 'ann'), reuse=reuse)
-                #info('Merging regions within genes...')
-                #target_bed = group_and_merge_regions_by_gene(cnf, target_bed, keep_genes=False)
-                # debug('Sorting amplicons_bed by (chrom, gene_name, start)')
-                # target_bed = sort_bed(work_dir, target_bed)
-                debug('Getting gene names again...')
-                gene_key_set, gene_key_list = get_gene_keys(target_bed)
-                debug()
-                debug('Using genes from the new amplicons list, filtering features with this genes again.')
-                features_filt_bed, genes_in_refseq = filter_bed_with_gene_set(work_dir, features_bed, gene_key_set, suffix='target_genes_2nd_round', reuse=reuse)
-                if not genes_in_refseq:
-                    critical('No gene symbols from the target BED file was found in the RefSeq features.')
-            features_bed = features_filt_bed
-            genes_not_in_refseq = gene_key_set - genes_in_refseq
-
-    elif features_bed:
-        info()
-        info('No target (probably WGS), getting the gene names from the full features list...')
-        gene_key_set, gene_key_list = get_gene_keys(features_bed)
-        genes_not_in_refseq = set()
-    info()
-
-    return gene_key_set, gene_key_list, genes_not_in_refseq, target_bed, features_bed
-
-
 def calc_region_number(bed_fpath):
     with open(bed_fpath) as f:
         return sum(1 for l in f if l.strip() and not l.strip().startswith('#'))
 
 
-def get_gene_keys(bed_fpath, chrom_index=0, gene_index=3):
+def get_gene_keys_from_bed(bed_fpath, chrom_index=0, gene_index=3):
     gene_keys_set = set()
     gene_keys_list = list()
     with open(bed_fpath) as f:
