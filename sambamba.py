@@ -8,34 +8,37 @@ from Utils.logger import debug, warn, err, critical
 
 
 def get_executable():
-    sambamba = abspath(join(dirname(__file__), 'sambamba', 'build', 'sambamba'))
-    if isfile(sambamba):
-        return sambamba
+    if 'darwin' in _platform:
+        path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_osx'))
     else:
-        try:
-            run('cd sambamba; make sambamba-ldmd2-64; cd ..')
-        except subprocess.CalledProcessError as e:
-            err('Could not compile sambamba.\n' + e.cmd)
-        else:
-            if isfile(sambamba):
-                return sambamba
-            else:
-                err('Compilation failed, can not find binary ' + sambamba)
+        path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_lnx'))
+    if isfile(path):
+        return path
+    else:
+        sys_path = which('sambamba')
+        warn('Sambamba executable not found in ' + path + ', using system sambamba ' + sys_path)
+        return sys_path
 
-    # if 'darwin' in _platform:
-    #     path = abspath(join(dirname(__file__), 'sambamba_osx'))
-    # else:
-    #     path = abspath(join(dirname(__file__), 'sambamba_lnx'))
-    # if isfile(path):
-    #     return path
-    # else:
-    #     sys_path = which('sambamba')
-    #     warn('Sambamba executable not found in ' + path + ', using system sambamba ' + sys_path)
-    #     return sys_path
-    sambamba = which('sambamba')
-    if not sambamba:
-        critical('Could not compile sambamba, and sambabma not found in $PATH')
-    return sambamba
+
+# def get_executable():
+#     sambamba = abspath(join(dirname(__file__), 'sambamba', 'build', 'sambamba'))
+#     if isfile(sambamba):
+#         return sambamba
+#     else:
+#         try:
+#             run('cd sambamba; make sambamba-ldmd2-64; cd ..')
+#         except subprocess.CalledProcessError as e:
+#             err('Could not compile sambamba.\n' + e.cmd)
+#         else:
+#             if isfile(sambamba):
+#                 return sambamba
+#             else:
+#                 err('Compilation failed, can not find binary ' + sambamba)
+#
+#     sambamba = which('sambamba')
+#     if not sambamba:
+#         critical('Could not compile sambamba, and sambabma not found in $PATH')
+#     return sambamba
 
 
 def index_bam(bam_fpath, sambamba=None, samtools=None):
