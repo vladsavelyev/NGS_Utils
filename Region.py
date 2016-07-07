@@ -3,6 +3,7 @@ import os
 from collections import defaultdict, OrderedDict
 from os.path import isfile
 
+from file_utils import open_gzipsafe
 from Utils.file_utils import file_transaction, verify_file, adjust_path
 from Utils.logger import info, err, critical, debug
 import Utils.reference_data as ref
@@ -305,7 +306,7 @@ def build_gene_objects_list(features_bed, gene_keys_list):
         debug()
         debug('Setting start and end for the genes (based only on the target gene names found in the features list)')
         i = 0
-        with open(features_bed) as f:
+        with open_gzipsafe(features_bed) as f:
             for l in f:
                 l = l.strip()
                 if l and not l.startswith('#'):

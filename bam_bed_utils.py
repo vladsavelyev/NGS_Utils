@@ -5,7 +5,7 @@ from subprocess import check_output
 
 from Utils import call_process
 from Utils.file_utils import intermediate_fname, iterate_file, splitext_plus, verify_file, adjust_path, add_suffix, \
-    safe_mkdir, file_transaction, which
+    safe_mkdir, file_transaction, which, file_exists, open_gzipsafe
 from Utils.logger import info, critical, warn, err, debug
 from Utils import reference_data as ref
 from Utils.Region import SortableByChrom, get_chrom_order
@@ -133,6 +133,42 @@ def cut(fpath, col_num, output_fpath=None, reuse=False):
     cmdline = 'cut -f' + ','.join(map(str, range(1, col_num + 1))) + ' ' + fpath + ' > ' + output_fpath
     call_process.run(cmdline, output_fpath=output_fpath, reuse=reuse)
     return output_fpath
+
+
+def bgzip_and_tabix(fpath, reuse=False, tabix_parameters='', **kwargs):
+    gzipped_fpath = join(fpath + '.gz')
+    tbi_fpath = gzipped_fpath + '.tbi'
+
+    if reuse and \
+           file_exists(gzipped_fpath) and (getctime(gzipped_fpath) >= getctime(fpath) if file_exists(fpath) else True) and \
+           file_exists(tbi_fpath) and getctime(tbi_fpath) >= getctime(gzipped_fpath):
+        info('Actual compressed file and index exist, reusing')
+        return gzipped_fpath
+
+    info('Compressing and tabixing file, writing ' + gzipped_fpath + '(.tbi)')
+    bgzip = which('bgzip')
+    tabix = which('tabix')
+    if not bgzip:
+        err('Cannot index file because bgzip is not found')
+    if not tabix:
+        err('Cannot index file because tabix is not found')
+    if not bgzip and not tabix:
+        return fpath
+
+    if isfile(gzipped_fpath):
+        os.remove(gzipped_fpath)
+    if isfile(tbi_fpath):
+        os.remove(tbi_fpath)
+
+    info('BGzipping ' + fpath)
+    cmdline = '{bgzip} {fpath}'.format(**locals())
+    call_process.run(cmdline, checks=[])
+
+    info('Tabixing ' + gzipped_fpath)
+    cmdline = '{tabix} {tabix_parameters} {gzipped_fpath}'.format(**locals())
+    call_process.run(cmdline, checks=[])
+
+    return gzipped_fpath
 
 
 def prep_bed_for_seq2c(work_dir, bed_fpath, reuse=False):
@@ -389,7 +425,7 @@ class BedFile:
             err: string containing the detected error. Empty string in case of a correct format.
         ************************************************************************************************************************************************************"""
 
-        fd = file(self.filename)
+        fd = open_gzipsafe(self.filename)
 
         line = fd.readline()
         fields = line.split('\t')
