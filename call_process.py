@@ -44,23 +44,24 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
     if output_fpath:
         if isfile(output_fpath):
             os.remove(output_fpath)
-    if output_fpath and stdout_tx:
-        with file_transaction(None, output_fpath) as tx_out_file:
-            if stdout_to_outputfile:
-                cmd += ' > ' + tx_out_file
-            else:
-                cmd += '\n'
-                cmd = cmd.replace(' ' + output_fpath + ' ', ' ' + tx_out_file + ' ') \
-                         .replace(' "' + output_fpath + '" ', ' ' + tx_out_file + '" ') \
-                         .replace(' \'' + output_fpath + '\' ', ' ' + tx_out_file + '\' ') \
-                         .replace(' ' + output_fpath + '\n', ' ' + tx_out_file) \
-                         .replace(' "' + output_fpath + '"\n', ' ' + tx_out_file + '"') \
-                         .replace(' \'' + output_fpath + '\'\n', ' ' + tx_out_file + '\'')
-            _try_run(cmd, tx_out_file, input_fpath, stderr_fpath)
-    else:
-        _try_run(cmd, output_fpath, input_fpath, stderr_fpath)
+    if output_fpath:
+        if stdout_tx:
+            with file_transaction(None, output_fpath) as tx_out_file:
+                if stdout_to_outputfile:
+                    cmd += ' > ' + tx_out_file
+                else:
+                    cmd += '\n'
+                    cmd = cmd.replace(' ' + output_fpath + ' ', ' ' + tx_out_file + ' ') \
+                             .replace(' "' + output_fpath + '" ', ' ' + tx_out_file + '" ') \
+                             .replace(' \'' + output_fpath + '\' ', ' ' + tx_out_file + '\' ') \
+                             .replace(' ' + output_fpath + '\n', ' ' + tx_out_file) \
+                             .replace(' "' + output_fpath + '"\n', ' ' + tx_out_file + '"') \
+                             .replace(' \'' + output_fpath + '\'\n', ' ' + tx_out_file + '\'')
+                _try_run(cmd, tx_out_file, input_fpath, stderr_fpath)
+        else:
+            _try_run(cmd, output_fpath, input_fpath, stderr_fpath)
 
-    if not output_fpath:
+    else:
         _try_run(cmd, None, input_fpath, stderr_fpath)
 
 
@@ -131,33 +132,37 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
         #     e.cmd
 
 
-def file_nonempty(target_file, input_file=None):
-    ok = utils.file_exists(target_file)
+def file_nonempty(output_fpath=None, input_fpath=None):
+    if output_fpath is None:
+        return True
+    ok = utils.file_exists(output_fpath)
     if not ok:
-        err("Did not find non-empty output file {0}".format(target_file))
+        err("Did not find non-empty output file {0}".format(output_fpath))
     return ok
 
 
-def file_exists(target_file, input_file=None):
-    ok = os.path.exists(target_file)
+def file_exists(output_fpath=None, input_fpath=None):
+    if output_fpath is None:
+        return True
+    ok = os.path.exists(output_fpath)
     if not ok:
-        err("Did not find output file {0}".format(target_file))
+        err("Did not find output file {0}".format(output_fpath))
     return ok
 
 
-def file_reasonable_size(target_file, input_file):
-    ok = file_exists(target_file)
+def file_reasonable_size(output_fpath, input_fpath):
+    ok = file_exists(output_fpath)
     if not ok:
         return ok
     # named pipes -- we can't calculate size
-    if input_file.strip().startswith("<("):
+    if input_fpath.strip().startswith("<("):
         return True
-    if input_file.endswith((".bam", ".gz")):
+    if input_fpath.endswith((".bam", ".gz")):
         scale = 7.0
     else:
         scale = 10.0
-    orig_size = os.path.getsize(input_file) / pow(1024.0, 3)
-    out_size = os.path.getsize(target_file) / pow(1024.0, 3)
+    orig_size = os.path.getsize(input_fpath) / pow(1024.0, 3)
+    out_size = os.path.getsize(output_fpath) / pow(1024.0, 3)
     if out_size < (orig_size / scale):
         err("Output file unexpectedly small. %.1fGb for output versus "
             "%.1fGb for the input file. This often indicates a truncated "
