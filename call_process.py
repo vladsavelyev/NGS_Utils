@@ -7,11 +7,11 @@ from os.path import isfile
 
 from Utils import utils
 from Utils.file_utils import file_transaction, verify_file
-from Utils.logger import info, debug
+from Utils.logger import info, debug, err
 
 
-def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputfile=True, reuse=False,
-        stderr_fpath=None, env_vars=None):
+def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputfile=True,
+        stdout_tx=True, reuse=False, stderr_fpath=None, env_vars=None):
     """Run the provided command, logging details and checking for errors.
     """
     if output_fpath and reuse:
@@ -44,16 +44,23 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
     if output_fpath:
         if isfile(output_fpath):
             os.remove(output_fpath)
+    if output_fpath and stdout_tx:
         with file_transaction(None, output_fpath) as tx_out_file:
             if stdout_to_outputfile:
                 cmd += ' > ' + tx_out_file
             else:
-                cmd = cmd.replace(output_fpath + ' ', tx_out_file + ' ') \
-                         .replace(output_fpath + '" ', tx_out_file + '" ') \
-                         .replace(output_fpath + '\' ', tx_out_file + '\' ')
+                cmd += '\n'
+                cmd = cmd.replace(' ' + output_fpath + ' ', ' ' + tx_out_file + ' ') \
+                         .replace(' "' + output_fpath + '" ', ' ' + tx_out_file + '" ') \
+                         .replace(' \'' + output_fpath + '\' ', ' ' + tx_out_file + '\' ') \
+                         .replace(' ' + output_fpath + '\n', ' ' + tx_out_file) \
+                         .replace(' "' + output_fpath + '"\n', ' ' + tx_out_file + '"') \
+                         .replace(' \'' + output_fpath + '\'\n', ' ' + tx_out_file + '\'')
             _try_run(cmd, tx_out_file, input_fpath, stderr_fpath)
-
     else:
+        _try_run(cmd, output_fpath, input_fpath, stderr_fpath)
+
+    if not output_fpath:
         _try_run(cmd, None, input_fpath, stderr_fpath)
 
 
@@ -127,14 +134,14 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
 def file_nonempty(target_file, input_file=None):
     ok = utils.file_exists(target_file)
     if not ok:
-        info("Did not find non-empty output file {0}".format(target_file))
+        err("Did not find non-empty output file {0}".format(target_file))
     return ok
 
 
 def file_exists(target_file, input_file=None):
     ok = os.path.exists(target_file)
     if not ok:
-        info("Did not find output file {0}".format(target_file))
+        err("Did not find output file {0}".format(target_file))
     return ok
 
 
@@ -152,7 +159,7 @@ def file_reasonable_size(target_file, input_file):
     orig_size = os.path.getsize(input_file) / pow(1024.0, 3)
     out_size = os.path.getsize(target_file) / pow(1024.0, 3)
     if out_size < (orig_size / scale):
-        info("Output file unexpectedly small. %.1fGb for output versus "
+        err("Output file unexpectedly small. %.1fGb for output versus "
             "%.1fGb for the input file. This often indicates a truncated "
             "BAM file or memory errors during the run." % (out_size, orig_size))
         return False

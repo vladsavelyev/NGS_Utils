@@ -3,7 +3,8 @@
 
 import shutil
 import os
-from os.path import isfile, isdir, getsize, exists, basename, join, abspath, splitext, islink, dirname, realpath
+from os.path import isfile, isdir, getsize, exists, basename, join, abspath, splitext, \
+    islink, dirname, realpath, getmtime
 import gzip
 import tempfile
 import contextlib
@@ -187,8 +188,11 @@ def chdir(new_dir):
 def file_uptodate(fname, cmp_fname):
     """Check if a file exists, is non-empty and is more recent than cmp_fname.
     """
-    return (file_exists(fname) and file_exists(cmp_fname) and
-            os.path.getmtime(fname) >= os.path.getmtime(cmp_fname))
+    try:
+        return (file_exists(fname) and file_exists(cmp_fname) and
+                getmtime(fname) >= getmtime(cmp_fname))
+    except OSError:
+        return False
 
 def create_dirs(config, names=None):
     if names is None:
@@ -633,7 +637,7 @@ def verify_obj_by_path(path, description='', silent=False, is_critical=False, ve
         _log(msg, silent, is_critical)
         return None
 
-def verify_file(fpath, description='', silent=False, is_critical=False, verify_size=True):
+def verify_file(fpath, description='', silent=False, is_critical=False, verify_size=True, cmp_date_fpath=None):
     if fpath is None:
         msg = (description + ': ' if description else ' ') + 'not specified.'
         _log(msg, silent, is_critical)
@@ -659,6 +663,13 @@ def verify_file(fpath, description='', silent=False, is_critical=False, verify_s
         msg = (description + ': ' if description else '') + fpath + ' is empty.'
         _log(msg, silent, is_critical)
         return None
+
+    if cmp_date_fpath:
+        try:
+            if getmtime(fpath) < getmtime(cmp_date_fpath):
+                return None
+        except OSError:
+            return None
 
     return fpath
 

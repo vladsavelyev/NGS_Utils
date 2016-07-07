@@ -3,45 +3,16 @@ from collections import OrderedDict
 from os.path import isfile, join, abspath, basename, dirname, getctime, getmtime, splitext, realpath
 from subprocess import check_output
 
+from pybedtools import BedTool
+
 from Utils import call_process
+from Utils.call_process import run
 from Utils.file_utils import intermediate_fname, iterate_file, splitext_plus, verify_file, adjust_path, add_suffix, \
     safe_mkdir, file_transaction, which, file_exists, open_gzipsafe
 from Utils.logger import info, critical, warn, err, debug
 from Utils import reference_data as ref
 from Utils.Region import SortableByChrom, get_chrom_order
 from Utils.utils import md5
-
-
-def markdup_sam(cnf, in_sam_fpath, samblaster=None):
-    """Perform non-stream based deduplication of SAM input files using samblaster.
-    """
-    samblaster = samblaster or which('samblaster')
-    if not samblaster:
-        warn('No samblaster, can\'t mark duplicates.')
-        return None
-
-    out_sam_fpath = add_suffix(in_sam_fpath, 'markdup')
-    tmp_fpath = join(cnf.work_dir, splitext_plus(basename(in_sam_fpath))[0] + '_markdup')
-    safe_mkdir(dirname(tmp_fpath))
-    cmdline = '{samblaster} -i {in_sam_fpath} -o {out_sam_fpath}'.format(**locals())
-    res = call_process.run(cmdline, output_fpath=out_sam_fpath, stdout_to_outputfile=False)
-    return out_sam_fpath
-
-
-def markdup_bam(cnf, in_bam_fpath, bammarkduplicates=None):
-    """Perform non-stream based deduplication of BAM input files using biobambam.
-    """
-    bammarkduplicates = bammarkduplicates or which('bammarkduplicates')
-    if not bammarkduplicates:
-        warn('No biobambam bammarkduplicates, can\'t mark duplicates.')
-        return None
-
-    out_bam_fpath = add_suffix(in_bam_fpath, 'markdup')
-    tmp_fpath = join(cnf.work_dir, splitext_plus(basename(in_bam_fpath))[0] + '_markdup')
-    safe_mkdir(dirname(tmp_fpath))
-    cmdline = '{bammarkduplicates} tmpfile={tmp_fpath} I={in_bam_fpath} O={out_bam_fpath}'.format(**locals())
-    res = call_process.run(cmdline, output_fpath=out_bam_fpath, stdout_to_outputfile=False)
-    return out_bam_fpath
 
 
 def bam_to_bed(cnf, bam_fpath, to_gzip=True):
@@ -77,6 +48,21 @@ def count_bed_cols(bed_fpath):
     # return len(next(dropwhile(lambda x: x.strip().startswith('#'), open(bed_fpath))).split('\t'))
     err('Empty bed file: ' + bed_fpath)
     return None
+
+
+def merge_overlaps(work_dir, bed_fpath, distance=None):
+    """Merge bed file intervals to avoid overlapping regions.
+    Overlapping regions (1:1-100, 1:90-100) cause issues with callers like FreeBayes
+    that don't collapse BEDs prior to using them.
+    """
+    output_fpath = intermediate_fname(work_dir, bed_fpath, 'merged')
+    if isfile(output_fpath) and verify_file(output_fpath, cmp_date_fpath=bed_fpath):
+        return output_fpath
+
+    with file_transaction(work_dir, output_fpath) as tx:
+        kwargs = dict(d=distance) if distance else dict()
+        BedTool(bed_fpath).merge(**kwargs).saveas(tx)
+    return output_fpath
 
 
 def remove_comments(work_dir, bed_fpath, reuse=False):
@@ -199,22 +185,20 @@ def prep_bed_for_seq2c(work_dir, bed_fpath, reuse=False):
 def filter_bed_with_gene_set(work_dir, bed_fpath, gene_keys_set, suffix=None, reuse=False):
     met_genes = set()
 
-    def fn(l, i):
-        if l:
-            fs = l.split('\t')
-            if len(fs) < 4:
-                return None
-            new_gns = []
-            c = fs[0]
-            for g in fs[3].split(','):
-                if (g, c) in gene_keys_set:
-                    new_gns.append(g)
-                    met_genes.add((g, c))
-            if new_gns:
-                return l.replace(fs[3], ','.join(new_gns))
+    def fun(r):
+        if not r.name:
+            return None
+        new_gns = []
+        for g in r.name.split(','):
+            if (g, r.chrom) in gene_keys_set:
+                new_gns.append(g)
+                met_genes.add((g, r.chrom))
+        if new_gns:
+            r.name = ','.join(new_gns)
 
-    res_fpath = iterate_file(work_dir, bed_fpath, fn, suffix=suffix or 'filt_genes', check_result=False)
-    return res_fpath, met_genes
+    return BedTool(bed_fpath).each(fun).saveas().fn, met_genes
+
+    # res_fpath = iterate_file(work_dir, bed, fn, suffix=suffix or 'filt_genes', check_result=False)
 
 
 def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=None, genome=None, reuse=False):
@@ -345,28 +329,11 @@ def intersect_bed(work_dir, bed1, bed2):
     return output_fpath
 
 
-def verify_bam(fpath, description='', is_critical=False, silent=False):
-    if not verify_file(fpath, description, is_critical=is_critical, silent=silent):
-        return None
+def verify_bed(bed, description='', is_critical=False, silent=False):
+    if isinstance(bed, BedTool):
+        return bed
 
-    fpath = adjust_path(fpath)
-
-    logfn = critical if is_critical else err
-    if not fpath.endswith('.bam'):
-        logfn('The file ' + fpath + ' is supposed to be BAM but does not have the .bam '
-            'extension. Please, make sure you pass proper file.')
-        return None
-
-    textchars = ''.join(map(chr, [7, 8, 9, 10, 12, 13, 27] + range(0x20, 0x100)))
-    is_binary_string = lambda baitiki: bool(baitiki.translate(None, textchars))
-    if not is_binary_string(open(fpath).read(3)):
-        logfn('The BAM file ' + fpath + ' must be a binary file.')
-        return None
-
-    return fpath
-
-
-def verify_bed(fpath, description='', is_critical=False, silent=False):
+    fpath = bed
     if not verify_file(fpath, description, is_critical=is_critical, silent=silent):
         return None
 
@@ -378,7 +345,7 @@ def verify_bed(fpath, description='', is_critical=False, silent=False):
         fn('Error: incorrect bed file format (' + fpath + '): ' + str(error) + '\n')
         return None
 
-    return fpath
+    return bed
 
 
 def check_md5(work_dir, fpath, file_type, silent=False):

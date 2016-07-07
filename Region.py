@@ -305,22 +305,17 @@ def build_gene_objects_list(features_bed, gene_keys_list):
 
         debug()
         debug('Setting start and end for the genes (based only on the target gene names found in the features list)')
-        i = 0
-        with open_gzipsafe(features_bed) as f:
-            for l in f:
-                l = l.strip()
-                if l and not l.startswith('#'):
-                    chrom, start, end, symbol, _, strand, feature, biotype, transcript = l.split('\t')
-                    if feature == 'Transcript':
-                        gene_by_name_and_chrom[(symbol, chrom)].chrom = chrom
-                        gene_by_name_and_chrom[(symbol, chrom)].start = int(start)
-                        gene_by_name_and_chrom[(symbol, chrom)].end = int(end)
-                        gene_by_name_and_chrom[(symbol, chrom)].size = int(end) - int(start)
-                        gene_by_name_and_chrom[(symbol, chrom)].strand = strand
-                        gene_by_name_and_chrom[(symbol, chrom)].biotype = biotype
-                        gene_by_name_and_chrom[(symbol, chrom)].transcript_id = transcript
-                        i += 1
-        debug('Processed ' + str(i) + ' genes')
+        def fun(c):
+            chrom, start, end, symbol, _, strand, feature, biotype, transcript = c.fields
+            if feature == 'Transcript':
+                gene_by_name_and_chrom[(symbol, chrom)].chrom = chrom
+                gene_by_name_and_chrom[(symbol, chrom)].start = int(start)
+                gene_by_name_and_chrom[(symbol, chrom)].end = int(end)
+                gene_by_name_and_chrom[(symbol, chrom)].size = int(end) - int(start)
+                gene_by_name_and_chrom[(symbol, chrom)].strand = strand
+                gene_by_name_and_chrom[(symbol, chrom)].biotype = biotype
+                gene_by_name_and_chrom[(symbol, chrom)].transcript_id = transcript
+        features_bed.each(fun)
         debug()
 
     if not gene_by_name_and_chrom:

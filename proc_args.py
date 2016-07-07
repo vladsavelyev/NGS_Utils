@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from os.path import splitext, basename
 
-from Utils.bam_bed_utils import verify_bam
+from Utils.bam_utils import verify_bam
 from Utils.file_utils import verify_file, adjust_path, splitext_plus
 from Utils.logger import info, critical, err
 

@@ -1,6 +1,9 @@
 import subprocess
+import traceback
 from os.path import join, dirname, abspath, basename, isfile, getmtime
 from sys import platform as _platform
+
+import sys
 
 from Utils.call_process import run
 from Utils.file_utils import verify_file, splitext_plus, which
@@ -42,12 +45,12 @@ def get_executable():
 
 
 def index_bam(bam_fpath, sambamba=None, samtools=None):
-    sambamba = sambamba or 'sambamba'
+    sambamba = sambamba or get_executable()
     indexed_bam = bam_fpath + '.bai'
     if not isfile(indexed_bam) or getmtime(indexed_bam) < getmtime(bam_fpath):
         # info('Indexing BAM, writing ' + indexed_bam + '...')
         cmdline = '{sambamba} index {bam_fpath}'.format(**locals())
-        res = run(cmdline, output_fpath=indexed_bam, stdout_to_outputfile=False)
+        res = run(cmdline, output_fpath=indexed_bam, stdout_to_outputfile=False, stdout_tx=False)
         # if not isfile(indexed_bam) or getmtime(indexed_bam) < getmtime(bam_fpath):
         #     samtools = samtools or get_system_path(cnf, 'samtools')
         #     cmdline = '{samtools} index {bam_fpath}'.format(**locals())
@@ -58,8 +61,14 @@ def index_bam(bam_fpath, sambamba=None, samtools=None):
 
 def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', reuse=False):
     index_bam(bam_fpath)
-    cmdl = get_executable() + ' ' + cmdl
-    run(cmdl, output_fpath=output_fpath, reuse=reuse)
+    sambamba = get_executable()
+    try:
+        run(sambamba + ' ' + cmdl, output_fpath=output_fpath, reuse=reuse)
+    except subprocess.CalledProcessError:
+        sys.stderr.write(traceback.format_exc())
+        err('Failed to run sambamba, trying with system executable.')
+        sambamba = which('sambamba')
+        run(sambamba + ' ' + cmdl, output_fpath=output_fpath, reuse=reuse)
     return output_fpath
 
 
