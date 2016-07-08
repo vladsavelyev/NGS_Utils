@@ -3,7 +3,7 @@ from os.path import dirname, join, abspath, splitext
 from Utils.file_utils import verify_file, adjust_path
 from Utils.logger import critical, debug
 
-SUPPORTED_GENOMES = ['hg19', 'hg19-noalt', 'hg38', 'hg38-noalt']
+SUPPORTED_GENOMES = ['hg19', 'hg19-noalt', 'hg38', 'hg38-noalt', 'hg19-chr21', 'GRCh37']
 
 
 def check_genome(genome):
@@ -12,9 +12,9 @@ def check_genome(genome):
 
 
 def _get(relative_path, genome):
-    chrom = None
-    if '-chr' in genome:
-        genome, chrom = genome.split('-')
+    # chrom = None
+    # if '-chr' in genome:
+    #     genome, chrom = genome.split('-')
     check_genome(genome)
     relative_path = relative_path.format(genome=genome)
 
@@ -32,6 +32,8 @@ def get_chrom_lengths(genome=None, fai_fpath=None):
     assert genome or fai_fpath
 
     if not fai_fpath:
+        # if '-chr' in genome:
+        #     genome, chrom = genome.split('-')
         check_genome(genome)
         fai_fpath = get_fai(genome)
     else:
@@ -69,6 +71,7 @@ def get_chrom_order(genome=None, fai_fpath=None):
 
 def get_canonical_transcripts(genome):
     genome = genome.split('-')[0]
+    if genome == 'GRCh37': genome = 'hg19'
     check_genome(genome)
     return _get('canonical_transcripts_{genome}.txt', genome)
 
