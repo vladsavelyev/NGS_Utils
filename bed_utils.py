@@ -409,6 +409,9 @@ class BedFile:
         fd = open_gzipsafe(self.filename)
 
         line = fd.readline()
+        while line.startswith('#'):
+            line = fd.readline()
+
         fields = line.split('\t')
         lc = 1
         error = ''
@@ -417,7 +420,7 @@ class BedFile:
         try:
             # Parses each line and checks that there are at least 3 fields, the two on the right containing integer values and being the right one
             # greater than the left one
-            while line <> '' and len(fields) > 2 and int(fields[1]) < int(fields[2]):
+            while line <> '' and len(fields) > 2 and int(fields[1]) <= int(fields[2]):
                 lc += 1
                 line = fd.readline()
                 fields = line.split('\t')
