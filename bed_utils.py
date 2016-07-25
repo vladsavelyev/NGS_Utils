@@ -347,11 +347,9 @@ def verify_bed(bed, description='', is_critical=False, silent=False):
     if isinstance(bed, BedTool):
         return bed
 
-    fpath = bed
+    fpath = adjust_path(bed)
     if not verify_file(fpath, description, is_critical=is_critical, silent=silent):
         return None
-
-    fpath = adjust_path(fpath)
 
     error = BedFile(fpath).checkformat()
     if error:
@@ -359,7 +357,7 @@ def verify_bed(bed, description='', is_critical=False, silent=False):
         fn('Error: incorrect bed file format (' + fpath + '): ' + str(error) + '\n')
         return None
 
-    return bed
+    return fpath
 
 
 def check_md5(work_dir, fpath, file_type, silent=False):
