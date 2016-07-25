@@ -242,7 +242,7 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
     chr_order = get_chrom_order(fai_fpath=fai_fpath)
 
     debug('Sorting regions in ' + input_bed_fpath)
-    if reuse and isfile(output_bed_fpath) and verify_bed(output_bed_fpath):
+    if reuse and isfile(output_bed_fpath) and verify_file(output_bed_fpath, cmp_date_fpath=input_bed_fpath):
         debug(output_bed_fpath + ' exists, reusing')
         return output_bed_fpath
 

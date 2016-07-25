@@ -5,6 +5,8 @@ from sys import platform as _platform
 
 import sys
 
+from pybedtools import BedTool
+
 from Utils.call_process import run
 from Utils.file_utils import verify_file, splitext_plus, which
 from Utils.logger import debug, warn, err, critical
@@ -74,6 +76,8 @@ def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', reuse=Fal
 
 def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only_depth=False, sample_name=None, reuse=False):
     sample_name = sample_name or splitext_plus(basename(bam))[0]
+    if isinstance(bed, BedTool):
+        bed = bed.saveas().fn
     if not output_fpath:
         output_fpath = join(work_dir,
             splitext_plus(basename(bed))[0] + '_' + sample_name + '_sambamba_depth.txt')
@@ -99,6 +103,8 @@ def count_in_bam(work_dir, bam, query, dedup=False, bed=None, use_grid=False, sa
     if dedup:
         query += ' and not duplicate'
     name = 'num_' + (query.replace(' ', '_') or 'reads')
+    if bed and isinstance(bed, BedTool):
+        bed = bed.saveas().fn
     if bed:
         name += '_on_target_' + basename(bed)
     sample_name = sample_name or basename(bam)
