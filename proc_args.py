@@ -57,7 +57,7 @@ def find_bams(args):
 
 
 def find_fastq_pairs(fpaths):
-    info('Finding fastq pairs.')
+    info('Finding fastq pairs...')
     fastqs_by_sample_name = dict()
     for fpath in fpaths:
         fn, ext = splitext_plus(basename(fpath))
@@ -91,8 +91,9 @@ def find_fastq_pairs(fpaths):
         if not l:
             err('ERROR: for sample ' + sname + ', left reads not found')
         if not r:
-            err('ERROR: for sample ' + sname + ', left reads not found')
-        fixed_fastqs_by_sample_name[sname] = l, r
+            err('ERROR: for sample ' + sname + ', right reads not found')
+        if l and r:
+            fixed_fastqs_by_sample_name[sname] = l, r
 
     return fixed_fastqs_by_sample_name
 
