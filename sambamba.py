@@ -2,6 +2,7 @@ import subprocess
 import traceback
 from os.path import join, dirname, abspath, basename, isfile, getmtime
 from sys import platform as _platform
+import platform
 
 import sys
 
@@ -16,7 +17,10 @@ def get_executable():
     if 'darwin' in _platform:
         path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_osx'))
     else:
-        path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_lnx'))
+        if 'redhat' in platform.dist():
+            path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_centos'))
+        else:
+            path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_lnx'))
     if isfile(path):
         return path
     else:
