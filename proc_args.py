@@ -1,9 +1,13 @@
+import os
 from collections import OrderedDict
-from os.path import splitext, basename
+from os.path import splitext, basename, join, isfile
 
+import datetime
+
+from Utils import logger
 from Utils.bam_utils import verify_bam
-from Utils.file_utils import verify_file, adjust_path, splitext_plus
-from Utils.logger import info, critical, err
+from Utils.file_utils import verify_file, adjust_path, splitext_plus, safe_mkdir, file_exists
+from Utils.logger import info, critical, err, debug
 
 
 def read_samples(args):
@@ -96,4 +100,42 @@ def find_fastq_pairs(fpaths):
             fixed_fastqs_by_sample_name[sname] = l, r
 
     return fixed_fastqs_by_sample_name
+
+
+def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None):
+    """ Creates output_dir, work_dir; sets up log
+    """
+    output_dir = adjust_path(output_dir or join(os.getcwd(), proc_name))
+    safe_mkdir(output_dir, 'output_dir')
+    debug('Saving results into ' + output_dir)
+
+    if not work_dir:
+        work_dir_name = 'work'
+        work_dir = join(output_dir, work_dir_name)
+    safe_mkdir(work_dir, 'working directory')
+
+    set_up_log(log_dir or work_dir, proc_name + '.log')
+
+    return output_dir, work_dir
+
+
+def set_up_log(log_dir, log_fname):
+    log_fname = log_fname
+    log_fpath = join(log_dir, log_fname)
+
+    if file_exists(log_fpath):
+        timestamp = datetime.datetime.fromtimestamp(os.stat(log_fpath).st_mtime)
+        mv_log_fpath = log_fpath + '.' + timestamp.strftime("%Y-%m-%d_%H-%M-%S")
+        try:
+            if isfile(mv_log_fpath):
+                os.remove(mv_log_fpath)
+            if not isfile(mv_log_fpath):
+                os.rename(log_fpath, mv_log_fpath)
+        except OSError:
+            pass
+
+    logger.log_fpath = log_fpath
+    debug('Logging to ' + log_fpath)
+    debug()
+
 
