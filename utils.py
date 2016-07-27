@@ -121,6 +121,10 @@ def is_local():
     hostname = socket.gethostname()
     return 'local' in hostname or 'Home' in hostname or environ.get('PYTHONUNBUFFERED')
 
+def is_ace():
+    hostname = socket.gethostname()
+    return hostname == 'ace'
+
 def is_us():
     hostname = socket.gethostname()
     return any(name in hostname for name in ['rask', 'chara', 'blue', 'green', 'espo', 'orr', 'usbod', 'bn0'])
