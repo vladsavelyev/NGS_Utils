@@ -39,19 +39,19 @@ class ParallelCfg:
             extra_params=self.extra_params)
 
 
-def get_parallel_view(n_samples, cfg):
-    if cfg.scheduler:
-        debug('Starting' + (' test' if is_local() else '') + ' cluster (scheduler: ' + cfg.scheduler + ', queue: ' + cfg.queue + ') '
-              'using ' + str(cfg.num_jobs(n_samples)) + ' nodes, ' + str(cfg.cores_per_job(n_samples)) + ' thread per each sample')
-        return ClusterView(n_samples, cfg)
+def get_parallel_view(n_samples, parallel_cfg):
+    if parallel_cfg.scheduler:
+        debug('Starting' + (' test' if is_local() else '') + ' cluster (scheduler: ' + parallel_cfg.scheduler + ', queue: ' + parallel_cfg.queue + ') '
+              'using ' + str(parallel_cfg.num_jobs(n_samples)) + ' nodes, ' + str(parallel_cfg.cores_per_job(n_samples)) + ' thread per each sample')
+        return ClusterView(n_samples, parallel_cfg)
     else:
-        debug('Running locally using ' + str(cfg.num_jobs(n_samples)) + ' thread(s)')
-        return ThreadedView(n_samples, cfg)
+        debug('Running locally using ' + str(parallel_cfg.num_jobs(n_samples)) + ' thread(s)')
+        return ThreadedView(n_samples, parallel_cfg)
 
 
 @contextlib.contextmanager
-def parallel_view(n_samples, cfg):
-    view = get_parallel_view(n_samples, cfg)
+def parallel_view(n_samples, parallel_cfg):
+    view = get_parallel_view(n_samples, parallel_cfg)
     try:
         yield view
     finally:
@@ -59,11 +59,11 @@ def parallel_view(n_samples, cfg):
 
 
 class BaseView:
-    def __init__(self, n_samples, cfg):
+    def __init__(self, n_samples, parallel_cfg):
         self.n_samples = n_samples
-        self.cfg = cfg
-        self.num_jobs = cfg.num_jobs(n_samples)
-        self.cores_per_job = cfg.cores_per_job(n_samples)
+        self.parallel_cfg = parallel_cfg
+        self.num_jobs = parallel_cfg.num_jobs(n_samples)
+        self.cores_per_job = parallel_cfg.cores_per_job(n_samples)
         self._view = None
 
     def run(self, fn, param_lists):
@@ -74,9 +74,9 @@ class BaseView:
 
 
 class ClusterView(BaseView):
-    def __init__(self, n_samples, cfg):
-        BaseView.__init__(self, n_samples, cfg)
-        self._view = CV(**cfg.get_cluster_params(n_samples))
+    def __init__(self, n_samples, parallel_cfg):
+        BaseView.__init__(self, n_samples, parallel_cfg)
+        self._view = CV(**parallel_cfg.get_cluster_params(n_samples))
 
     def run(self, fn, param_lists):
         assert self.n_samples == len(param_lists)
@@ -88,8 +88,8 @@ class ClusterView(BaseView):
 
 
 class ThreadedView(BaseView):
-    def __init__(self, n_samples, cfg):
-        BaseView.__init__(self, n_samples, cfg)
+    def __init__(self, n_samples, parallel_cfg):
+        BaseView.__init__(self, n_samples, parallel_cfg)
         self._view = Parallel(n_jobs=self.num_jobs)
 
     def run(self, fn, param_lists):

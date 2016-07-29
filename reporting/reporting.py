@@ -1185,7 +1185,7 @@ def make_cell_td(rec, class_=''):
     html += ' quality="' + str(rec.metric.quality) + '"'
     html += ' class="td ' + class_ + ' ' + rec.metric.td_class + ' ' + rec.metric.class_ + ' '
 
-    if rec.num:
+    if rec.num is not None:
         html += ' number" number="' + str(rec.num)
     # if rec.sort_as:
     #     if isinstance(rec.sort_as, int):
@@ -1200,7 +1200,7 @@ def make_cell_td(rec, class_=''):
     #         print rec.metric.name, s
     #     else:
     #         html += '" data-sortAs="' + str(rec.sort_as)
-    if rec.num:
+    if rec.num is not None:
         html += '" data-sortAs="' + str(rec.num)
 
     html += '"'
@@ -1442,7 +1442,7 @@ def calc_cell_contents(report, rows):
             if rec.metric.name not in max_frac_widths_by_metric or \
                             rec.frac_width > max_frac_widths_by_metric[rec.metric.name]:
                 max_frac_widths_by_metric[rec.metric.name] = rec.frac_width
-            if rec.num:
+            if rec.num is not None:
                 row.numbers.append(rec.num)
                 rec.metric.numbers.append(rec.num)
             # elif rec.sort_as:
@@ -1483,7 +1483,7 @@ def calc_cell_contents(report, rows):
             heatmap_stats = rec.metric if not report.heatmap_by_rows else row
 
             # Color heatmap
-            if rec.num and metric.with_heatmap:
+            if rec.num is not None and metric.with_heatmap:
                 [top_hue, inner_top_brt, outer_top_brt] = [BLUE_HUE, BLUE_INNER_BRT, BLUE_OUTER_BRT]
                 [low_hue, inner_low_brt, outer_low_brt] = [RED_HUE, RED_INNER_BRT, RED_OUTER_BRT]
 
