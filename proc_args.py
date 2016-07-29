@@ -1,5 +1,6 @@
 import os
 from collections import OrderedDict
+from genericpath import exists
 from os.path import splitext, basename, join, isfile
 
 import datetime
@@ -102,17 +103,25 @@ def find_fastq_pairs(fpaths):
     return fixed_fastqs_by_sample_name
 
 
-def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None):
+def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None, reuse_intermediate=False):
     """ Creates output_dir, work_dir; sets up log
     """
-    output_dir = adjust_path(output_dir or join(os.getcwd(), proc_name))
-    safe_mkdir(output_dir, 'output_dir')
+    output_dir = safe_mkdir(adjust_path(output_dir or join(os.getcwd(), proc_name)), 'output_dir')
     debug('Saving results into ' + output_dir)
 
     if not work_dir:
-        work_dir_name = 'work'
-        work_dir = join(output_dir, work_dir_name)
-    safe_mkdir(work_dir, 'working directory')
+        all_work_dir = safe_mkdir(join(output_dir, 'work'))
+        latest_fpath = join(all_work_dir, 'latest')
+
+        if reuse_intermediate:
+            work_dir = latest_fpath
+        else:
+            work_dir = join(all_work_dir, datetime.datetime.now().strftime("%Y-%b-%d_%H-%M"))
+            if exists(latest_fpath):
+                os.remove(latest_fpath)
+            if not exists(latest_fpath):
+                os.symlink(basename(work_dir), latest_fpath)
+    safe_mkdir(adjust_path(work_dir), 'working directory')
 
     set_up_log(log_dir or work_dir, proc_name + '.log')
 
