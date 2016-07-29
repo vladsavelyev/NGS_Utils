@@ -4,6 +4,8 @@ from os.path import isfile, join, abspath, basename, dirname, getctime, getmtime
 from subprocess import check_output
 
 import math
+
+import sys
 from pybedtools import BedTool
 
 from Utils import call_process
@@ -215,7 +217,7 @@ def filter_bed_with_gene_set(work_dir, bed_fpath, gene_keys_set, suffix=None, re
     # res_fpath = iterate_file(work_dir, bed, fn, suffix=suffix or 'filt_genes', check_result=False)
 
 
-def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=None, genome=None, reuse=False):
+def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=None, chr_order=None, genome=None, reuse=False):
     input_bed_fpath = verify_bed(input_bed_fpath)
     output_bed_fpath = adjust_path(output_bed_fpath) if output_bed_fpath \
         else intermediate_fname(work_dir, input_bed_fpath, 'sorted')
@@ -233,13 +235,14 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
 
     regions = []
 
-    if fai_fpath:
-        fai_fpath = verify_file(fai_fpath)
-    elif genome:
-        fai_fpath = verify_file(ref.get_fai(genome))
-    else:
-        critical('fai or genome build name must be specified')
-    chr_order = get_chrom_order(fai_fpath=fai_fpath)
+    if not chr_order:
+        if fai_fpath:
+            fai_fpath = verify_file(fai_fpath)
+        elif genome:
+            fai_fpath = verify_file(ref.get_fai(genome))
+        else:
+            critical('Either of chr_order, fai_fpath, or genome build name must be specified')
+        chr_order = get_chrom_order(fai_fpath=fai_fpath)
 
     debug('Sorting regions in ' + input_bed_fpath)
     if reuse and isfile(output_bed_fpath) and verify_file(output_bed_fpath, cmp_date_fpath=input_bed_fpath):
