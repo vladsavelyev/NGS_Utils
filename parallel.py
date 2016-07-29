@@ -50,7 +50,7 @@ def get_parallel_view(n_samples, parallel_cfg):
 
 
 @contextlib.contextmanager
-def get_parallel_view(n_samples, parallel_cfg):
+def parallel_view(n_samples, parallel_cfg):
     view = get_parallel_view(n_samples, parallel_cfg)
     try:
         yield view
