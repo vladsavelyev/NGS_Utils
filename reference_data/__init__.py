@@ -8,7 +8,7 @@ SUPPORTED_GENOMES = ['hg19', 'hg19-noalt', 'hg38', 'hg38-noalt', 'hg19-chr21', '
 
 def check_genome(genome):
     if genome not in SUPPORTED_GENOMES:
-        critical('Genome ' + genome + ' is not supported. Supported genomes: ' + ', '.join(SUPPORTED_GENOMES))
+        critical('Genome ' + str(genome) + ' is not supported. Supported genomes: ' + ', '.join(SUPPORTED_GENOMES))
 
 
 def _get(relative_path, genome):

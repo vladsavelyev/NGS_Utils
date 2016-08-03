@@ -5,6 +5,7 @@ import subprocess
 from cluster_helper.cluster import ClusterView as CV
 from joblib import Parallel, delayed
 
+from Utils.file_utils import safe_mkdir
 from Utils.logger import debug
 from Utils.utils import is_local
 
@@ -55,7 +56,7 @@ def get_parallel_view(n_samples, parallel_cfg):
 @contextlib.contextmanager
 def parallel_view(n_samples, parallel_cfg, work_dir):
     prev_dir = os.getcwd()
-    os.chdir(work_dir)
+    os.chdir(safe_mkdir(work_dir))
     view = get_parallel_view(n_samples, parallel_cfg)
     os.chdir(prev_dir)
     try:
