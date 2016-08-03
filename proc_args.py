@@ -103,7 +103,7 @@ def find_fastq_pairs(fpaths):
     return fixed_fastqs_by_sample_name
 
 
-def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None, reuse_intermediate=False):
+def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None, reuse=False):
     """ Creates output_dir, work_dir; sets up log
     """
     output_dir = safe_mkdir(adjust_path(output_dir or join(os.getcwd(), proc_name)), 'output_dir')
@@ -113,10 +113,12 @@ def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None, reuse_i
         all_work_dir = safe_mkdir(join(output_dir, 'work'))
         latest_fpath = join(all_work_dir, 'latest')
 
-        if reuse_intermediate:
+        if reuse:
+            debug('Reusing latest work directory ' + latest_fpath)
             work_dir = latest_fpath
         else:
             work_dir = join(all_work_dir, datetime.datetime.now().strftime("%Y-%b-%d_%H-%M"))
+            debug('Creating a newwork directory ' + work_dir)
             if exists(latest_fpath):
                 os.remove(latest_fpath)
             if not exists(latest_fpath):
