@@ -1,4 +1,5 @@
 import contextlib
+import os
 import subprocess
 
 from cluster_helper.cluster import ClusterView as CV
@@ -68,7 +69,7 @@ class BaseView:
         self.cores_per_job = parallel_cfg.cores_per_job(n_samples)
         self._view = None
 
-    def run(self, fn, param_lists):
+    def run(self, fn, work_dir, param_lists):
         raise NotImplementedError
 
     def stop(self):
@@ -80,10 +81,12 @@ class ClusterView(BaseView):
         BaseView.__init__(self, n_samples, parallel_cfg)
         self._view = CV(**parallel_cfg.get_cluster_params(n_samples))
 
-    def run(self, fn, param_lists):
+    def run(self, fn, work_dir, param_lists):
         assert self.n_samples == len(param_lists)
         n_params = len(param_lists[0])
-        return self._view.view.map(fn, *([params[param_i] for params in param_lists] for param_i in range(n_params)))
+        with with_chdir(work_dir):
+            res = self._view.view.map(fn, *([params[param_i] for params in param_lists] for param_i in range(n_params)))
+        return res
 
     def stop(self):
         self._view.stop()
@@ -94,9 +97,19 @@ class ThreadedView(BaseView):
         BaseView.__init__(self, n_samples, parallel_cfg)
         self._view = Parallel(n_jobs=self.num_jobs)
 
-    def run(self, fn, param_lists):
+    def run(self, fn, work_dir, param_lists):
         assert self.n_samples == len(param_lists)
         return self._view(delayed(fn)(*params) for params in param_lists)
 
     def stop(self):
         return
+
+
+@contextlib.contextmanager
+def with_chdir(dirpath):
+    prev_dir = os.getcwd()
+    try:
+        os.chdir(dirpath)
+        yield dirpath
+    finally:
+        os.chdir(prev_dir)
