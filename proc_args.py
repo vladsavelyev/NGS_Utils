@@ -118,11 +118,11 @@ def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None, reuse=F
             work_dir = latest_fpath
         else:
             work_dir = join(all_work_dir, datetime.datetime.now().strftime("%Y-%b-%d_%H-%M"))
-            debug('Creating a newwork directory ' + work_dir)
+            debug('Creating a new work directory ' + work_dir)
             if exists(latest_fpath):
                 os.remove(latest_fpath)
             if not exists(latest_fpath):
-                os.symlink(basename(work_dir), latest_fpath)
+                os.symlink(work_dir, latest_fpath)
     safe_mkdir(adjust_path(work_dir), 'working directory')
 
     set_up_log(log_dir or work_dir, proc_name + '.log')
