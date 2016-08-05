@@ -637,6 +637,15 @@ def verify_obj_by_path(path, description='', silent=False, is_critical=False, ve
         _log(msg, silent, is_critical)
         return None
 
+def can_reuse(fpath, cmp_f):
+    if not isfile(fpath):
+        return False
+    elif verify_file(fpath, cmp_date_fpath=cmp_f, silent=True):
+        debug('Reusing ' + fpath)
+        return True
+    else:
+        return False
+
 def verify_file(fpath, description='', silent=False, is_critical=False, verify_size=True, cmp_date_fpath=None):
     if fpath is None:
         msg = (description + ': ' if description else ' ') + 'not specified.'
@@ -665,9 +674,12 @@ def verify_file(fpath, description='', silent=False, is_critical=False, verify_s
         return None
 
     if cmp_date_fpath:
+        if isinstance(cmp_date_fpath, basestring):
+            cmp_date_fpath = [cmp_date_fpath]
         try:
-            if getmtime(fpath) < getmtime(cmp_date_fpath):
-                return None
+            for cmp_f in cmp_date_fpath:
+                if getmtime(fpath) < getmtime(cmp_f):
+                    return None
         except OSError:
             return None
 

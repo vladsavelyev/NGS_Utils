@@ -9,7 +9,7 @@ import sys
 from pybedtools import BedTool
 
 from Utils.call_process import run
-from Utils.file_utils import verify_file, splitext_plus, which
+from Utils.file_utils import verify_file, splitext_plus, which, can_reuse
 from Utils.logger import debug, warn, err, critical
 
 
@@ -55,7 +55,7 @@ def get_executable():
 def index_bam(bam_fpath, sambamba=None, samtools=None):
     sambamba = sambamba or get_executable()
     indexed_bam = bam_fpath + '.bai'
-    if not isfile(indexed_bam) or getmtime(indexed_bam) < getmtime(bam_fpath):
+    if not can_reuse(indexed_bam, cmp_f=bam_fpath):
         # info('Indexing BAM, writing ' + indexed_bam + '...')
         cmdline = '{sambamba} index {bam_fpath}'.format(**locals())
         res = run(cmdline, output_fpath=indexed_bam, stdout_to_outputfile=False, stdout_tx=False)
@@ -88,9 +88,9 @@ def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only
         output_fpath = join(work_dir,
             splitext_plus(basename(bed))[0] + '_' + sample_name + '_sambamba_depth.txt')
 
-    if reuse and verify_file(output_fpath, silent=True):
-        debug(output_fpath + ' exists, reusing.')
+    if can_reuse(output_fpath, [bam, bed]):
         return output_fpath
+
     thresholds_str = ''
     if not only_depth:
         thresholds_str = ''.join([' -T' + str(d) for d in depth_thresholds])
@@ -105,22 +105,28 @@ def remove_dups(bam, output_fpath, sambamba=None, reuse=False):
     return call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath, command_name='not_duplicate', reuse=reuse)
 
 
-def count_in_bam(work_dir, bam, query, dedup=False, bed=None, use_grid=False, sample_name=None, reuse=False):
+def count_in_bam(work_dir, bam, query, dedup=False, bed=None, use_grid=False, sample_name=None, reuse=False, target_name=None):
     if dedup:
         query += ' and not duplicate'
     name = 'num_' + (query.replace(' ', '_') or 'reads')
-    if bed and isinstance(bed, BedTool):
+    if bed is not None and isinstance(bed, BedTool):
         bed = bed.saveas().fn
-    if bed:
-        name += '_on_target_' + basename(bed)
+    if bed is not None:
+        target_name = target_name or ('target_' + basename(bed))
+        name += '_on_' + target_name
+
     sample_name = sample_name or basename(bam)
     output_fpath = join(work_dir, sample_name + '_' + name)
 
-    cmdline = 'view -c -F "{query}" {bam}'.format(**locals())
-    if bed:
-        cmdline += ' -L ' + bed
+    if can_reuse(output_fpath, cmp_f=bam):
+        pass
+    else:
+        cmdline = 'view -c -F "{query}" {bam}'.format(**locals())
+        if bed is not None:
+            cmdline += ' -L ' + bed
 
-    call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath, command_name=name, reuse=reuse)
+        call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath, command_name=name, reuse=reuse)
+
     with open(output_fpath) as f:
         return int(f.read().strip())
 
@@ -141,8 +147,8 @@ def number_of_dup_reads(work_dir, bam, use_grid=False, sample_name=None, reuse=F
     return count_in_bam(work_dir, bam, 'duplicate', use_grid=use_grid, sample_name=sample_name, reuse=reuse)
 
 
-def number_mapped_reads_on_target(work_dir, bed, bam, dedup=False, use_grid=False, sample_name=None, reuse=False):
-    return count_in_bam(work_dir, bam, 'not unmapped', dedup, bed=bed, use_grid=use_grid, sample_name=sample_name, reuse=reuse)
+def number_mapped_reads_on_target(work_dir, bed, bam, dedup=False, use_grid=False, sample_name=None, target_name=None):
+    return count_in_bam(work_dir, bam, 'not unmapped', dedup, bed=bed, use_grid=use_grid, sample_name=sample_name, target_name=target_name)
 
 
 # def flag_stat(cnf, bam):
