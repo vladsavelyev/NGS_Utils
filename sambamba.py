@@ -80,7 +80,7 @@ def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', reuse=Fal
     return output_fpath
 
 
-def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only_depth=False, sample_name=None, reuse=False):
+def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only_depth=False, sample_name=None):
     sample_name = sample_name or splitext_plus(basename(bam))[0]
     if isinstance(bed, BedTool):
         bed = bed.saveas().fn
