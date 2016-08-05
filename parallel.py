@@ -84,8 +84,7 @@ class ClusterView(BaseView):
     def __init__(self, n_samples, parallel_cfg):
         BaseView.__init__(self, n_samples, parallel_cfg)
         self._view = CV(**parallel_cfg.get_cluster_params(n_samples))
-        debug('Starting cluster with ' + self.num_jobs(n_samples) + ' open nodes, ' +
-              self.cores_per_job(self.num_jobs(n_samples)) + ' cores per node')
+        debug('Starting cluster with ' + str(self.num_jobs) + ' open nodes, ' + str(self.cores_per_job) + ' cores per node')
 
     def run(self, fn, param_lists):
         assert self.n_samples == len(param_lists)
