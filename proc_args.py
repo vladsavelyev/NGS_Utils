@@ -22,10 +22,10 @@ def read_samples(args):
     if not input_not_bam and not bam_by_sample:
         critical('No correct input files')
     if input_not_bam:
-        info(str(len(input_not_bam)) + ' correct input not-bam files')
+        info('Input ' + str(len(input_not_bam)) + ' correct input non-BAM files')
         fastqs_by_sample = find_fastq_pairs(input_not_bam)
         if fastqs_by_sample:
-            info('Found FastQ pairs: ' + str(len(fastqs_by_sample)))
+            info('Found ' + str(len(fastqs_by_sample)) + ' FastQ pairs')
         intersection = set(fastqs_by_sample.keys()) & set(bam_by_sample.keys())
         if intersection:
             critical('The following samples both had input BAMs and FastQ: ' + ', '.join(list(intersection)))
@@ -62,7 +62,7 @@ def find_bams(args):
 
 
 def find_fastq_pairs(fpaths):
-    info('Finding fastq pairs...')
+    info('Finding FastQ pairs...')
     fastqs_by_sample_name = dict()
     for fpath in fpaths:
         fn, ext = splitext_plus(basename(fpath))
