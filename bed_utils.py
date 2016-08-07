@@ -218,7 +218,7 @@ def filter_bed_with_gene_set(work_dir, bed_fpath, gene_keys_set, suffix=None, re
 
 
 def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=None, chr_order=None, genome=None, reuse=False):
-    input_bed_fpath = verify_bed(input_bed_fpath)
+    input_bed_fpath = verify_bed(input_bed_fpath, is_critical=True)
     output_bed_fpath = adjust_path(output_bed_fpath) if output_bed_fpath \
         else intermediate_fname(work_dir, input_bed_fpath, 'sorted')
 
@@ -244,7 +244,7 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
             critical('Either of chr_order, fai_fpath, or genome build name must be specified')
         chr_order = get_chrom_order(fai_fpath=fai_fpath)
 
-    debug('Sorting regions in ' + input_bed_fpath)
+    debug('Sorting regions in ' + str(input_bed_fpath))
     if reuse and isfile(output_bed_fpath) and verify_file(output_bed_fpath, cmp_date_fpath=input_bed_fpath):
         debug(output_bed_fpath + ' exists, reusing')
         return output_bed_fpath

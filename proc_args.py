@@ -1,8 +1,8 @@
 import os
 from collections import OrderedDict
 from genericpath import exists
-from os.path import splitext, basename, join, isfile
-
+from os.path import splitext, basename, join, isfile, isdir, abspath, realpath, islink
+from random import random
 import datetime
 
 from Utils import logger
@@ -109,22 +109,30 @@ def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None, reuse=F
     output_dir = safe_mkdir(adjust_path(output_dir or join(os.getcwd(), proc_name)), 'output_dir')
     debug('Saving results into ' + output_dir)
 
-    if not work_dir:
-        all_work_dir = safe_mkdir(join(output_dir, 'work'))
-        latest_fpath = join(all_work_dir, 'latest')
+    all_work_dir = safe_mkdir(join(output_dir, 'work'))
+    latest_fpath = join(all_work_dir, 'latest')
 
-        if reuse:
-            debug('Reusing latest work directory ' + latest_fpath)
-            work_dir = latest_fpath
+    if work_dir:
+        info('Using work directory ' + work_dir)
+
+    elif reuse:
+        if exists(latest_fpath) and isdir(realpath(latest_fpath)):
+            info('Reusing latest work directory ' + latest_fpath)
+            work_dir = adjust_path(realpath(latest_fpath))
         else:
-            work_dir = join(all_work_dir, datetime.datetime.now().strftime("%Y-%b-%d_%H-%M"))
-            debug('Creating a new work directory ' + work_dir)
-            if exists(latest_fpath):
-                os.remove(latest_fpath)
-            if not exists(latest_fpath):
-                os.symlink(work_dir, latest_fpath)
-    safe_mkdir(adjust_path(work_dir), 'working directory')
+            info('latest work directory was not found under latest_fpath, cannot reuse; creating a new work directory')
 
+    if not work_dir:
+        work_dir = join(all_work_dir, datetime.datetime.now().strftime("%Y-%b-%d_%H-%M-%S_" + str(random() * 1000)))
+        if islink(latest_fpath):
+            os.remove(latest_fpath)
+        if exists(latest_fpath):
+            critical('Error: expected symlink ' + latest_fpath + ' is not a symlink')
+        if not islink(latest_fpath):
+            os.symlink(work_dir, latest_fpath)
+        debug('Creating a new work directory ' + work_dir)
+
+    work_dir = safe_mkdir(adjust_path(realpath(work_dir)), 'working directory')
     set_up_log(log_dir or work_dir, proc_name + '.log')
 
     return output_dir, work_dir
@@ -136,7 +144,7 @@ def set_up_log(log_dir, log_fname):
 
     if file_exists(log_fpath):
         timestamp = datetime.datetime.fromtimestamp(os.stat(log_fpath).st_mtime)
-        mv_log_fpath = log_fpath + '.' + timestamp.strftime("%Y-%m-%d_%H-%M-%S")
+        mv_log_fpath = log_fpath + '.' + timestamp.strftime('%Y-%m-%d_%H-%M-%S_' + str(random() * 1000))
         try:
             if isfile(mv_log_fpath):
                 os.remove(mv_log_fpath)
