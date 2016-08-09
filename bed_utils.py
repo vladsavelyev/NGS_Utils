@@ -72,7 +72,7 @@ def merge_overlaps(work_dir, bed_fpath, distance=None):
     that don't collapse BEDs prior to using them.
     """
     output_fpath = intermediate_fname(work_dir, bed_fpath, 'merged')
-    if isfile(output_fpath) and verify_file(output_fpath, cmp_date_fpath=bed_fpath):
+    if isfile(output_fpath) and verify_file(output_fpath, cmp_f=bed_fpath):
         return output_fpath
 
     with file_transaction(work_dir, output_fpath) as tx:
@@ -245,7 +245,7 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
         chr_order = get_chrom_order(fai_fpath=fai_fpath)
 
     debug('Sorting regions in ' + str(input_bed_fpath))
-    if reuse and isfile(output_bed_fpath) and verify_file(output_bed_fpath, cmp_date_fpath=input_bed_fpath):
+    if reuse and isfile(output_bed_fpath) and verify_file(output_bed_fpath, cmp_f=input_bed_fpath):
         debug(output_bed_fpath + ' exists, reusing')
         return output_bed_fpath
 
