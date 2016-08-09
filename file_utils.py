@@ -679,9 +679,11 @@ def verify_file(fpath, description='', silent=False, is_critical=False, verify_s
         try:
             for cmp_f in cmp_f:
                 if getmtime(fpath) < getmtime(cmp_f):
+                    msg = (description + ': ' if description else '') + fpath + ' is older than ' + cmp_f
+                    _log(msg, silent, is_critical)
                     return None
-        except OSError:
-            return None
+        except OSError as e:
+            _log(str(e), silent, is_critical)
 
     return fpath
 
