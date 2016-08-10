@@ -52,13 +52,3 @@ def with_cnf(cnf, **kwargs):
     finally:
         for k, v in prev_opts.items():
             cnf[k] = v
-
-
-def fill_dict_from_defaults(cur_cnf, defaults_dict):
-    for key in defaults_dict:
-        if key in cur_cnf:
-            if isinstance(cur_cnf[key], dict) and isinstance(defaults_dict[key], dict):
-                fill_dict_from_defaults(cur_cnf[key], defaults_dict[key])
-        else:
-            cur_cnf[key] = defaults_dict[key]
-    return cur_cnf
