@@ -6,11 +6,10 @@ import platform
 
 import sys
 
-from pybedtools import BedTool
-
 from Utils.call_process import run
 from Utils.file_utils import verify_file, splitext_plus, which, can_reuse
 from Utils.logger import debug, warn, err, critical
+from Utils.bedtools import BedTool
 
 
 def get_executable():
