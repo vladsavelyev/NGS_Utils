@@ -1,13 +1,11 @@
 import os
+import sys
+import math
 from collections import OrderedDict
 from os.path import isfile, join, abspath, basename, dirname, getctime, getmtime, splitext, realpath
 from subprocess import check_output
 
-import math
-
-import sys
-from pybedtools import BedTool
-
+from Utils.bedtools import BedTool
 from Utils import call_process
 from Utils.file_utils import intermediate_fname, iterate_file, splitext_plus, verify_file, adjust_path, add_suffix, \
     safe_mkdir, file_transaction, which, file_exists, open_gzipsafe
