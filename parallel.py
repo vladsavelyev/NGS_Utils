@@ -16,13 +16,14 @@ class ParallelCfg:
                  queue=None,
                  resources=None,
                  threads=None,
-                 tag='targqc'):
+                 tag='targqc',
+                 local=False):
         self.scheduler = scheduler
         self.queue = queue
         self.threads = threads or 1
         self.extra_params = dict()
     
-        self.extra_params['run_local'] = is_local()
+        self.extra_params['run_local'] = local or is_local()
         if tag:
             self.extra_params['tag'] = tag
         if resources:
