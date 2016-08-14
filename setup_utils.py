@@ -9,7 +9,7 @@ import platform
 from pip.req import parse_requirements
 
 
-def init(package_name, setup_py_fpath):
+def init(name, package_name, setup_py_fpath):
     if abspath(dirname(setup_py_fpath)) != abspath(os.getcwd()):
         sys.stderr.write('Please, change to ' + dirname(setup_py_fpath) + ' before running setup.py\n')
         sys.exit()
@@ -36,7 +36,7 @@ def init(package_name, setup_py_fpath):
         print('''-----------------------------------
  Installing {} version {}
 -----------------------------------
-'''.format(package_name, version))
+'''.format(name, version))
         return version
 
 
@@ -125,8 +125,10 @@ def which(program):
     return None
 
 
+utils_package_name = 'Utils'
+
 def get_sambamba_executable():
-    sambamba_dirpath = join('Utils', 'sambamba_binaries')
+    sambamba_dirpath = join(utils_package_name, 'sambamba_binaries')
     if 'darwin' in sys_platform:
         path = join(sambamba_dirpath, 'sambamba_osx')
     elif 'redhat' in platform.dist():
@@ -142,12 +144,9 @@ def get_sambamba_executable():
     else:
         sys.stderr.write('Error: could not find sambamba ' + path + '(.gz)')
 
-
-utils_package_name = 'Utils'
-
 def get_utils_package_files():
     return [
-        relpath(get_sambamba_executable(), 'Utils'),
+        relpath(get_sambamba_executable(), utils_package_name),
         'bedtools/bedtools2/bin/*',
-    ] + find_package_files('reporting', 'Utils', skip_exts=['.sass', '.coffee', '.map'])\
-      + find_package_files('reference_data', 'Utils')
+    ] + find_package_files('reporting', utils_package_name, skip_exts=['.sass', '.coffee', '.map'])\
+      + find_package_files('reference_data', utils_package_name)
