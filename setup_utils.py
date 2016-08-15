@@ -162,4 +162,4 @@ def get_utils_package_files():
         relpath(get_sambamba_executable(), utils_package_name),
         'bedtools/bedtools2/bin/*',
     ] + find_package_files('reporting', utils_package_name, skip_exts=['.sass', '.coffee', '.map'])\
-      + find_package_files('reference_data', utils_package_name)
+      + find_package_files('reference_data', utils_package_name, skip_exts=['ga4gh_tricky_regions.zip'])
