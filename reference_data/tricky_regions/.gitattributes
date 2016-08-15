@@ -1,6 +1,5 @@
 hg19/bad_promoter.bed.gz filter=lfs diff=lfs merge=lfs -text
 hg19/bad_promoter.bed.gz.tbi filter=lfs diff=lfs merge=lfs -text
-hg19/ga4gh_tricky_regions.zip filter=lfs diff=lfs merge=lfs -text
 hg19/gc0to15.bed.gz filter=lfs diff=lfs merge=lfs -text
 hg19/gc0to15.bed.gz.tbi filter=lfs diff=lfs merge=lfs -text
 hg19/gc15to20.bed.gz filter=lfs diff=lfs merge=lfs -text
