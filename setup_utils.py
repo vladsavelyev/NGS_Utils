@@ -2,10 +2,12 @@
 import os
 import subprocess
 import sys
+from genericpath import isdir
 from os.path import join, isfile, abspath, dirname, relpath
 from sys import platform as sys_platform
 import platform
 
+import shutil
 from pip.req import parse_requirements
 
 
@@ -29,6 +31,17 @@ def init(name, package_name, setup_py_fpath):
         run_cmdl('git pull --recurse-submodules --rebase')
         # if first time: $ git submodule update --init --recursive
         # also try: $ git submodule foreach "(git checkout master; git pull)&"
+        sys.exit()
+
+    if sys.argv[-1] == 'clean':
+        print('Cleaning up binary, build and dist...')
+        if isdir('build'):
+            shutil.rmtree('build')
+        if isdir('dist'):
+            shutil.rmtree('dist')
+        if isdir(package_name + '.egg-info'):
+            shutil.rmtree(package_name + '.egg-info')
+        print('Done.')
         sys.exit()
 
     if is_installing():
