@@ -30,7 +30,7 @@ def init(name, package_name, setup_py_fpath):
     if sys.argv[-1] == 'up':
         run_cmdl('git pull --recurse-submodules --rebase')
         # if first time: $ git submodule update --init --recursive
-        # also try: $ git submodule foreach "(git checkout master; git pull)&"
+        run_cmdl('git submodule foreach "(git checkout master; git pull --rebase)"')
         sys.exit()
 
     if sys.argv[-1] == 'clean':
