@@ -23,7 +23,7 @@ def check_call(cmdl):
 class BaseTestCase(unittest.TestCase):
     script = None
 
-    data_dir = 'results'
+    data_dir = 'data'
     results_dir = 'results'
     gold_standard_dir = 'gold_standard'
 
