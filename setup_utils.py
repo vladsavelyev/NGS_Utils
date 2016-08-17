@@ -34,14 +34,7 @@ def init(name, package_name, setup_py_fpath):
         sys.exit()
 
     if sys.argv[-1] == 'clean':
-        print('Cleaning up binary, build and dist...')
-        if isdir('build'):
-            shutil.rmtree('build')
-        if isdir('dist'):
-            shutil.rmtree('dist')
-        if isdir(package_name + '.egg-info'):
-            shutil.rmtree(package_name + '.egg-info')
-        print('Done.')
+        clean_package(package_name, '.')
         sys.exit()
 
     if is_installing():
@@ -54,6 +47,17 @@ def init(name, package_name, setup_py_fpath):
         install_bedtools()
 
         return version
+
+
+def clean_package(package_name, dirpath='.'):
+    print('Cleaning up binary, build and dist for ' + package_name + ' in ' + dirpath + '...')
+    if isdir(join(dirpath, 'build')):
+        shutil.rmtree(join(dirpath, 'build'))
+    if isdir(join(dirpath, 'dist')):
+        shutil.rmtree(join(dirpath, 'dist'))
+    if isdir(join(dirpath, package_name + '.egg-info')):
+        shutil.rmtree(join(dirpath, package_name + '.egg-info'))
+    print('Done.')
 
 
 def get_reqs():
@@ -110,6 +114,10 @@ def run_cmdl(_cmd):
 
 def is_installing():
     return sys.argv[-1] in ['install', 'develop', 'build', 'build_ext']
+
+
+def is_cleaning():
+    return sys.argv[-1] in ['clean']
 
 
 def compile_tool(tool_name, dirpath, requirements):
