@@ -50,6 +50,9 @@ def init(name, package_name, setup_py_fpath):
  Installing {} version {}
 -----------------------------------
 '''.format(name, version))
+
+        install_bedtools()
+
         return version
 
 
@@ -157,9 +160,22 @@ def get_sambamba_executable():
     else:
         sys.stderr.write('Error: could not find sambamba ' + path + '(.gz)')
 
+
 def get_utils_package_files():
     return [
         relpath(get_sambamba_executable(), utils_package_name),
         'bedtools/bedtools2/bin/*',
+        'bedtools/__init__.py',
     ] + find_package_files('reporting', utils_package_name, skip_exts=['.sass', '.coffee', '.map'])\
       + find_package_files('reference_data', utils_package_name, skip_exts=['ga4gh_tricky_regions.zip'])
+
+
+def install_bedtools():
+    bedtools_dirpath = join(utils_package_name, 'bedtools', 'bedtools2')
+    success_compilation = compile_tool('BEDtools', bedtools_dirpath, [join('bin', 'bedtools')])
+    if not success_compilation:
+        bedtools = which('bedtools')
+        if bedtools:
+            sys.stderr.write('Compilation failed, using bedtools in $PATH: ' + bedtools + '\n')
+        else:
+            sys.exit(1)

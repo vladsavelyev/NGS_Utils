@@ -8,9 +8,9 @@ from Utils.logger import critical, err
 def find_executable():
     exec_fpath = abspath(join(dirname(__file__), 'bedtools2', 'bin', 'bedtools'))
     if not file_exists(exec_fpath):
-        exec_fpath = which('bedtools')
-        if exec_fpath:
-            err('BedTools compilation failed, using bedtools in $PATH: ' + exec_fpath + '\n')
+        exec_fpath_in_path = which('bedtools')
+        if exec_fpath_in_path:
+            err('BedTools compilation failed, using bedtools in $PATH: ' + exec_fpath_in_path + '\n')
         else:
             critical('Error: could not find BedTools executable at ' + exec_fpath + ' or in $PATH')
     return exec_fpath
