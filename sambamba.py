@@ -15,13 +15,10 @@ from Utils.bedtools import BedTool
 def get_executable():
     if 'darwin' in sys_platform:
         path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_osx'))
-    elif 'redhat' in platform.dist():
+    elif 'redhat' in platform.dist() or 'centos' in platform.dist():
         path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_centos'))
     else:
-        if 'redhat' in platform.dist():
-            path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_centos'))
-        else:
-            path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_lnx'))
+        path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_lnx'))
     if isfile(path):
         return path
     else:
