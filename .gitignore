@@ -89,3 +89,4 @@ ENV/
 .ropeproject
 
 sambamba_binaries/sambamba_centos
+sambamba_binaries/sambamba_centos.gz
