@@ -40,9 +40,9 @@ def init(name, package_name, setup_py_fpath):
     if is_installing():
         version = write_version_py(package_name)
         print('''-----------------------------------
- Installing {} version {}
+ Installing {name} version {version}
 -----------------------------------
-'''.format(name, version))
+'''.format(name=name, version=version))
 
         install_bedtools()
 
