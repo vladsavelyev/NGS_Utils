@@ -12,13 +12,18 @@ from Utils.logger import debug, warn, err, critical
 from Utils.bedtools import BedTool
 
 
-def get_executable():
+def get_executable_path():
     if 'darwin' in sys_platform:
         path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_osx'))
     elif 'redhat' in platform.dist() or 'centos' in platform.dist():
         path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_centos'))
     else:
         path = abspath(join(dirname(__file__), 'sambamba_binaries', 'sambamba_lnx'))
+    return path
+
+
+def get_executable():
+    path = get_executable_path()
     if isfile(path):
         return path
     else:

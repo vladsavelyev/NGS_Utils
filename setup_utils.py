@@ -10,6 +10,8 @@ import platform
 import shutil
 from pip.req import parse_requirements
 
+from Utils import sambamba
+
 
 def init(name, package_name, setup_py_fpath):
     if abspath(dirname(setup_py_fpath)) != abspath(os.getcwd()):
@@ -152,13 +154,7 @@ def which(program):
 utils_package_name = 'Utils'
 
 def get_sambamba_executable():
-    sambamba_dirpath = join(utils_package_name, 'sambamba_binaries')
-    if 'darwin' in sys_platform:
-        path = join(sambamba_dirpath, 'sambamba_osx')
-    elif 'redhat' in platform.dist():
-        path = join(sambamba_dirpath, 'sambamba_centos')
-    else:
-        path = join(sambamba_dirpath, 'sambamba_lnx')
+    path = sambamba.get_executable_path()
     if isfile(path):
         return path
     elif isfile(path + '.gz'):
