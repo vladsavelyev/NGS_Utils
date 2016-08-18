@@ -184,18 +184,25 @@ def install_sambamba():
         info('Gunzipping sambamba ' + path + '.gz')
         os.system('gunzip ' + path + '.gz')
         return path
+
+    err('Could not find sambamba ' + path + '(.gz)')
+    sys_fpath = which('sambamba')
+    if sys_fpath:
+        err('Using sambamba found in $PATH: ' + sys_fpath)
+        return sys_fpath
     else:
-        err('Error: could not find sambamba ' + path + '(.gz)')
+        critical('Error: sambamba was not found in ' + Utils.sambamba_bin_dirpath +
+                 ' or in $PATH')
 
 
 def install_bedtools():
     success_compilation = compile_tool('BEDtools', Utils.bedtools_dirpath, [Utils.bedtools_execuable_fpath])
-    if not success_compilation:
-        sys_bedtools_fpath = which('bedtools')
-        if sys_bedtools_fpath:
-            err('Compilation failed, using bedtools in $PATH: ' + sys_bedtools_fpath + '\n')
-            return sys_bedtools_fpath
-        else:
-            critical('Compilation of BEDtools at ' + Utils.bedtools_dirpath +
-                     ' failed, and no bedtools found in $PATH')
-    return Utils.bedtools_execuable_fpath
+    if success_compilation:
+        return Utils.bedtools_execuable_fpath
+    sys_bedtools_fpath = which('bedtools')
+    if sys_bedtools_fpath:
+        err('Compilation failed, using bedtools in $PATH: ' + sys_bedtools_fpath)
+        return sys_bedtools_fpath
+    else:
+        critical('Compilation of BEDtools at ' + Utils.bedtools_dirpath +
+                 ' failed, and no bedtools found in $PATH')
