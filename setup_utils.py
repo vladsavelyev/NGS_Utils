@@ -50,13 +50,13 @@ def init(name, package_name, setup_py_fpath):
 -----------------------------------
 '''.format(name=name, version=version))
 
-        info('Installing BEDtools')
+        print('Installing BEDtools')
         bedtools_fpath = install_bedtools()
-        info('Used BedTools at ' + bedtools_fpath)
+        print('Used BedTools at ' + bedtools_fpath)
 
         return version
     else:
-        info('Running setup command: ' + sys.argv[-1])
+        print('Running setup command: ' + sys.argv[-1])
 
 
 def clean_package(package_name, dirpath='.'):
