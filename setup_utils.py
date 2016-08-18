@@ -2,16 +2,15 @@
 import os
 import subprocess
 import sys
-from genericpath import isdir
+from genericpath import isdir, exists
 from os.path import join, isfile, abspath, dirname, relpath
-from sys import platform as sys_platform
-import platform
 
 import shutil
 from pip.req import parse_requirements
 
 import Utils
 from Utils.call_process import run
+from Utils.file_utils import which
 from Utils.logger import critical, err, info
 import Utils.logger
 Utils.logger.is_debug = True
@@ -144,25 +143,6 @@ def compile_tool(tool_name, dirpath, requirements):
     return True
 
 
-def which(program):
-    """
-    returns the path to an executable or None if it can't be found
-    """
-    def is_exe(_fpath):
-        return os.path.isfile(_fpath) and os.access(_fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-    return None
-
-
 utils_package_name = 'Utils'
 
 
@@ -178,14 +158,15 @@ def get_utils_package_files():
 
 def install_sambamba():
     path = Utils.sambamba_executable_path
-    if isfile(path):
+    if exists(path):
         return path
-    elif isfile(path + '.gz'):
+    elif exists(path + '.gz'):
         info('Gunzipping sambamba ' + path + '.gz')
         os.system('gunzip ' + path + '.gz')
         return path
 
-    err('Could not find sambamba ' + path + '(.gz)')
+    err('Could not find sambamba ' + path + '(.gz): the ' + dirname(path) +
+        ' contents is ' + str(os.listdir(path)))
     sys_fpath = which('sambamba')
     if sys_fpath:
         err('Using sambamba found in $PATH: ' + sys_fpath)
