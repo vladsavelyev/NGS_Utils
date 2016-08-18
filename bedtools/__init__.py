@@ -5,8 +5,12 @@ from Utils.file_utils import file_exists, which
 from Utils.logger import critical, err
 
 
+def get_executable_path():
+    return abspath(join(dirname(__file__), 'bedtools2', 'bin', 'bedtools'))
+
+
 def find_executable():
-    exec_fpath = abspath(join(dirname(__file__), 'bedtools2', 'bin', 'bedtools'))
+    exec_fpath = get_executable_path()
     if not file_exists(exec_fpath):
         exec_fpath_in_path = which('bedtools')
         if exec_fpath_in_path:

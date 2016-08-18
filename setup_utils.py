@@ -10,7 +10,8 @@ import platform
 import shutil
 from pip.req import parse_requirements
 
-from Utils import sambamba
+from Utils import sambamba, bedtools
+from Utils.logger import critical, err, info
 
 
 def init(name, package_name, setup_py_fpath):
@@ -46,9 +47,12 @@ def init(name, package_name, setup_py_fpath):
 -----------------------------------
 '''.format(name=name, version=version))
 
+        info('Installing BedTools')
         install_bedtools()
 
         return version
+    else:
+        info('Running setup command: ' + sys.argv[-1])
 
 
 def clean_package(package_name, dirpath='.'):
@@ -124,7 +128,7 @@ def is_cleaning():
 
 def compile_tool(tool_name, dirpath, requirements):
     if not all(isfile(join(dirpath, req)) for req in requirements):
-        print('Compiling ' + tool_name)
+        info('Compiling ' + tool_name)
         return_code = subprocess.call(['make', '-C', dirpath])
         if return_code != 0 or not all(isfile(join(dirpath, req)) for req in requirements):
             sys.stderr.write('Failed to compile ' + tool_name + ' (' + dirpath + ')\n')
@@ -175,11 +179,12 @@ def get_utils_package_files():
 
 
 def install_bedtools():
-    bedtools_dirpath = join(utils_package_name, 'bedtools', 'bedtools2')
-    success_compilation = compile_tool('BEDtools', bedtools_dirpath, [join('bin', 'bedtools')])
+    bedtools_fpath = bedtools.get_executable_path()
+    success_compilation = compile_tool('BEDtools', dirname(bedtools_fpath), [bedtools_fpath])
     if not success_compilation:
-        bedtools = which('bedtools')
-        if bedtools:
-            sys.stderr.write('Compilation failed, using bedtools in $PATH: ' + bedtools + '\n')
+        sys_bedtools_fpath = which('bedtools')
+        if sys_bedtools_fpath:
+            err('Compilation failed, using bedtools in $PATH: ' + sys_bedtools_fpath + '\n')
         else:
-            sys.exit(1)
+            critical('Compilation of BedTools at ' + dirname(bedtools_fpath) +
+                     ' failed, and no bedtools found in $PATH')
