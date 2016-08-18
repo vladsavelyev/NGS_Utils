@@ -10,7 +10,7 @@ import platform
 import shutil
 from pip.req import parse_requirements
 
-from Utils import sambamba, bedtools
+import Utils
 from Utils.call_process import run
 from Utils.logger import critical, err, info
 import Utils.logger
@@ -50,13 +50,17 @@ def init(name, package_name, setup_py_fpath):
 -----------------------------------
 '''.format(name=name, version=version))
 
-        print('Installing BEDtools')
+        info('Installing BEDtools')
         bedtools_fpath = install_bedtools()
-        print('Used BedTools at ' + bedtools_fpath)
+        info('Using BedTools at ' + bedtools_fpath)
+
+        info('Installing Sambamba')
+        sambamba_fpath = install_sambamba()
+        info('Using Sambamba at ' + sambamba_fpath)
 
         return version
     else:
-        print('Running setup command: ' + sys.argv[-1])
+        info('Running setup command: ' + sys.argv[-1])
 
 
 def clean_package(package_name, dirpath='.'):
@@ -161,36 +165,37 @@ def which(program):
 
 utils_package_name = 'Utils'
 
-def get_sambamba_executable():
-    path = sambamba.get_executable_path()
-    if isfile(path):
-        return path
-    elif isfile(path + '.gz'):
-        print('gunzipping sambamba ' + path + '.gz')
-        os.system('gunzip ' + path + '.gz')
-        return path
-    else:
-        sys.stderr.write('Error: could not find sambamba ' + path + '(.gz)')
-
 
 def get_utils_package_files():
     return [
-        relpath(get_sambamba_executable(), utils_package_name),
-        'bedtools/bedtools2/bin/*',
-        'bedtools/__init__.py',
+        relpath(Utils.bedtools_execuable_fpath, utils_package_name),
+        relpath(Utils.sambamba_executable_path, utils_package_name),
+        'bedtools/*.py',
+        'sambamba/*.py',
     ] + find_package_files('reporting', utils_package_name, skip_exts=['.sass', '.coffee', '.map'])\
       + find_package_files('reference_data', utils_package_name, skip_exts=['ga4gh_tricky_regions.zip'])
 
 
+def install_sambamba():
+    path = Utils.sambamba_executable_path
+    if isfile(path):
+        return path
+    elif isfile(path + '.gz'):
+        info('Gunzipping sambamba ' + path + '.gz')
+        os.system('gunzip ' + path + '.gz')
+        return path
+    else:
+        err('Error: could not find sambamba ' + path + '(.gz)')
+
+
 def install_bedtools():
-    bedtools_fpath = bedtools.get_executable_path()
-    success_compilation = compile_tool('BEDtools', bedtools.get_dirpath(), [bedtools_fpath])
+    success_compilation = compile_tool('BEDtools', Utils.bedtools_dirpath, [Utils.bedtools_execuable_fpath])
     if not success_compilation:
         sys_bedtools_fpath = which('bedtools')
         if sys_bedtools_fpath:
             err('Compilation failed, using bedtools in $PATH: ' + sys_bedtools_fpath + '\n')
             return sys_bedtools_fpath
         else:
-            critical('Compilation of BEDtools at ' + bedtools.get_dirpath() +
+            critical('Compilation of BEDtools at ' + Utils.bedtools_dirpath +
                      ' failed, and no bedtools found in $PATH')
-    return bedtools_fpath
+    return Utils.bedtools_execuable_fpath

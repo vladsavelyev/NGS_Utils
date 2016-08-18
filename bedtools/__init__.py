@@ -3,27 +3,23 @@ import os
 
 from Utils.file_utils import file_exists, which
 from Utils.logger import critical, err
-
-
-def get_dirpath():
-    return abspath(join(dirname(__file__), 'bedtools2'))
-
-
-def get_executable_path():
-    return join(get_dirpath(), 'bin', 'bedtools')
+from Utils import bedtools_execuable_fpath
 
 
 def find_executable():
-    exec_fpath = get_executable_path()
-    if not file_exists(exec_fpath):
+    if not file_exists(bedtools_execuable_fpath):
         exec_fpath_in_path = which('bedtools')
         if exec_fpath_in_path:
-            err('BedTools compilation failed, using bedtools in $PATH: ' + exec_fpath_in_path + '\n')
+            err('BEDtools compilation failed, using executable found in $PATH: ' + exec_fpath_in_path + '\n')
         else:
-            critical('Error: could not find BedTools executable at ' + exec_fpath + ' or in $PATH')
-    return exec_fpath
+            critical('Error: could not find BEDtools executable at ' + bedtools_execuable_fpath
+                     + ' or in $PATH')
+    return bedtools_execuable_fpath
 
 
-os.environ['PATH'] = dirname(find_executable()) + ':' + os.environ['PATH']
+if not isfile(bedtools_execuable_fpath):
+    critical('Error: BEDtools execuatable not found under ' + bedtools_execuable_fpath +
+             '! Please first install BEDtools, then import this module.')
+os.environ['PATH'] = dirname(bedtools_execuable_fpath) + ':' + os.environ['PATH']
 # noinspection PyUnresolvedReferences
 from pybedtools import BedTool
