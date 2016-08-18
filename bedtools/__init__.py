@@ -5,8 +5,12 @@ from Utils.file_utils import file_exists, which
 from Utils.logger import critical, err
 
 
+def get_dirpath():
+    return abspath(join(dirname(__file__), 'bedtools2'))
+
+
 def get_executable_path():
-    return abspath(join(dirname(__file__), 'bedtools2', 'bin', 'bedtools'))
+    return join(get_dirpath(), 'bin', 'bedtools')
 
 
 def find_executable():

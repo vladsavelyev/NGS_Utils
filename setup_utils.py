@@ -11,7 +11,10 @@ import shutil
 from pip.req import parse_requirements
 
 from Utils import sambamba, bedtools
+from Utils.call_process import run
 from Utils.logger import critical, err, info
+import Utils.logger
+Utils.logger.is_debug = True
 
 
 def init(name, package_name, setup_py_fpath):
@@ -47,8 +50,9 @@ def init(name, package_name, setup_py_fpath):
 -----------------------------------
 '''.format(name=name, version=version))
 
-        info('Installing BedTools')
-        install_bedtools()
+        info('Installing BEDtools')
+        bedtools_fpath = install_bedtools()
+        info('Used BedTools at ' + bedtools_fpath)
 
         return version
     else:
@@ -129,9 +133,9 @@ def is_cleaning():
 def compile_tool(tool_name, dirpath, requirements):
     if not all(isfile(join(dirpath, req)) for req in requirements):
         info('Compiling ' + tool_name)
-        return_code = subprocess.call(['make', '-C', dirpath])
-        if return_code != 0 or not all(isfile(join(dirpath, req)) for req in requirements):
-            sys.stderr.write('Failed to compile ' + tool_name + ' (' + dirpath + ')\n')
+        run('make -C ' + dirpath)
+        if not all(isfile(join(dirpath, req)) for req in requirements):
+            err('Failed to compile ' + tool_name + ' (' + dirpath + ')\n')
             return False
     return True
 
@@ -180,11 +184,13 @@ def get_utils_package_files():
 
 def install_bedtools():
     bedtools_fpath = bedtools.get_executable_path()
-    success_compilation = compile_tool('BEDtools', dirname(bedtools_fpath), [bedtools_fpath])
+    success_compilation = compile_tool('BEDtools', bedtools.get_dirpath(), [bedtools_fpath])
     if not success_compilation:
         sys_bedtools_fpath = which('bedtools')
         if sys_bedtools_fpath:
             err('Compilation failed, using bedtools in $PATH: ' + sys_bedtools_fpath + '\n')
+            return sys_bedtools_fpath
         else:
-            critical('Compilation of BedTools at ' + dirname(bedtools_fpath) +
+            critical('Compilation of BEDtools at ' + bedtools.get_dirpath() +
                      ' failed, and no bedtools found in $PATH')
+    return bedtools_fpath
