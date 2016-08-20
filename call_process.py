@@ -56,7 +56,8 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
                              .replace(' \'' + output_fpath + '\' ', ' ' + tx_out_file + '\' ') \
                              .replace(' ' + output_fpath + '\n', ' ' + tx_out_file) \
                              .replace(' "' + output_fpath + '"\n', ' ' + tx_out_file + '"') \
-                             .replace(' \'' + output_fpath + '\'\n', ' ' + tx_out_file + '\'')
+                             .replace(' \'' + output_fpath + '\'\n', ' ' + tx_out_file + '\'') \
+                             .replace('\n', '')
                 _try_run(cmd, tx_out_file, input_fpath, stderr_fpath)
         else:
             _try_run(cmd, output_fpath, input_fpath, stderr_fpath)

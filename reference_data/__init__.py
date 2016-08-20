@@ -95,8 +95,8 @@ def get_chrom_order(genome=None, fai_fpath=None):
     chr_order = {c: i for i, (c, l) in enumerate(chr_lengths)}
     return chr_order
 
-#######################
-###### CANONICAL ######
+#########################
+###### TRANSCRIPTS ######
 def get_canonical_transcripts(genome):
     short_genome = genome.split('-')[0]
     if short_genome == 'GRCh37':
