@@ -5,7 +5,7 @@ import sys
 from optparse import OptionParser
 from Utils.file_utils import adjust_path
 from Utils.logger import critical
-from Utils.bam_bed_utils import verify_bed, sort_bed
+from Utils.bed_utils import verify_bed, sort_bed
 
 
 def main():
