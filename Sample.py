@@ -1,18 +1,3 @@
-from string import join
-
-
-targetseq_name                  = 'targqc'
-
-qualimap_name                   = 'qualimap'
-qualimap_report_fname           = 'qualimapReport.html'
-qualimap_genome_results_fname   = 'genome_results.txt'
-qualimap_raw_data_dirname       = 'raw_data_qualimapReport'
-
-qualimap_ishist_fname           = 'insert_size_histogram.txt'
-qualimap_covhist_fname          = 'coverage_histogram.txt'
-qualimap_gchist_fname           = 'mapped_reads_gc-content_distribution.txt'
-
-
 class BaseSample:
     def __init__(self, name, dirpath, bam=None, bed=None, vcf=None, genome=None,
                  targqc_dirpath=None, fastqc_dirpath=None, picard_dirpath=None, clinical_report_dirpath=None,
@@ -32,25 +17,7 @@ class BaseSample:
         self.normal_match = normal_match
         self.min_af = None
         self.sv_fpath = sv_fpath
-
-        if targqc_dirpath:
-            self.targqc_dirpath              = dirpath
-            self.targqc_html_fpath           = join(self.targqc_dirpath, 'summary.html')
-            self.targqc_json_fpath           = join(self.targqc_dirpath, 'summary.json')
-            self.targqc_region_txt           = join(self.targqc_dirpath, 'regions.txt')
-            self.targqc_region_tsv           = join(self.targqc_dirpath, 'regions.tsv')
-            self.targqc_norm_depth_vcf_txt   = None
-            self.targqc_norm_depth_vcf_tsv   = None
-
-            qualimap_dirpath = join(self.targqc_dirpath, 'qualimap')
-            self.qualimap_dirpath               = qualimap_dirpath
-            self.qualimap_html_fpath            = join(self.qualimap_dirpath, qualimap_report_fname)
-            self.qualimap_genome_results_fpath  = join(self.qualimap_dirpath, qualimap_report_fname)
-            self.qualimap_raw_dirpath           = join(self.qualimap_dirpath, qualimap_raw_data_dirname)
-
-            self.qualimap_ins_size_hist_fpath   = join(self.qualimap_raw_dirpath, qualimap_ishist_fname)
-            self.qualimap_cov_hist_fpath        = join(self.qualimap_raw_dirpath, qualimap_covhist_fname)
-            self.qualimap_gc_hist_fpath         = join(self.qualimap_raw_dirpath, qualimap_gchist_fname)
+        self.targqc_dirpath = targqc_dirpath
 
     def __cmp__(self, other):
         return cmp(self.key_to_sort(), other.key_to_sort())
@@ -93,3 +60,9 @@ class BaseSample:
 
     def __repr__(self):
         return self.name
+
+    @classmethod
+    def load(cls, data):
+        sample = cls(**data)
+        sample.__dict__ = data
+        return sample
