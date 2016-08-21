@@ -93,7 +93,7 @@ def calc_region_number(bed_fpath):
         return sum(1 for l in f if l.strip() and not l.strip().startswith('#'))
 
 
-def get_gene_keys_from_bed(bed_fpath, chrom_index=0, gene_index=3):
+def get_genes_from_bed(bed_fpath, chrom_index=0, gene_index=3):
     gene_keys_set = set()
     gene_keys_list = list()
     with open(bed_fpath) as f:
