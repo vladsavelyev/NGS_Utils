@@ -89,7 +89,7 @@ def get_chrom_lengths(genome=None, fai_fpath=None):
             for line in handle:
                 line = line.strip()
                 if line:
-                    chrom, length = line.split()[0], line.split()[1]
+                    chrom, length = line.split()[0], int(line.split()[1])
                     chr_lengths.append((chrom, length))
 
     return chr_lengths

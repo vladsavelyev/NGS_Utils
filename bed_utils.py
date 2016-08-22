@@ -23,10 +23,31 @@ def get_chrom_order(genome=None, fai_fpath=None):
 class SortableByChrom:
     def __init__(self, chrom, chrom_ref_order):
         self.chrom = chrom
-        self.chrom_ref_order = chrom_ref_order
+        if isinstance(chrom_ref_order, dict):
+            self.chrom_ref_order = chrom_ref_order.get(chrom, -1)
+        else:
+            self.chrom_ref_order = chrom_ref_order
 
     def get_key(self):
         return self.chrom_ref_order
+
+
+class Region(SortableByChrom):
+    def __init__(self, chrom, start, end, other_fields, chrom_ref_order):
+        SortableByChrom.__init__(self, chrom, chrom_ref_order)
+        self.start = int(start)
+        self.end = int(end) if end is not None else None
+        self.other_fields = list(other_fields)
+
+    def get_key(self):
+        return self.chrom_ref_order, self.start, self.end, self.other_fields
+
+    def __str__(self):
+        ts = [self.chrom, self.start, self.end] + self.other_fields
+        return '"' + '\t'.join(map(str, ts)) + '"'
+
+    def __repr__(self):
+        return self.__str__()
 
 
 def bam_to_bed(cnf, bam_fpath, to_gzip=True):
@@ -219,17 +240,6 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
     input_bed_fpath = verify_bed(input_bed_fpath, is_critical=True)
     output_bed_fpath = adjust_path(output_bed_fpath) if output_bed_fpath \
         else intermediate_fname(work_dir, input_bed_fpath, 'sorted')
-
-    class Region(SortableByChrom):
-        def __init__(self, chrom, start, end, other_fields, chrom_ref_order):
-            SortableByChrom.__init__(self, chrom, chrom_ref_order)
-            self.start = start
-            self.end = end
-            self.chrom_ref_order = chrom_ref_order
-            self.other_fields = tuple(other_fields)
-
-        def get_key(self):
-            return self.chrom_ref_order, self.start, self.end, self.other_fields
 
     regions = []
 
@@ -447,169 +457,169 @@ class BedFile:
         return len(open(filename).readlines())
 
 
-class Region:
-    def __init__(self, sample_name=None, gene_name=None, transcript_id=None,
-                 exon_num=None, strand=None, biotype=None, feature=None, extra_fields=list(),
-                 chrom=None, start=None, end=None, size=None, min_depth=None, median_depth=None,
-                 avg_depth=None, std_dev=None, rate_within_normal=None, bases_by_depth=None):
-
-        self.sample_name = sample_name
-        self.gene_name = gene_name
-        self.feature = feature
-        self.extra_fields = extra_fields  # for exons, extra_fields is [Gene, Exon number, Strand]
-        self.exon_num = exon_num
-        self.strand = strand
-        self.biotype = biotype
-        self.transcript_id = transcript_id
-
-        self.chrom = chrom
-        self.start = start  # int
-        self.end = end      # int
-        self.size = size    # int
-        self.min_depth = min_depth
-        self.bases_by_depth = bases_by_depth or defaultdict(int)  # filled in from the "bedcoverage hist" output
-
-        # Calculated once on "sum_up()", when all self.bases_by_depth are there:
-        self.avg_depth = avg_depth  # float
-        self.median_depth = median_depth  # float
-        self.std_dev = std_dev
-        self.rate_within_normal = rate_within_normal
-        self.bases_within_threshs = None    # OrderedDict((depth, 0) for depth in depth_thresholds)
-        self.rates_within_threshs = None    # defaultdict(float)
-
-        self.missed_by_db = dict()
-        self.var_num = None
-
-    # def get_chrom_num(self):
-    #     digits = [c for c in self.chrom if c.isdigit()]
-    #     if digits:
-    #         return int(''.join(digits))
-    #     if 'M' in self.chrom:
-    #         return 0
-    #     if 'X' in self.chrom:
-    #         return 23
-    #     if 'Y' in self.chrom:
-    #         return 24
-    #     else:
-    #         return 25
-    #
-    # @staticmethod
-    # def get_order_key(r):
-    #     return r.get_chrom_num(), r.get_start(), r.get_end(), r.gene_name
-
-    def get_start(self):
-        return self.start
-
-    def get_end(self):
-        return self.end
-
-    def get_avg_depth(self):
-        return self.avg_depth
-
-    def get_std_dev(self):
-        return self.std_dev
-
-    def get_bases_by_depth(self):
-        return self.bases_by_depth
-
-    def get_size(self):
-        if self.size is not None:
-            return self.size
-        if self.start and self.end:
-            return abs(self.end - self.start)
-        return None
-
-    def add_bases_for_depth(self, depth, bases):
-        if depth in self.bases_by_depth:
-            err('Duplicated depth ' + str(depth) + ' for the region ' + str(self))
-        else:
-            self.bases_by_depth[depth] += bases
-
-    def __str__(self):
-        ts = [self.sample_name, self.chrom, self.start, self.end,
-              self.gene_name, self.feature]
-        return '"' + '\t'.join(map(str, ts)) + '"'
-
-    def to_bed_str(self):
-        return '\t'.join([self.chrom, str(self.start), str(self.end), self.gene_name] + '\n')
-
-    def __repr__(self):
-        return self.__str__()
-
-    def calc_bases_within_threshs(self, depth_thresholds):
-        if self.bases_within_threshs is not None:
-            return self.bases_within_threshs
-
-        if self.bases_by_depth is None:
-            err('Error: self.bases_by_depth is None for ' + str(self))
-
-        self.bases_within_threshs, self.rates_within_threshs = calc_bases_within_threshs(
-            self.bases_by_depth, self.get_size(), depth_thresholds)
-
-        return self.bases_within_threshs
-
-    def calc_avg_depth(self):
-        if self.avg_depth is not None:
-            return self.avg_depth
-
-        if self.bases_by_depth:
-            depth_sum = sum(
-                depth * bases
-                for depth, bases
-                in self.bases_by_depth.items())
-            self.avg_depth = float(depth_sum) / self.get_size() if self.get_size() else None
-            return self.avg_depth
-
-    def calc_std_dev(self, avg_depth):
-        if avg_depth is None:
-            return None
-
-        if self.std_dev is not None:
-            return self.std_dev
-
-        if self.bases_by_depth:
-            sum_of_sq_var = sum(
-                (depth - avg_depth) ** 2 * bases
-                for depth, bases
-                in self.bases_by_depth.items())
-            sz = self.get_size()
-            if sz and sz > 0:
-                d = float(sum_of_sq_var) / float(sz)
-                try:
-                    self.std_dev = math.sqrt(d)
-                except ValueError, e:
-                    print 'float(sum_of_sq_var) =', float(sum_of_sq_var)
-                    print 'float(sz) =', float(sz)
-                    print 'd =', d
-                    print self.sample_name, self.gene_name, self.chrom, ':', self.start, '-', self.end
-                    # print 'math.sqrt(d) =', math.sqrt(d)
-                    critical(str(e))
-            return self.std_dev
-
-    def calc_rate_within_normal(self, avg_depth):
-        if avg_depth is None:
-            return None
-
-        if self.rate_within_normal is not None:
-            return self.rate_within_normal
-
-        return calc_rate_within_normal(self.bases_by_depth, avg_depth, self.get_size())
-
-    def sum_up(self, depth_thresholds):
-        self.calc_avg_depth()
-        self.calc_std_dev(self.avg_depth)
-        self.calc_bases_within_threshs(depth_thresholds)
-        self.calc_rate_within_normal(self.avg_depth)
-        return self.bases_within_threshs,\
-               self.bases_by_depth, \
-               self.avg_depth, \
-               self.std_dev, \
-               self.rate_within_normal
-
-    def intersect(self, reg2):
-        return self.chrom == reg2.chrom and \
-               (reg2.start < self.start < reg2.end or
-                self.start < reg2.start < self.end)
+# class Region:
+#     def __init__(self, sample_name=None, gene_name=None, transcript_id=None,
+#                  exon_num=None, strand=None, biotype=None, feature=None, extra_fields=list(),
+#                  chrom=None, start=None, end=None, size=None, min_depth=None, median_depth=None,
+#                  avg_depth=None, std_dev=None, rate_within_normal=None, bases_by_depth=None):
+#
+#         self.sample_name = sample_name
+#         self.gene_name = gene_name
+#         self.feature = feature
+#         self.extra_fields = extra_fields  # for exons, extra_fields is [Gene, Exon number, Strand]
+#         self.exon_num = exon_num
+#         self.strand = strand
+#         self.biotype = biotype
+#         self.transcript_id = transcript_id
+#
+#         self.chrom = chrom
+#         self.start = start  # int
+#         self.end = end      # int
+#         self.size = size    # int
+#         self.min_depth = min_depth
+#         self.bases_by_depth = bases_by_depth or defaultdict(int)  # filled in from the "bedcoverage hist" output
+#
+#         # Calculated once on "sum_up()", when all self.bases_by_depth are there:
+#         self.avg_depth = avg_depth  # float
+#         self.median_depth = median_depth  # float
+#         self.std_dev = std_dev
+#         self.rate_within_normal = rate_within_normal
+#         self.bases_within_threshs = None    # OrderedDict((depth, 0) for depth in depth_thresholds)
+#         self.rates_within_threshs = None    # defaultdict(float)
+#
+#         self.missed_by_db = dict()
+#         self.var_num = None
+#
+#     # def get_chrom_num(self):
+#     #     digits = [c for c in self.chrom if c.isdigit()]
+#     #     if digits:
+#     #         return int(''.join(digits))
+#     #     if 'M' in self.chrom:
+#     #         return 0
+#     #     if 'X' in self.chrom:
+#     #         return 23
+#     #     if 'Y' in self.chrom:
+#     #         return 24
+#     #     else:
+#     #         return 25
+#     #
+#     # @staticmethod
+#     # def get_order_key(r):
+#     #     return r.get_chrom_num(), r.get_start(), r.get_end(), r.gene_name
+#
+#     def get_start(self):
+#         return self.start
+#
+#     def get_end(self):
+#         return self.end
+#
+#     def get_avg_depth(self):
+#         return self.avg_depth
+#
+#     def get_std_dev(self):
+#         return self.std_dev
+#
+#     def get_bases_by_depth(self):
+#         return self.bases_by_depth
+#
+#     def get_size(self):
+#         if self.size is not None:
+#             return self.size
+#         if self.start and self.end:
+#             return abs(self.end - self.start)
+#         return None
+#
+#     def add_bases_for_depth(self, depth, bases):
+#         if depth in self.bases_by_depth:
+#             err('Duplicated depth ' + str(depth) + ' for the region ' + str(self))
+#         else:
+#             self.bases_by_depth[depth] += bases
+#
+#     def __str__(self):
+#         ts = [self.sample_name, self.chrom, self.start, self.end,
+#               self.gene_name, self.feature]
+#         return '"' + '\t'.join(map(str, ts)) + '"'
+#
+#     def to_bed_str(self):
+#         return '\t'.join([self.chrom, str(self.start), str(self.end), self.gene_name] + '\n')
+#
+#     def __repr__(self):
+#         return self.__str__()
+#
+#     def calc_bases_within_threshs(self, depth_thresholds):
+#         if self.bases_within_threshs is not None:
+#             return self.bases_within_threshs
+#
+#         if self.bases_by_depth is None:
+#             err('Error: self.bases_by_depth is None for ' + str(self))
+#
+#         self.bases_within_threshs, self.rates_within_threshs = calc_bases_within_threshs(
+#             self.bases_by_depth, self.get_size(), depth_thresholds)
+#
+#         return self.bases_within_threshs
+#
+#     def calc_avg_depth(self):
+#         if self.avg_depth is not None:
+#             return self.avg_depth
+#
+#         if self.bases_by_depth:
+#             depth_sum = sum(
+#                 depth * bases
+#                 for depth, bases
+#                 in self.bases_by_depth.items())
+#             self.avg_depth = float(depth_sum) / self.get_size() if self.get_size() else None
+#             return self.avg_depth
+#
+#     def calc_std_dev(self, avg_depth):
+#         if avg_depth is None:
+#             return None
+#
+#         if self.std_dev is not None:
+#             return self.std_dev
+#
+#         if self.bases_by_depth:
+#             sum_of_sq_var = sum(
+#                 (depth - avg_depth) ** 2 * bases
+#                 for depth, bases
+#                 in self.bases_by_depth.items())
+#             sz = self.get_size()
+#             if sz and sz > 0:
+#                 d = float(sum_of_sq_var) / float(sz)
+#                 try:
+#                     self.std_dev = math.sqrt(d)
+#                 except ValueError, e:
+#                     print 'float(sum_of_sq_var) =', float(sum_of_sq_var)
+#                     print 'float(sz) =', float(sz)
+#                     print 'd =', d
+#                     print self.sample_name, self.gene_name, self.chrom, ':', self.start, '-', self.end
+#                     # print 'math.sqrt(d) =', math.sqrt(d)
+#                     critical(str(e))
+#             return self.std_dev
+#
+#     def calc_rate_within_normal(self, avg_depth):
+#         if avg_depth is None:
+#             return None
+#
+#         if self.rate_within_normal is not None:
+#             return self.rate_within_normal
+#
+#         return calc_rate_within_normal(self.bases_by_depth, avg_depth, self.get_size())
+#
+#     def sum_up(self, depth_thresholds):
+#         self.calc_avg_depth()
+#         self.calc_std_dev(self.avg_depth)
+#         self.calc_bases_within_threshs(depth_thresholds)
+#         self.calc_rate_within_normal(self.avg_depth)
+#         return self.bases_within_threshs,\
+#                self.bases_by_depth, \
+#                self.avg_depth, \
+#                self.std_dev, \
+#                self.rate_within_normal
+#
+#     def intersect(self, reg2):
+#         return self.chrom == reg2.chrom and \
+#                (reg2.start < self.start < reg2.end or
+#                 self.start < reg2.start < self.end)
 
 
 def calc_rate_within_normal(bases_by_depth, avg_depth, total_size):
