@@ -74,8 +74,9 @@ def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', reuse=Fal
     return output_fpath
 
 
-def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only_depth=False, sample_name=None):
+def sambamba_depth(work_dir, bed, bam, depth_thresholds=None, output_fpath=None, sample_name=None):
     sample_name = sample_name or splitext_plus(basename(bam))[0]
+    depth_thresholds = depth_thresholds or []
     if isinstance(bed, BedTool):
         bed = bed.saveas().fn
     if not output_fpath:
@@ -85,9 +86,7 @@ def sambamba_depth(work_dir, bed, bam, depth_thresholds, output_fpath=None, only
     if can_reuse(output_fpath, [bam, bed]):
         return output_fpath
 
-    thresholds_str = ''
-    if not only_depth:
-        thresholds_str = ''.join([' -T' + str(d) for d in depth_thresholds])
+    thresholds_str = ''.join([' -T' + str(d) for d in depth_thresholds])
     cmdline = 'depth region -F "not duplicate and not failed_quality_control" -L {bed} {thresholds_str} {bam}'.format(**locals())
 
     call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath)

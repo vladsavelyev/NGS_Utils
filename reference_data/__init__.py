@@ -9,8 +9,11 @@ def check_genome(genome):
     if genome not in SUPPORTED_GENOMES:
         critical('Genome ' + str(genome) + ' is not supported. Supported genomes: ' + ', '.join(SUPPORTED_GENOMES))
 
-def _get(relative_path, genome):
-    check_genome(genome)
+def _get(relative_path, genome=None):
+    if genome:
+        check_genome(genome)
+    else:
+        genome = ''
     relative_path = relative_path.format(genome=genome)
 
     path = abspath(join(dirname(__file__), relative_path))
@@ -58,7 +61,8 @@ def get_fai(genome):
     return _get(join('fai', '{genome}.fa.fai'), genome)
 
 def get_chrom_lengths(genome=None, fai_fpath=None):
-    assert genome or fai_fpath
+    assert genome or fai_fpath, 'One of genome or fai_fpath should be not None: ' \
+                                'genome=' + str(genome) + ' fai_fpath=' + str(fai_fpath)
 
     if not fai_fpath:
         check_genome(genome)
@@ -102,8 +106,13 @@ def get_canonical_transcripts(genome):
     if short_genome == 'GRCh37':
         short_genome = 'hg19'
     check_genome(short_genome)
-    return _get('canonical_transcripts_{genome}.txt', short_genome)
+    return _get(join('canonical_transcripts', 'canonical_transcripts_{genome}.txt'), short_genome)
 
 def get_canonical_transcripts_ids(genome):
     with open(verify_file(get_canonical_transcripts(genome))) as f:
         return set(l.strip().split('.')[0] for l in f)
+
+###################
+###### GENES ######
+def key_genes_800():
+    return _get('az_key_genes.823.txt')

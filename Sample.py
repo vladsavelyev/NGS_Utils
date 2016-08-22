@@ -1,12 +1,15 @@
 class BaseSample:
     def __init__(self, name, dirpath, work_dir=None, bam=None, bed=None, vcf=None, genome=None,
                  targqc_dirpath=None, fastqc_dirpath=None, picard_dirpath=None, clinical_report_dirpath=None,
-                 flagged_regions_dirpath=None, normal_match=None, sv_fpath=None, sv_bed=None):
+                 flagged_regions_dirpath=None, normal_match=None, sv_fpath=None, sv_bed=None,
+                 l_fpath=None, r_fpath=None):
         self.name = name
         self.dirpath = dirpath
         self.work_dir = work_dir
         self.bam = bam
         self.dedup_bam = None
+        self.l_fpath = l_fpath
+        self.r_fpath = r_fpath
         self.bed = bed
         self.sv_bed = sv_bed
         self.is_wgs = False
