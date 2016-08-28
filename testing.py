@@ -7,6 +7,10 @@ from os.path import dirname, join, exists, isfile, splitext, basename, isdir, re
 import shutil
 import sys
 
+from datetime import datetime
+
+from Utils.file_utils import verify_dir, verify_file
+
 
 def info(msg=''):
     sys.stdout.write(msg + '\n')
@@ -18,6 +22,11 @@ def call(cmdl):
 def check_call(cmdl):
     info(cmdl if isinstance(cmdl, basestring) else ' '.join(cmdl))
     subprocess.check_call(cmdl, shell=isinstance(cmdl, basestring))
+
+def swap_output_dir(output_dir):
+    last_changed = datetime.fromtimestamp(getmtime(output_dir))
+    prev_output_dir = output_dir + '_' + last_changed.strftime("%Y_%m_%d_%H_%M_%S")
+    os.rename(output_dir, prev_output_dir)
 
 
 class BaseTestCase(unittest.TestCase):
@@ -46,3 +55,10 @@ class BaseTestCase(unittest.TestCase):
                 else:
                     cmdl = ['diff', '-q', fpath, cmp_fpath]
                 check_call(cmdl)
+
+    def _check_dir_not_empty(self, dirpath, description=None):
+        assert verify_dir(dirpath, description=description)
+        contents = [join(dirpath, fname) for fname in os.listdir(dirpath)
+                    if not fname.startswith('.')]
+        assert len(contents) >= 1, str(contents)
+        assert all(verify_file(contents, is_critical=True)), str(contents)
