@@ -2,7 +2,7 @@ import subprocess
 import unittest
 import os
 from genericpath import getsize, getmtime
-from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath
+from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, realpath
 
 import shutil
 import sys
@@ -25,7 +25,7 @@ def check_call(cmdl):
 
 def swap_output_dir(output_dir):
     last_changed = datetime.fromtimestamp(getmtime(output_dir))
-    prev_output_dir = output_dir + '_' + last_changed.strftime("%Y_%m_%d_%H_%M_%S")
+    prev_output_dir = output_dir + '.' + last_changed.strftime('%Y_%m_%d_%H_%M_%S')
     os.rename(output_dir, prev_output_dir)
 
 
@@ -61,4 +61,6 @@ class BaseTestCase(unittest.TestCase):
         contents = [join(dirpath, fname) for fname in os.listdir(dirpath)
                     if not fname.startswith('.')]
         assert len(contents) >= 1, str(contents)
-        assert all(verify_file(contents, is_critical=True)), str(contents)
+        assert all(verify_file(realpath(fpath), is_critical=True)
+                   for fpath in contents
+                   if isfile(realpath(fpath))), str(contents)
