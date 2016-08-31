@@ -1,9 +1,10 @@
+from genericpath import isfile
 from os.path import dirname, join, abspath, splitext
 
 from Utils.file_utils import verify_file, adjust_path, verify_dir
 from Utils.logger import critical, debug
 
-SUPPORTED_GENOMES = ['hg19', 'hg19-noalt', 'hg38', 'hg38-noalt', 'hg19-chr21', 'GRCh37']
+SUPPORTED_GENOMES = ['hg19', 'hg19-noalt', 'hg38', 'hg38-noalt', 'hg19-chr21', 'GRCh37', 'mm10']
 
 def check_genome(genome):
     if genome not in SUPPORTED_GENOMES:
@@ -109,7 +110,10 @@ def get_canonical_transcripts(genome):
     return _get(join('canonical_transcripts', 'canonical_transcripts_{genome}.txt'), short_genome)
 
 def get_canonical_transcripts_ids(genome):
-    with open(verify_file(get_canonical_transcripts(genome))) as f:
+    fpath = get_canonical_transcripts(genome)
+    if not isfile(fpath):
+        return None
+    with open(verify_file(fpath, is_critical=True)) as f:
         return set(l.strip().split('.')[0] for l in f)
 
 ###################
