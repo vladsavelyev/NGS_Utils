@@ -53,7 +53,8 @@ def _compact_html(html_fpath):
 def _convert_file_contents(fpath, mime=None):
     print 'Encoding file ' + fpath
     if not os.path.isfile(fpath):
-        raise Exception('File ' + fpath + ' does not exists')
+        sys.stderr.write('File ' + fpath + ' does not exists\n')
+        return ''
     if not mime:
         mimetypes.init()
         mime, enc = mimetypes.guess_type(os.path.join('file://', fpath))
@@ -68,7 +69,7 @@ def _convert_file_contents(fpath, mime=None):
 
 
 def _convert_text(text, mime):
-    print 'Encoding ' +  'Mime: ' + str(mime)
+    print 'Encoding ' + 'Mime: ' + str(mime)
     b64_string = base64.b64encode(text)
     return 'data:%s;base64,%s' % (mime, b64_string)
 
