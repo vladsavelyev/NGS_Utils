@@ -33,7 +33,6 @@
         <div class="row placeholders">
             <div class="col-xs-6 col-sm-3 placeholder">
                 <!--<img data-src="holder.js/200x200/auto/sky" class="img-responsive" alt="Generic placeholder thumbnail">-->
-                <h4 class="section_header">Reads</h4>
                 {.section basecalls}
                 <span class="text-muted">{contents}<br></span>
                 {.end}
@@ -95,19 +94,8 @@
 
             <div class="col-xs-6 col-sm-3 placeholder">
                 <!--<img data-src="holder.js/200x200/auto/sky" class="img-responsive" alt="Generic placeholder thumbnail">-->
-                {.section var_qc}
-                <h4>Variants</h4>
-                <span class="text-muted">{contents}</span>
-                <br>
-                {.or}
-                {.end}
-                {.section var_qc_after_filtering}
-                <span class="text-muted">{contents}</span>
-                <br>
-                {.or}
-                {.end}
-
                 {.section mutations}
+                <h4>Variants</h4>
                 <span class="text-muted">{contents}</span>
                 {.or}
                 {.end}

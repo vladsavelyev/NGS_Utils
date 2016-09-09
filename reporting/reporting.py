@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import os
 from collections import OrderedDict
 from itertools import repeat, izip
 from os.path import join, relpath, dirname, abspath, basename
@@ -1012,7 +1013,7 @@ static_template_fpath = get_real_path('static_template.html')
 static_dirname = 'static'
 static_dirpath = get_real_path(static_dirname)
 
-aux_dirname = 'html_aux'
+aux_dirname = 'assets'
 
 css_files = [
     'bootstrap/bootstrap.min.css',
@@ -1704,8 +1705,13 @@ def _embed_css_and_scripts(html, report_dirpath,
             l_tag_formatted = l_tag.format(name=rel_fpath)
 
             if is_debug:  # not embedding, just adding links
-                link = relpath(fpath, report_dirpath)
-                line_formatted = line.replace(rel_fpath, link)
+                aux_dirpath = safe_mkdir(join(report_dirpath, aux_dirname))
+                fpath_in_aux = join(aux_dirpath, rel_fpath)
+                safe_mkdir(dirname(fpath_in_aux))
+                if not os.path.exists(fpath_in_aux):
+                    os.symlink(fpath, fpath_in_aux)
+                relpath_in_aux = relpath(fpath_in_aux, report_dirpath)
+                line_formatted = line.replace(rel_fpath, relpath_in_aux)
                 html = html.replace(line, line_formatted)
 
             else:
