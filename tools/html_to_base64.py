@@ -21,18 +21,18 @@ def execute(html_fpath):
 
 
 def _html_to_dataurl(html_fpath):
-    comp_html = _compact_html(html_fpath)
-    return _convert_unicode(comp_html.encode('utf-8'), mime='text/html')
+    comp_html_unicode = _compact_html(html_fpath)
+    return _convert_text(comp_html_unicode.encode('utf-8'), mime='text/html')
 
 
 def _compact_html(html_fpath):
-    ''' 1. Embed images in base64 format
+    """ 1. Embed images in base64 format
         2. Replace anchors with javascript
-    '''
+    """
     with open(html_fpath) as f:
-        html = unicode(f.read(), 'utf-8')
+        html_unicode = unicode(f.read(), 'utf-8')
     base_dir = os.path.split(html_fpath)[0]
-    soup = BeautifulSoup(html, 'lxml')
+    soup = BeautifulSoup(html_unicode, 'lxml')
     for img in soup.findAll('img'):
         img_src = img['src']
         print img_src
@@ -67,14 +67,16 @@ def _convert_file_contents(fpath, mime=None):
     return 'data:%s;base64,%s' % (mime, b64_string)
 
 
-# d = data_path.encode('utf-8')
-def _convert_unicode(text, mime):
+def _convert_text(text, mime):
     print 'Encoding ' +  'Mime: ' + str(mime)
     b64_string = base64.b64encode(text)
     return 'data:%s;base64,%s' % (mime, b64_string)
 
 
 if __name__ == "__main__":
-    execute(sys.argv[1] if len(sys.argv) > 1 else 'targqc_results/summary.html')
+    if len(sys.argv) < 2:
+        sys.stderr.write('Please, provide input HTML file. Usage: ' + __file__ + ' file.html\n')
+        sys.exit(1)
+    execute(sys.argv[1])
 
 
