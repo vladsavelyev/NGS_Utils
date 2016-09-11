@@ -3,10 +3,8 @@ import unittest
 import os
 from genericpath import getsize, getmtime
 from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, realpath
-
 import shutil
 import sys
-
 from datetime import datetime
 
 from Utils.file_utils import verify_dir, verify_file
@@ -23,10 +21,20 @@ def check_call(cmdl):
     info(cmdl if isinstance(cmdl, basestring) else ' '.join(cmdl))
     subprocess.check_call(cmdl, shell=isinstance(cmdl, basestring))
 
-def swap_output_dir(output_dir):
-    last_changed = datetime.fromtimestamp(getmtime(output_dir))
-    prev_output_dir = output_dir + '.' + last_changed.strftime('%Y_%m_%d_%H_%M_%S')
-    os.rename(output_dir, prev_output_dir)
+def swap_output(output_path):
+    if not exists(output_path):
+        return
+
+    last_changed = datetime.fromtimestamp(getmtime(output_path))
+    prev_output_path = output_path + '_' + last_changed.strftime('%Y_%m_%d__%H_%M_%S')
+    os.rename(output_path, prev_output_path)
+    return prev_output_path
+
+def swap_prev_symlink(output_path, prev_output_path):
+    prev_output_link = output_path + '_prev'
+    if exists(prev_output_link):
+        os.remove(prev_output_link)
+    os.symlink(prev_output_path, prev_output_link)
 
 
 class BaseTestCase(unittest.TestCase):
