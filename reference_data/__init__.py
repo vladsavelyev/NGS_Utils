@@ -119,4 +119,4 @@ def get_canonical_transcripts_ids(genome):
 ###################
 ###### GENES ######
 def key_genes_800():
-    return _get('az_key_genes.823.txt')
+    return _get('az_key_genes.800.txt')
