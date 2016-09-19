@@ -31,10 +31,13 @@ def swap_output(output_path):
     return prev_output_path
 
 def swap_prev_symlink(output_path, prev_output_path):
-    prev_output_link = output_path + '_prev'
+    prev_output_link = get_prev(output_path)
     if exists(prev_output_link):
         os.remove(prev_output_link)
     os.symlink(prev_output_path, prev_output_link)
+
+def get_prev(fpath):
+    return fpath + '_prev'
 
 
 class BaseTestCase(unittest.TestCase):
@@ -55,14 +58,20 @@ class BaseTestCase(unittest.TestCase):
     def _check_file(self, fpath, diff_ignore_re=''):
         assert isfile(fpath)
         assert getsize(fpath) > 0
+
+        cmp_fpath = None
         if isdir(self.gold_standard_dir):
             cmp_fpath = join(self.gold_standard_dir, relpath(fpath, self.results_dir))
-            if cmp_fpath and isfile(cmp_fpath):
-                if diff_ignore_re:
-                    cmdl = ['diff', '-q', '--ignore-matching-lines', diff_ignore_re, fpath, cmp_fpath]
-                else:
-                    cmdl = ['diff', '-q', fpath, cmp_fpath]
-                check_call(cmdl)
+        elif isfile(get_prev(fpath)):
+            cmp_fpath = get_prev(fpath)
+
+        if cmp_fpath and isfile(cmp_fpath):
+            if diff_ignore_re:
+                cmdl = ['diff', '-q', '--ignore-matching-lines', diff_ignore_re, fpath, cmp_fpath]
+            else:
+                cmdl = ['diff', '-q', fpath, cmp_fpath]
+            check_call(cmdl)
+
 
     def _check_dir_not_empty(self, dirpath, description=None):
         assert verify_dir(dirpath, description=description)
