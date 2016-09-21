@@ -56,8 +56,8 @@ class BaseTestCase(unittest.TestCase):
             os.makedirs(self.results_dir)
 
     def _check_file(self, fpath, diff_ignore_re=''):
-        assert isfile(fpath)
-        assert getsize(fpath) > 0
+        assert isfile(fpath), fpath
+        assert getsize(fpath) > 0, fpath
 
         cmp_fpath = None
         if isdir(self.gold_standard_dir):
@@ -74,10 +74,10 @@ class BaseTestCase(unittest.TestCase):
 
 
     def _check_dir_not_empty(self, dirpath, description=None):
-        assert verify_dir(dirpath, description=description)
+        assert verify_dir(dirpath, description=description), dirpath
         contents = [join(dirpath, fname) for fname in os.listdir(dirpath)
                     if not fname.startswith('.')]
-        assert len(contents) >= 1, str(contents)
+        assert len(contents) >= 1, dirpath + ': ' + str(contents)
         assert all(verify_file(realpath(fpath), is_critical=True)
                    for fpath in contents
-                   if isfile(realpath(fpath))), str(contents)
+                   if isfile(realpath(fpath))), dirpath + ': ' + str(contents)
