@@ -8,7 +8,7 @@ from subprocess import check_output
 from Utils.bedtools import BedTool
 from Utils import call_process
 from Utils.file_utils import intermediate_fname, iterate_file, splitext_plus, verify_file, adjust_path, add_suffix, \
-    safe_mkdir, file_transaction, which, file_exists, open_gzipsafe
+    safe_mkdir, file_transaction, which, file_exists, open_gzipsafe, can_reuse
 from Utils.logger import info, critical, warn, err, debug
 from Utils import reference_data as ref
 from Utils.utils import md5
@@ -369,6 +369,21 @@ def verify_bed(bed, description='', is_critical=False, silent=False):
         return None
 
     return fpath
+
+
+def clean_bed(bed_fpath, work_dir):
+    clean_fpath = intermediate_fname(work_dir, bed_fpath, 'clean')
+
+    if not can_reuse(clean_fpath, bed_fpath):
+        bed = BedTool(bed_fpath)
+        bed = bed.filter(lambda x: x.chrom and
+                         not any(x.chrom.startswith(e) for e in ['#', ' ', 'track', 'browser']))
+        bed = bed.remove_invalid()
+        with file_transaction(work_dir, clean_fpath) as tx_out_file:
+            bed.saveas(tx_out_file)
+        verify_bed(clean_fpath, is_critical=True)
+        debug('Saved Seq2C clean BED file into ' + clean_fpath)
+    return clean_fpath
 
 
 def check_md5(work_dir, fpath, file_type, silent=False):
