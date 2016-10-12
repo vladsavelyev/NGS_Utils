@@ -22,7 +22,10 @@ def main():
     if not opts.output_fpath:
         critical(parser.usage)
 
-    sort_bed(verify_bed(args[0], is_critical=True), adjust_path(opts.output_fpath), adjust_path(opts.fai_fpath), opts.genome)
+    sort_bed(input_bed_fpath=verify_bed(args[0], is_critical=True),
+             output_bed_fpath=adjust_path(opts.output_fpath),
+             fai_fpath=adjust_path(opts.fai_fpath),
+             genome=opts.genome)
 
 
 if __name__ == '__main__':
