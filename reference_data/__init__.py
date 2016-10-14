@@ -118,5 +118,11 @@ def get_canonical_transcripts_ids(genome):
 
 ###################
 ###### GENES ######
-def key_genes_800():
+def get_key_genes_fpath_800():
     return _get('az_key_genes.800.txt')
+
+def get_key_genes_fpath_300():
+    return _get('az_key_genes.300.txt')
+
+def get_key_genes_fpath():
+    return get_key_genes_fpath_300()
