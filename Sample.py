@@ -22,6 +22,7 @@ class BaseSample:
         self.min_af = None
         self.sv_fpath = sv_fpath
         self.targqc_dirpath = targqc_dirpath
+        self.clinical_html = None
 
     def __cmp__(self, other):
         return cmp(self.key_to_sort(), other.key_to_sort())
