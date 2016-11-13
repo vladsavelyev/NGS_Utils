@@ -143,8 +143,8 @@ def send_email(msg_other='', subj='', only_me=False, email_by_prid=None):
 
     def print_msg():
         for line in msg_other.as_string().split('\n'):
-            print '   | ' + line
-        print ''
+            sys.stdout.write('   | ' + line + '\n')
+        sys.stdout.write('\n')
 
     msgs = []
     if other_address:

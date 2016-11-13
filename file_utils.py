@@ -11,7 +11,6 @@ import contextlib
 import itertools
 import functools
 import random
-import ConfigParser
 import collections
 import fnmatch
 import time
@@ -71,7 +70,7 @@ def safe_mkdir(dirpath, descriptive_name=''):
         # the directory at the same time. Grr, concurrency.
         try:
             os.makedirs(dirpath)
-        except OSError, e:
+        except OSError as e:
             if num_tries > max_tries:
                 raise
             num_tries += 1
@@ -211,17 +210,6 @@ def save_diskspace(fname, reason, config):
         with open(fname, "w") as out_handle:
             out_handle.write("File removed to save disk space: %s" % reason)
 
-def read_galaxy_amqp_config(galaxy_config, base_dir):
-    """Read connection information on the RabbitMQ server from Galaxy config.
-    """
-    galaxy_config = add_full_path(galaxy_config, base_dir)
-    config = ConfigParser.ConfigParser()
-    config.read(galaxy_config)
-    amqp_config = {}
-    for option in config.options("galaxy_amqp"):
-        amqp_config[option] = config.get("galaxy_amqp", option)
-    return amqp_config
-
 def add_full_path(dirname, basedir=None):
     if basedir is None:
         basedir = os.getcwd()
@@ -249,7 +237,7 @@ def open_gzipsafe(f, mode='rb'):
             mode += 'b'
         try:
             h = gzip.open(f, mode=mode)
-        except IOError, e:
+        except IOError as e:
             err('Error opening gzip ' + f + ': ' + str(e) + ', opening as plain text')
             return open(f, mode=mode)
         else:
@@ -258,7 +246,7 @@ def open_gzipsafe(f, mode='rb'):
             else:
                 try:
                     h.read(1)
-                except IOError, e:
+                except IOError as e:
                     err('Error opening gzip ' + f + ': ' + str(e) + ', opening as plain text')
                     h.close()
                     return open(f, mode=mode)
@@ -999,12 +987,12 @@ def safe_symlink_to(fpath, dst_dirpath):
 def is_gz(fpath, mode='rb'):
     try:
         h = gzip.open(fpath)
-    except IOError, e:
+    except IOError as e:
         return False
     else:
         try:
             h.read(1)
-        except IOError, e:
+        except IOError as e:
             h.close()
             return False
         else:

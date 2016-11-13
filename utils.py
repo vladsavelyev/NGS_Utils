@@ -3,10 +3,10 @@ from os import environ
 import socket
 import re
 from collections import OrderedDict
-from os.path import join, basename, splitext
+from os.path import join
 
-from logger import info, critical, err, debug
-from file_utils import file_exists, verify_file, file_transaction, adjust_path
+from Utils.logger import err
+from Utils.file_utils import verify_file
 
 
 class OrderedDefaultDict(OrderedDict):

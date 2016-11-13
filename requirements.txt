@@ -1,0 +1,16 @@
+setuptools>=18.5
+pip
+pyyaml
+numpy
+pandas
+pybedtools
+joblib
+jsontemplate
+ipython>=4.0.0,<5.0.0
+ipyparallel
+ipython-cluster-helper
+nose
+pytabix
+pysam
+beautifulsoup4
+lxml
