@@ -5,8 +5,7 @@ import os
 import subprocess
 from os.path import isfile
 
-from Utils import utils
-from Utils.file_utils import file_transaction, verify_file
+from Utils.file_utils import file_transaction, verify_file, file_exists
 from Utils.logger import info, debug, err
 
 
@@ -136,7 +135,7 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
 def file_nonempty(output_fpath=None, input_fpath=None):
     if output_fpath is None:
         return True
-    ok = utils.file_exists(output_fpath)
+    ok = file_exists(output_fpath)
     if not ok:
         err("Did not find non-empty output file {0}".format(output_fpath))
     return ok
