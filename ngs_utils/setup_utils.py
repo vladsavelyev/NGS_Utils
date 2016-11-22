@@ -54,7 +54,10 @@ def clean_package(package_name, dirpath='.'):
 
 
 def get_reqs():
-    install_reqs = parse_requirements('requirements.txt', session=False)
+    try:
+        install_reqs = parse_requirements('requirements.txt', session=False)
+    except TypeError:
+        install_reqs = parse_requirements('requirements.txt')
     reqs = [str(ir.req) for ir in install_reqs]
     return reqs
 
