@@ -58,7 +58,7 @@ def get_reqs():
         install_reqs = parse_requirements('requirements.txt', session=False)
     except TypeError:
         install_reqs = parse_requirements('requirements.txt')
-    reqs = [str(ir.req) for ir in install_reqs]
+    reqs = [str(ir.req) for ir in install_reqs if ir.req]
     return reqs
 
 
