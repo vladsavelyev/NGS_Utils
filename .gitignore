@@ -91,6 +91,5 @@ ENV/
 .ropeproject
 
 ngs_utils/sambamba/bin/sambamba_centos
-ngs_utils/sambamba/bin/sambamba_centos.gz
 
 .idea/
