@@ -35,7 +35,10 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
 
     def _try_run(_cmd, _output_fpath, _input_fpath, _stderr_fpath):
         try:
-            debug(' '.join(str(x) for x in _cmd) if not isinstance(_cmd, basestring) else _cmd)
+            if verbose:
+                info(' '.join(str(x) for x in _cmd) if not isinstance(_cmd, basestring) else _cmd)
+            else:
+                debug(' '.join(str(x) for x in _cmd) if not isinstance(_cmd, basestring) else _cmd)
             _do_run(_cmd, checks, env, _output_fpath, _input_fpath, _stderr_fpath, verbose=verbose)
         except:
             raise
