@@ -10,7 +10,7 @@ from ngs_utils.logger import info, debug, err
 
 
 def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputfile=True,
-        stdout_tx=True, reuse=False, stderr_fpath=None, env_vars=None):
+        stdout_tx=True, reuse=False, stderr_fpath=None, env_vars=None, verbose=False):
     """Run the provided command, logging details and checking for errors.
     """
     if output_fpath and reuse:
@@ -36,7 +36,7 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
     def _try_run(_cmd, _output_fpath, _input_fpath, _stderr_fpath):
         try:
             debug(' '.join(str(x) for x in _cmd) if not isinstance(_cmd, basestring) else _cmd)
-            _do_run(_cmd, checks, env, _output_fpath, _input_fpath, _stderr_fpath)
+            _do_run(_cmd, checks, env, _output_fpath, _input_fpath, _stderr_fpath, verbose=verbose)
         except:
             raise
 
@@ -94,7 +94,7 @@ def _normalize_cmd_args(cmd):
         return [str(x) for x in cmd], False, None
 
 
-def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_fpath=None):
+def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_fpath=None, verbose=False):
     """Perform running and check results, raising errors for issues.
     """
     cmd, shell_arg, executable_arg = _normalize_cmd_args(cmd)
@@ -106,7 +106,10 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
         line = s.stdout.readline()
         if line:
             debug_stdout.append(line)
-            debug('  ' + line.rstrip())
+            if verbose:
+                info('  ' + line.rstrip())
+            else:
+                debug('  ' + line.rstrip())
         exitcode = s.poll()
         if exitcode is not None:
             for line in s.stdout:
