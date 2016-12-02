@@ -34,7 +34,8 @@ def swap_prev_symlink(output_path, prev_output_path):
     prev_output_link = get_prev(output_path)
     if exists(prev_output_link):
         os.remove(prev_output_link)
-    os.symlink(prev_output_path, prev_output_link)
+    if prev_output_path:
+        os.symlink(prev_output_path, prev_output_link)
 
 def get_prev(fpath):
     return fpath + '_prev'
