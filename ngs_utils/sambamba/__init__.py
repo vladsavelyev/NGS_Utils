@@ -3,7 +3,6 @@ import traceback
 from os.path import join, dirname, abspath, basename, isfile, getmtime
 from sys import platform as sys_platform
 import platform
-
 import sys
 
 import ngs_utils
@@ -15,35 +14,10 @@ from ngs_utils.bedtools import BedTool
 
 
 def get_executable():
-    built_in_sambabma_executable = ngs_utils.sambamba_executable_path
-    if isfile(built_in_sambabma_executable):
-        return built_in_sambabma_executable
-    else:
-        sys_path = which('sambamba')
-        warn('Sambamba executable not found in ' + built_in_sambabma_executable +
-             ', using system sambamba ' + sys_path)
-        return sys_path
-
-
-# def get_executable():
-#     sambamba = abspath(join(dirname(__file__), 'sambamba', 'build', 'sambamba'))
-#     if isfile(sambamba):
-#         return sambamba
-#     else:
-#         try:
-#             run('cd sambamba; make sambamba-ldmd2-64; cd ..')
-#         except subprocess.CalledProcessError as e:
-#             err('Could not compile sambamba.\n' + e.cmd)
-#         else:
-#             if isfile(sambamba):
-#                 return sambamba
-#             else:
-#                 err('Compilation failed, can not find binary ' + sambamba)
-#
-#     sambamba = which('sambamba')
-#     if not sambamba:
-#         critical('Could not compile sambamba, and sambabma not found in $PATH')
-#     return sambamba
+    sys_path = which('sambamba')
+    if not sys_path:
+        critical('Error: sambamba executable is not found')
+    return sys_path
 
 
 def index_bam(bam_fpath, sambamba=None, samtools=None):
