@@ -7,6 +7,7 @@ from time import sleep
 import smtplib
 from email.mime.text import MIMEText
 import traceback
+from subprocess import check_output
 
 
 log_fpath = None
@@ -23,6 +24,18 @@ my_address = 'Vlad.Saveliev@astrazeneca.com'
 error_msgs = []
 warning_msgs = []
 critical_msgs = []
+
+
+def init(is_debug_, log_fpath_):
+    global is_debug, log_fpath
+    is_debug = is_debug_
+    log_fpath = log_fpath_
+    info(check_output('hostname', shell=True).strip())
+    info(check_output('finger $(whoami) | head -n1', shell=True).strip())
+    info()
+    info(' '.join(sys.argv))
+    info()
+    info('-' * 70)
 
 
 def is_local():

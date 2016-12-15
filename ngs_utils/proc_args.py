@@ -103,7 +103,7 @@ def find_fastq_pairs(fpaths):
     return fixed_fastqs_by_sample_name
 
 
-def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None, reuse=False):
+def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None):
     """ Creates output_dir, work_dir; sets up log
     """
     output_dir = safe_mkdir(adjust_path(output_dir or join(os.getcwd(), proc_name)), 'output_dir')
@@ -112,9 +112,9 @@ def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None, reuse=F
     work_dir = safe_mkdir(work_dir or join(output_dir, 'work'), 'working directory')
     info('Using work directory ' + work_dir)
 
-    set_up_log(log_dir or work_dir, proc_name + '.log')
+    log_fpath = set_up_log(log_dir or work_dir, proc_name + '.log')
 
-    return output_dir, work_dir
+    return output_dir, work_dir, log_fpath
 
 
 def set_up_log(log_dir, log_fname):
@@ -132,8 +132,8 @@ def set_up_log(log_dir, log_fname):
         except OSError:
             pass
 
-    logger.log_fpath = log_fpath
     debug('Logging to ' + log_fpath)
     debug()
+    return log_fpath
 
 
