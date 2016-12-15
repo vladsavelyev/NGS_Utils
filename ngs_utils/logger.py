@@ -26,16 +26,28 @@ warning_msgs = []
 critical_msgs = []
 
 
-def init(is_debug_, log_fpath_):
-    global is_debug, log_fpath
-    is_debug = is_debug_
-    log_fpath = log_fpath_
+def init(is_debug_=None, log_fpath_=None):
+    if is_debug_:
+        global is_debug
+        is_debug = is_debug_
+    if log_fpath_:
+        set_log_path(log_fpath_)
     info(check_output('hostname', shell=True).strip())
     info(check_output('finger $(whoami) | head -n1', shell=True).strip())
     info()
     info(' '.join(sys.argv))
     info()
     info('-' * 70)
+
+
+past_msgs = []
+def set_log_path(log_fpath_):
+    assert log_fpath_
+    global log_fpath, past_msgs
+    log_fpath = log_fpath_
+    for msg in past_msgs:
+        _write_to_file(msg)
+    past_msgs = []
 
 
 def is_local():
@@ -213,11 +225,18 @@ def _log(out, msg='', ending='\n', print_date=True, severity=None):
         sleep(0.01)
 
     if log_fpath:
+        _write_to_file(msg_debug + ending)
+    else:
+        past_msgs.append(msg_debug + ending)
+
+
+def _write_to_file(text):
+    if log_fpath:
         try:
-            open(log_fpath, 'a').write(msg_debug + ending)
+            open(log_fpath, 'a').write(text)
         except IOError:
             sys.stderr.write('Logging: cannot append to ' + log_fpath + '\n')
             try:
-                open(log_fpath, 'w').write(msg_debug + '\n')
+                open(log_fpath, 'w').write(text)
             except IOError:
                 sys.stderr.write('Logging: cannot write to ' + log_fpath + '\n')
