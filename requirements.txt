@@ -14,3 +14,4 @@ pytabix
 pysam
 beautifulsoup4
 lxml
+csvkit

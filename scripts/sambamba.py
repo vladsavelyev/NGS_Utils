@@ -5,7 +5,7 @@ import os
 import subprocess
 from os.path import basename, join, isfile, getctime
 
-from Utils.logger import err
+from ngs_utils.logger import err
 
 
 def main():

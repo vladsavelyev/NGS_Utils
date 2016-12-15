@@ -984,6 +984,17 @@ def safe_symlink_to(fpath, dst_dirpath):
     return dst
 
 
+def safe_symlink(src_path, dst_path):
+    if not exists(dst_path):
+        try:
+            if os.lstat(dst_path):  # broken symlink
+                os.remove(dst_path)
+        except:
+            pass
+        os.symlink(src_path, dst_path)
+    return dst_path
+
+
 def is_gz(fpath, mode='rb'):
     try:
         h = gzip.open(fpath)
