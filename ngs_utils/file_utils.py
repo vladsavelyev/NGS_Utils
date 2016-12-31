@@ -626,7 +626,7 @@ def verify_obj_by_path(path, description='', silent=False, is_critical=False, ve
         return None
 
 def can_reuse(fpath, cmp_f):
-    if not isfile(fpath):
+    if not fpath or not isfile(fpath):
         return False
     elif verify_file(fpath, cmp_f=cmp_f, silent=True):
         debug('Reusing ' + fpath)
@@ -666,7 +666,7 @@ def verify_file(fpath, description='', silent=False, is_critical=False, verify_s
             cmp_f = [cmp_f]
         try:
             for cmp_f in cmp_f:
-                if getmtime(fpath) < getmtime(cmp_f):
+                if cmp_f and getmtime(fpath) < getmtime(cmp_f):
                     msg = (description + ': ' if description else '') + fpath + ' is older than ' + cmp_f
                     _log(msg, silent, is_critical)
                     return None

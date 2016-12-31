@@ -17,6 +17,22 @@ from ngs_utils.logger import critical, info, err, warn, debug
 from ngs_utils.utils import mean
 
 
+def get_int_val(v):
+    v = _get_num(v)
+    return int(v) if v else None
+
+def get_float_val(v):
+    v = _get_num(v)
+    return float(v) if v else None
+
+def _get_num(v):
+    v = get_val(v)
+    return ''.join(c for c in v if c.isdigit() or c == '.') if v else None
+
+def get_val(v):
+    return v.strip() if v.strip() not in ['.', '-', ''] else None
+
+
 def get_real_path(path_in_html_saver):
     return join(dirname(abspath(__file__)), path_in_html_saver)
 

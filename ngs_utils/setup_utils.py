@@ -15,7 +15,7 @@ def init(name, package_name, setup_py_fpath, kwargs=None):
     print('Upgrading pip and setuptools...')
     try:
         pip.main(['install', '--upgrade', 'setuptools', 'pip'])
-    except:
+    except StandardError:
         err('Cannot update pip and setuptools, that might cause errors during the following intallation')
 
     if abspath(dirname(setup_py_fpath)) != abspath(os.getcwd()):

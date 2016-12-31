@@ -12,26 +12,6 @@ name = 'NGS Utils'
 package_name = reporting_package_name = ngs_utils.__name__
 
 
-def install_sambamba():
-    path = ngs_utils.sambamba_executable_path
-    if exists(path):
-        return path
-    elif exists(path + '.gz'):
-        print('Gunzipping sambamba ' + path + '.gz')
-        os.system('gunzip ' + path + '.gz')
-        return path
-
-    err('Could not find sambamba ' + path + '(.gz): the ' + dirname(path) +
-        ' contents is ' + str(os.listdir(path)))
-    sys_fpath = which('sambamba')
-    if sys_fpath:
-        err('Using sambamba found in $PATH: ' + sys_fpath)
-        return sys_fpath
-    else:
-        err('Error: sambamba was not found in ' + ngs_utils.sambamba_bin_dirpath + ' or in $PATH')
-        sys.exit(1)
-
-
 def install_bedtools():
     success_compilation = compile_tool('BEDtools', ngs_utils.bedtools_dirpath, [ngs_utils.bedtools_execuable_fpath])
     if success_compilation:
@@ -50,10 +30,6 @@ init(name, package_name, __file__)
 print('Installing BEDtools')
 bedtools_fpath = install_bedtools()
 print('Using BedTools at ' + bedtools_fpath)
-
-print('Installing Sambamba')
-sambamba_fpath = install_sambamba()
-print('Using Sambamba at ' + sambamba_fpath)
 
 setup(
     name=name,

@@ -35,20 +35,21 @@ def index_bam(bam_fpath, sambamba=None, samtools=None):
     #     debug('Actual "bai" index exists.')
 
 
-def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', reuse=False):
+def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name=''):
     index_bam(bam_fpath)
     sambamba = get_executable()
     try:
-        run(sambamba + ' ' + cmdl, output_fpath=output_fpath, reuse=reuse)
+        run(sambamba + ' ' + cmdl, output_fpath=output_fpath)
     except subprocess.CalledProcessError:
         sys.stderr.write(traceback.format_exc())
         err('Failed to run sambamba, trying with system executable.')
         sambamba = which('sambamba')
-        run(sambamba + ' ' + cmdl, output_fpath=output_fpath, reuse=reuse)
+        run(sambamba + ' ' + cmdl, output_fpath=output_fpath)
     return output_fpath
 
 
-def sambamba_depth(work_dir, bed, bam, depth_thresholds=None, output_fpath=None, sample_name=None):
+def sambamba_depth(work_dir, bed, bam, depth_thresholds=None,
+                   output_fpath=None, sample_name=None, threads=1):
     sample_name = sample_name or splitext_plus(basename(bam))[0]
     depth_thresholds = depth_thresholds or []
     if isinstance(bed, BedTool):
@@ -61,18 +62,19 @@ def sambamba_depth(work_dir, bed, bam, depth_thresholds=None, output_fpath=None,
         return output_fpath
 
     thresholds_str = ''.join([' -T' + str(d) for d in depth_thresholds])
-    cmdline = 'depth region -F "not duplicate and not failed_quality_control" -L {bed} {thresholds_str} {bam}'.format(**locals())
+    cmdline = ('depth region -F "not duplicate and not failed_quality_control" '
+               '-t {threads} -L {bed} {thresholds_str} {bam}').format(**locals())
 
     call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath)
     return output_fpath
 
 
-def remove_dups(bam, output_fpath, sambamba=None, reuse=False):
+def remove_dups(bam, output_fpath):
     cmdline = 'view --format=bam -F "not duplicate" {bam}'.format(**locals())  # -F (=not) 1024 (=duplicate)
-    return call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath, command_name='not_duplicate', reuse=reuse)
+    return call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath, command_name='not_duplicate')
 
 
-def count_in_bam(work_dir, bam, query, dedup=False, bed=None, use_grid=False, sample_name=None, reuse=False, target_name=None):
+def count_in_bam(work_dir, bam, query, dedup=False, bed=None, use_grid=False, sample_name=None, target_name=None):
     if dedup:
         query += ' and not duplicate'
     name = 'num_' + (query.replace(' ', '_') or 'reads')
@@ -92,26 +94,26 @@ def count_in_bam(work_dir, bam, query, dedup=False, bed=None, use_grid=False, sa
         if bed is not None:
             cmdline += ' -L ' + bed
 
-        call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath, command_name=name, reuse=reuse)
+        call_sambamba(cmdline, bam_fpath=bam, output_fpath=output_fpath, command_name=name)
 
     with open(output_fpath) as f:
         return int(f.read().strip())
 
 
 def number_of_reads(work_dir, bam, dedup=False, use_grid=False, sample_name=None, reuse=False):
-    return count_in_bam(work_dir, bam, '', dedup, use_grid=use_grid, sample_name=sample_name, reuse=reuse)
+    return count_in_bam(work_dir, bam, '', dedup, use_grid=use_grid, sample_name=sample_name)
 
 
 def number_of_mapped_reads(work_dir, bam, dedup=False, use_grid=False, sample_name=None, reuse=False):
-    return count_in_bam(work_dir, bam, 'not unmapped', dedup, use_grid=use_grid, sample_name=sample_name, reuse=reuse)
+    return count_in_bam(work_dir, bam, 'not unmapped', dedup, use_grid=use_grid, sample_name=sample_name)
 
 
 def number_of_properly_paired_reads(work_dir, bam, dedup=False, use_grid=False, sample_name=None, reuse=False):
-    return count_in_bam(work_dir, bam, 'proper_pair', dedup, use_grid=use_grid, sample_name=sample_name, reuse=reuse)
+    return count_in_bam(work_dir, bam, 'proper_pair', dedup, use_grid=use_grid, sample_name=sample_name)
 
 
 def number_of_dup_reads(work_dir, bam, use_grid=False, sample_name=None, reuse=False):
-    return count_in_bam(work_dir, bam, 'duplicate', use_grid=use_grid, sample_name=sample_name, reuse=reuse)
+    return count_in_bam(work_dir, bam, 'duplicate', use_grid=use_grid, sample_name=sample_name)
 
 
 def number_mapped_reads_on_target(work_dir, bed, bam, dedup=False, use_grid=False, sample_name=None, target_name=None):

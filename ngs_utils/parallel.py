@@ -16,7 +16,7 @@ class ParallelCfg:
                  queue=None,
                  resources=None,
                  threads=None,
-                 tag='targqc',
+                 tag=None,
                  local=False):
         self.scheduler = scheduler
         self.queue = queue
@@ -28,6 +28,9 @@ class ParallelCfg:
             self.extra_params['tag'] = tag
         if resources:
             self.extra_params['resources'] = resources
+
+    def set_tag(self, tag):
+        self.extra_params['tag'] = tag
 
     def num_jobs(self, n_samples):
         return min(self.threads, n_samples)

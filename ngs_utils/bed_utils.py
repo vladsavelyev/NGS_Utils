@@ -50,9 +50,11 @@ class Region(SortableByChrom):
         return self.__str__()
 
 
-def bam_to_bed(cnf, bam_fpath, to_gzip=True):
-    info('Converting the BAM to BED to save some memory.')  # from here: http://davetang.org/muse/2015/08/05/creating-a-coverage-plot-using-bedtools-and-r/
+def bam_to_bed(bam_fpath, to_gzip=True):
+    debug('Converting the BAM to BED to save some memory.')  # from here: http://davetang.org/muse/2015/08/05/creating-a-coverage-plot-using-bedtools-and-r/
     bam_bed_fpath = splitext_plus(bam_fpath)[0] + ('.bed.gz' if to_gzip else '.bed')
+    if can_reuse(bam_bed_fpath, bam_fpath):
+        return bam_bed_fpath
     bedtools = which('bedtools')
     gzip = which('gzip')
     cmdline = '{bedtools} bamtobed -i {bam_fpath}'.format(**locals())
@@ -135,18 +137,10 @@ def get_genes_from_bed(bed_fpath, chrom_index=0, gene_index=3):
     return gene_keys_set, gene_keys_list
 
 
-# def group_and_merge_regions_by_gene(work_dir, bed_fpath, keep_genes=False):
-#     output_fpath = intermediate_fname(work_dir, bed_fpath, 'grp_mrg')
-#
-#     group_merge_bed_py = join(tc.code_base_path, 'tools', 'bed_processing', 'group_and_merge_by_gene.py')
-#
-#     cmdline = '{group_merge_bed_py} {bed_fpath}'.format(**locals())
-#     if not keep_genes:
-#         cmdline += ' | grep -vw Gene'
-#
-#     call_process.run(cmdline, 'Group and merge bed', output_fpath)
-#
-#     return output_fpath
+def is_panel(bed_fpath):
+    """ bed is smaller than 3 megabases
+    """
+    return get_total_bed_size(bed_fpath) < 3 * 1000 * 1000
 
 
 def cut(fpath, col_num, output_fpath=None, reuse=False):
@@ -217,26 +211,17 @@ def prep_bed_for_seq2c(work_dir, bed_fpath, reuse=False):
     return seq2c_bed
 
 
-def filter_bed_with_gene_set(work_dir, bed_fpath, gene_keys_set, suffix=None, reuse=False):
-    met_genes = set()
-
-    def fun(r):
-        if not r.name:
-            return None
-        new_gns = []
-        for g in r.name.split(','):
-            if (g, r.chrom) in gene_keys_set:
-                new_gns.append(g)
-                met_genes.add((g, r.chrom))
-        if new_gns:
-            r.name = ','.join(new_gns)
-
-    return BedTool(bed_fpath).each(fun).saveas().fn, met_genes
-
-    # res_fpath = iterate_file(work_dir, bed, fn, suffix=suffix or 'filt_genes', check_result=False)
+def filter_bed_with_gene_set(bed_fpath, gene_keys_set, output_fpath):
+    with file_transaction(None, output_fpath) as tx:
+        with open(bed_fpath) as inp, open(tx, 'w') as out:
+            for l in inp:
+                if l.strip('\n'):
+                    chrom, start, end, gene = l.strip('\n').split('\t')
+                    if (gene, chrom) in gene_keys_set:
+                        out.write(l)
 
 
-def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=None, chr_order=None, genome=None, reuse=False):
+def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=None, chr_order=None, genome=None):
     input_bed_fpath = verify_bed(input_bed_fpath, is_critical=True)
     output_bed_fpath = adjust_path(output_bed_fpath) if output_bed_fpath \
         else intermediate_fname(work_dir, input_bed_fpath, 'sorted')
@@ -253,7 +238,7 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
         chr_order = get_chrom_order(fai_fpath=fai_fpath)
 
     debug('Sorting regions in ' + str(input_bed_fpath))
-    if reuse and isfile(output_bed_fpath) and verify_file(output_bed_fpath, cmp_f=input_bed_fpath):
+    if can_reuse(output_bed_fpath, input_bed_fpath):
         debug(output_bed_fpath + ' exists, reusing')
         return output_bed_fpath
 
@@ -332,6 +317,8 @@ def intersect_bed(work_dir, bed1, bed2):
     bed1_fname, _ = splitext_plus(basename(bed1))
     bed2_fname, _ = splitext_plus(basename(bed2))
     output_fpath = join(work_dir, bed1_fname + '__' + bed2_fname + '.bed')
+    if can_reuse(output_fpath, [bed1, bed2]):
+        return output_fpath
     bedtools = which('bedtools')
     cmdline = '{bedtools} intersect -u -a {bed1} -b {bed2}'.format(**locals())
     call_process.run(cmdline, output_fpath=output_fpath, checks=[call_process.file_exists])
