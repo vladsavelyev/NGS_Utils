@@ -35,8 +35,9 @@ def index_bam(bam_fpath, sambamba=None, samtools=None):
     #     debug('Actual "bai" index exists.')
 
 
-def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name=''):
-    index_bam(bam_fpath)
+def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', no_index=False):
+    if not no_index:
+        index_bam(bam_fpath)
     sambamba = get_executable()
     try:
         run(sambamba + ' ' + cmdl, output_fpath=output_fpath)
