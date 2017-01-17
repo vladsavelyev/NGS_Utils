@@ -6,9 +6,9 @@ from os.path import dirname, basename, join, splitext, isfile
 import json
 import itertools
 
-from Utils.bed_utils import verify_bed
-from Utils.file_utils import adjust_path, safe_mkdir
-from Utils.logger import critical
+from ngs_utils.bed_utils import verify_bed
+from ngs_utils.file_utils import adjust_path, safe_mkdir
+from ngs_utils.logger import critical
 
 # beds_dirpath = '/Users/vlad/googledrive/az/reference_data/genomes/Hsapiens/hg19/bed/intersection/merged'
 # work_dirpath = '/Users/vlad/googledrive/az/reference_data/genomes/Hsapiens/hg19/bed/intersection/merged/intersections'

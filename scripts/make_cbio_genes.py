@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-import bcbio_postproc  # do not remove it: checking for python version and adding site dirs inside
 
 from collections import defaultdict, OrderedDict
 import sys
 from traceback import format_exc
-from source.file_utils import adjust_path
+
+from ngs_utils.file_utils import adjust_path
 
 DO_APPROVE = False
 ALL_EXONS = True

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-import bcbio_postproc  # do not remove it: checking for python version and adding site dirs inside
 
 from os.path import abspath, dirname, realpath, join
 import sys
 from collections import OrderedDict, defaultdict
-from source.targetcov.bam_and_bed_utils import count_bed_cols
+
+from ngs_utils.bed_utils import count_bed_cols
 
 
 def main():
