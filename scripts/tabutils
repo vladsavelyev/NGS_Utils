@@ -1,0 +1,40 @@
+#!/bin/bash
+if [ "$1" == "" ]; then
+    echo "Usage: tabutils COMMAND"
+    echo ""
+    echo "Commands"
+    echo "    combine - Combines multiple tab-delimited files into one XLSX file"
+    echo "    filter  - Filters a tab-delmited file based upon critera"
+    echo "    merge   - Merges tab-delimited files together, combining common columns"
+    echo "    reorder - Re-orders columns in a tab-delimited file"
+    echo "    view    - A data aware tab-delimited file viewer"
+    echo ""
+    echo "    less   - view | less -S"
+    echo ""
+    echo "See 'tabutils help CMD' for more information about a specific command"
+    exit -1
+fi
+
+REAL=`python -c 'import os,sys;print os.path.realpath(sys.argv[1])' "$0"`
+DIR=`dirname "$REAL"`
+
+
+if [ "$1" == "help" ]; then
+    action=tab_$2.py
+    if [ ! -e "$DIR"/tab_utils/$action ]; then
+        echo "Unknown command '$2'"
+        exit 1
+    fi
+    "$DIR"/venv/bin/python "$DIR"/tab_utils/$action -h
+elif [ "$1" == "less" ]; then
+    "$DIR"/venv/bin/python "$DIR"/tab_utils/tab_view.py $@ 2> /dev/null | less -S
+else
+    action=tab_$1.py
+    if [ ! -e "$DIR"/tab_utils/$action ]; then
+        echo "Unknown command '$1'"
+        exit 1
+    fi
+    shift
+
+    "$DIR"/venv/bin/python "$DIR"/tab_utils/$action $@
+fi

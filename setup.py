@@ -31,6 +31,7 @@ print('Installing BEDtools')
 bedtools_fpath = install_bedtools()
 print('Using BedTools at ' + bedtools_fpath)
 
+
 setup(
     name=name,
     author='Vlad Saveliev',
@@ -39,7 +40,7 @@ setup(
     keywords='bioinformatics',
     url='https://github.com/vladsaveliev/NGS_Utils',
     license='GPLv3',
-    packages=[package_name],
+    packages=[package_name, 'tab_utils'],
     package_data={
         package_name: [
             'bedtools/*.py',
@@ -53,10 +54,8 @@ setup(
     zip_safe=False,
     install_requires=get_reqs(),
     setup_requires=['numpy'],
-    scripts=[join('scripts', fn) for fn in os.listdir(join(dirname(__file__), 'scripts'))
-             if fn.endswith('.py') or fn.endswith('.sh')] +
-            [join('scripts', 'converters', fn) for fn in os.listdir(join(dirname(__file__), 'scripts', 'converters'))
-             if fn.endswith('.py') or fn.endswith('.sh')],
+    scripts=[join('scripts',               fn) for fn in os.listdir(join(dirname(__file__), 'scripts'))] +
+            [join('scripts', 'converters', fn) for fn in os.listdir(join(dirname(__file__), 'scripts', 'converters'))],
     classifiers=[
         'Environment :: Console',
         'Environment :: Web Environment',
@@ -72,4 +71,3 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
 )
-

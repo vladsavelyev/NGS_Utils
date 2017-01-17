@@ -65,3 +65,9 @@ def get_chrom_order(genome=None, fai_fpath=None):
     chr_lengths = get_chrom_lengths(genome, fai_fpath)
     chr_order = {c: i for i, (c, l) in enumerate(chr_lengths)}
     return chr_order
+
+def ucsc_to_ensembl(genome):
+    """ mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -e "select * from ucscToEnsembl;" hg19 > hg19.ucscToEnsembl.tsv
+        mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N -e "select * from ucscToEnsembl;" hg38 > hg38.ucscToEnsembl.tsv
+    """
+    return _get(join('fai', '{genome}.ucscToEnsembl.tsv'), genome)
