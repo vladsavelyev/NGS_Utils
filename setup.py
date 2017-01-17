@@ -2,7 +2,6 @@
 import os
 import sys
 from os.path import join, isfile, abspath, dirname, relpath, exists
-from setuptools import setup, find_packages
 
 import ngs_utils
 from ngs_utils.file_utils import which
@@ -30,8 +29,10 @@ init(name, package_name, __file__)
 print('Installing BEDtools')
 bedtools_fpath = install_bedtools()
 print('Using BedTools at ' + bedtools_fpath)
+print('')
 
 
+from setuptools import setup
 setup(
     name=name,
     author='Vlad Saveliev',
@@ -47,14 +48,14 @@ setup(
             'sambamba/*.py',
             relpath(ngs_utils.bedtools_execuable_fpath, abspath(ngs_utils.__name__)),
             relpath(ngs_utils.sambamba_executable_path, abspath(ngs_utils.__name__)),
-        ] + find_package_files('reporting', package_name, skip_exts=['.sass', '.coffee'])\
+        ] + find_package_files('reporting', package_name, skip_exts=['.sass', '.coffee'])
           + find_package_files('reference_data', package_name)
     },
     include_package_data=True,
     zip_safe=False,
     install_requires=get_reqs(),
     setup_requires=['numpy'],
-    scripts=[join('scripts',               fn) for fn in os.listdir(join(dirname(__file__), 'scripts'))] +
+    scripts=[join('scripts', fn) for fn in os.listdir(join(dirname(__file__), 'scripts')) if isfile(fn)] +
             [join('scripts', 'converters', fn) for fn in os.listdir(join(dirname(__file__), 'scripts', 'converters'))],
     classifiers=[
         'Environment :: Console',
@@ -71,3 +72,4 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
 )
+
