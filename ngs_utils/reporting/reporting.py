@@ -165,6 +165,7 @@ class Metric:
             bottom=None,
             top=None,
             is_hidden=False,
+            is_mandatory=False,
             with_heatmap=True,
             style='',
             td_style='',
@@ -203,6 +204,7 @@ class Metric:
         self.bottom = bottom
         self.top = top
         self.is_hidden = is_hidden
+        self.is_mandatory = is_mandatory  # show even if no values
         self.with_heatmap = with_heatmap
         self.style = style
         self.td_style = td_style
@@ -1113,7 +1115,7 @@ def make_cell_th(metric, class_='', sortable=True):
     # return '<th class="' + metric.class_ + '" style="' + metric.style + '">' + metric.name + '</th>'
     html = ''
 
-    if not metric.values:
+    if not metric.values and not metric.is_mandatory:
         return html
 
     if metric.is_hidden:
@@ -1170,7 +1172,7 @@ def make_cell_td(rec, class_=''):
     if rec.metric.name == 'Databases':
         pass
 
-    if not rec.metric.values:
+    if not rec.metric.values and not rec.metric.is_mandatory:
         return html
 
     if rec.metric.is_hidden:
@@ -1310,7 +1312,8 @@ def build_section_html(report, section, sortable=True):
 
         tr = '<tr class="' + tr_class_ + '" style="' + tr_style + '">'
         for col_num, rec in enumerate(row.records):
-            if not rec.metric.values: continue
+            if not rec.metric.values and not rec.metric.is_mandatory:
+                continue
             tr += make_cell_td(rec, class_='left_column_td' if col_num == 0 else '')
         tr += '\n</tr>'
 
