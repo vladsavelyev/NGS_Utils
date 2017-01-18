@@ -290,7 +290,7 @@ def bedtools_version(bedtools):
     v = check_output([bedtools, '--version'])  # bedtools v2.24.0
     try:
         v = int(v.split(' ')[1].split('.')[1])
-    except:
+    except StandardError:
         return None
     else:
         return v
@@ -300,7 +300,6 @@ this_py_fpath = splitext(__file__)[0] + '.py'
 this_py_real_fpath = realpath(this_py_fpath)
 project_dir = dirname(this_py_real_fpath)
 code_base_path = abspath(join(abspath(project_dir)))
-
 
 
 def get_padded_bed_file(work_dir, bed, padding, fai_fpath):

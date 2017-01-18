@@ -32,6 +32,10 @@ print('Using BedTools at ' + bedtools_fpath)
 print('')
 
 
+scripts = [join('scripts', fn) for fn in os.listdir(join(dirname(__file__), 'scripts'))] + \
+          [join('scripts', 'converters', fn) for fn in os.listdir(join(dirname(__file__), 'scripts', 'converters'))]
+scripts = [path for path in scripts if isfile(path)]
+
 from setuptools import setup
 setup(
     name=name,
@@ -55,8 +59,7 @@ setup(
     zip_safe=False,
     install_requires=get_reqs(),
     setup_requires=['numpy'],
-    scripts=[join('scripts', fn) for fn in os.listdir(join(dirname(__file__), 'scripts')) if isfile(fn)] +
-            [join('scripts', 'converters', fn) for fn in os.listdir(join(dirname(__file__), 'scripts', 'converters'))],
+    scripts=scripts,
     classifiers=[
         'Environment :: Console',
         'Environment :: Web Environment',

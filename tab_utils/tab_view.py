@@ -94,7 +94,7 @@ def _write_cols(line,colsizes,coltypes):
         
         sys.stdout.write(val)
         if i < (len(cols) - 1):
-            sys.stdout.write(' | ')
+            sys.stdout.write('  ')
     sys.stdout.write('\n')
     
 def usage():

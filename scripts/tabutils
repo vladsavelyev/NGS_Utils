@@ -1,5 +1,6 @@
 #!/bin/bash
-if [ "$1" == "" ]; then
+
+if [ "$1" == "" ] || [ "$1" == "help" ] && [ "$2" == "" ]; then
     echo "Usage: tabutils COMMAND"
     echo ""
     echo "Commands"
@@ -15,26 +16,24 @@ if [ "$1" == "" ]; then
     exit -1
 fi
 
-REAL=`python -c 'import os,sys;print os.path.realpath(sys.argv[1])' "$0"`
-DIR=`dirname "$REAL"`
-
+LIBS=`python -c 'import tab_utils, os; print os.path.dirname(tab_utils.__file__)'`
 
 if [ "$1" == "help" ]; then
     action=tab_$2.py
-    if [ ! -e "$DIR"/tab_utils/$action ]; then
+    if [ ! -e "$LIBS"/$action ]; then
         echo "Unknown command '$2'"
         exit 1
     fi
-    "$DIR"/venv/bin/python "$DIR"/tab_utils/$action -h
+    python "$LIBS"/$action -h
 elif [ "$1" == "less" ]; then
-    "$DIR"/venv/bin/python "$DIR"/tab_utils/tab_view.py $@ 2> /dev/null | less -S
+    python "$LIBS"/tab_view.py $@ 2> /dev/null | less -S
 else
     action=tab_$1.py
-    if [ ! -e "$DIR"/tab_utils/$action ]; then
+    if [ ! -e "$LIBS"/$action ]; then
         echo "Unknown command '$1'"
         exit 1
     fi
     shift
 
-    "$DIR"/venv/bin/python "$DIR"/tab_utils/$action $@
+    python "$LIBS"/$action $@
 fi
