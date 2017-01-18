@@ -13,6 +13,7 @@ import itertools
 import jsontemplate
 
 from ngs_utils.file_utils import file_transaction, verify_file, safe_mkdir
+from ngs_utils import logger
 from ngs_utils.logger import critical, info, err, warn, debug
 from ngs_utils.utils import mean
 
@@ -366,7 +367,7 @@ class BaseReport:
 
     def save_html(self, output_fpath, caption='', #type_=None,
                   extra_js_fpaths=list(), extra_css_fpaths=list(),
-                  tmpl_fpath=None, data_dict=None, is_debug=False):
+                  tmpl_fpath=None, data_dict=None):
         # class Encoder(JSONEncoder):
         #     def default(self, o):
         #         if isinstance(o, (VariantCaller, BCBioSample)):
@@ -379,8 +380,9 @@ class BaseReport:
         #     type_=type_,
         # ), separators=(',', ':'), cls=Encoder)
         safe_mkdir(dirname(output_fpath))
-        fpath = write_html_report(self, output_fpath, caption=caption, is_debug=is_debug,
-            extra_js_fpaths=extra_js_fpaths, extra_css_fpaths=extra_css_fpaths, tmpl_fpath=tmpl_fpath, data_dict=data_dict)
+        fpath = write_html_report(self, output_fpath, caption=caption,
+                                  extra_js_fpaths=extra_js_fpaths, extra_css_fpaths=extra_css_fpaths,
+                                  tmpl_fpath=tmpl_fpath, data_dict=data_dict)
         self.html_fpath = fpath
         return fpath
 
@@ -487,10 +489,10 @@ class SampleReport(BaseReport):
 
     def save_html(self, output_fpath, caption='', #type_=None,
             extra_js_fpaths=list(), extra_css_fpaths=list(),
-            tmpl_fpath=None, data_dict=None, is_debug=False):
+            tmpl_fpath=None, data_dict=None):
         return BaseReport.save_html(self, output_fpath, caption=caption, #type_='SampleReport',
                     extra_js_fpaths=extra_js_fpaths, extra_css_fpaths=extra_css_fpaths,
-                    tmpl_fpath=tmpl_fpath, data_dict=data_dict, is_debug=is_debug)
+                    tmpl_fpath=tmpl_fpath, data_dict=data_dict)
 
     def __repr__(self):
         return self.display_name + (', ' + self.report_name if self.report_name else '')
@@ -591,7 +593,7 @@ class PerRegionSampleReport(SampleReport):
 
     def save_html(self, output_fpath, caption='', #type_=None,
                   extra_js_fpaths=None, extra_css_fpaths=None,
-                  tmpl_fpath=None, data_dict=None, is_debug=False):
+                  tmpl_fpath=None, data_dict=None):
         return None
         # sample_reports = []
         # fr = FullReport(self.report_name, sample_reports, self.metric_storage)
@@ -760,16 +762,16 @@ class FullReport(BaseReport):
 
         return fr
 
-    def save_into_files(self, base_path, caption, sections=None, is_debug=False):
+    def save_into_files(self, base_path, caption, sections=None):
         safe_mkdir(dirname(base_path))
         return \
             self.save_txt(base_path + '.txt', sections), \
             self.save_tsv(base_path + '.tsv', sections), \
-            self.save_html(base_path + '.html', caption, is_debug=is_debug)
+            self.save_html(base_path + '.html', caption)
 
     def save_html(self, output_fpath, caption='',  #type_=None,
                   display_name=None, extra_js_fpaths=None, extra_css_fpaths=None,
-                  tmpl_fpath=None, data_dict=None, is_debug=False):
+                  tmpl_fpath=None, data_dict=None):
         safe_mkdir(dirname(output_fpath))
         if len(self.sample_reports) == 0:
             err('No sample reports found: HTML summary will not be made.')
@@ -777,7 +779,7 @@ class FullReport(BaseReport):
 
         return BaseReport.save_html(self, output_fpath, caption=caption,  #type_='FullReport',
             extra_js_fpaths=extra_js_fpaths, extra_css_fpaths=extra_css_fpaths,
-            tmpl_fpath=tmpl_fpath, data_dict=data_dict, is_debug=is_debug)
+            tmpl_fpath=tmpl_fpath, data_dict=data_dict)
 
     def __repr__(self):
         return self.name
@@ -1567,8 +1569,9 @@ def calc_cell_contents(report, rows):
     return report
 
 
-def write_html_report(report, html_fpath, caption='', is_debug=False,
-        extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None, tmpl_fpath=None, data_dict=None):
+def write_html_report(report, html_fpath, caption='',
+                      extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None,
+                      tmpl_fpath=None, data_dict=None):
 
     tmpl_fpath = tmpl_fpath or template_fpath
     with open(tmpl_fpath) as f: html = f.read()
@@ -1580,8 +1583,8 @@ def write_html_report(report, html_fpath, caption='', is_debug=False,
         for keyword, text in data_dict.iteritems():
             html = _insert_into_html(html, text, keyword)
 
-    html = _embed_css_and_scripts(html, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths, is_debug)
-    html = _embed_images(html, dirname(html_fpath), image_by_key, is_debug)
+    html = _embed_css_and_scripts(html, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths)
+    html = _embed_images(html, dirname(html_fpath), image_by_key)
 
     report_html = build_report_html(report)
     html = _insert_into_html(html, report_html, 'report')
@@ -1665,7 +1668,7 @@ def calc_heatmap_stats(metric):
 
 import base64
 
-def _embed_images(html, report_dirpath, image_by_key, is_debug=False):
+def _embed_images(html, report_dirpath, image_by_key):
     ptrn = '<img src="{key}"'
 
     if not image_by_key:
@@ -1679,7 +1682,7 @@ def _embed_images(html, report_dirpath, image_by_key, is_debug=False):
                 continue
 
         old_piece = ptrn.format(key=key)
-        if is_debug:  # Not embedding, just adding links
+        if logger.is_debug:  # Not embedding, just adding links
             new_piece = old_piece.replace(key, relpath(fpath, report_dirpath))
         else:
             with open(fpath, 'rb') as f:
@@ -1693,8 +1696,7 @@ def _embed_images(html, report_dirpath, image_by_key, is_debug=False):
     return html
 
 
-def _embed_css_and_scripts(html, report_dirpath,
-       extra_js_fpaths=None, extra_css_fpaths=None, is_debug=False):
+def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css_fpaths=None):
     extra_js_fpaths = extra_js_fpaths or []
     extra_css_fpaths = extra_css_fpaths or []
 
@@ -1723,7 +1725,7 @@ def _embed_css_and_scripts(html, report_dirpath,
             line = line_tmpl.format(file_rel_path=rel_fpath)
             l_tag_formatted = l_tag.format(name=rel_fpath)
 
-            if is_debug:  # not embedding, just adding links
+            if logger.is_debug:  # not embedding, just adding links
                 aux_dirpath = safe_mkdir(join(report_dirpath, aux_dirname))
                 fpath_in_aux = join(aux_dirpath, rel_fpath)
                 safe_mkdir(dirname(fpath_in_aux))
@@ -1778,15 +1780,15 @@ def _insert_into_html(html, text, keyword):
 
 
 def write_static_html_report(data_dict, html_fpath, tmpl_fpath=None,
-        extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None, is_debug=False):
+        extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None):
 
     tmpl_fpath = tmpl_fpath or static_template_fpath
     with open(tmpl_fpath) as f: html = f.read()
 
     html = jsontemplate.expand(html, data_dict)
 
-    html = _embed_css_and_scripts(html, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths, is_debug)
-    html = _embed_images(html, dirname(html_fpath), image_by_key, is_debug)
+    html = _embed_css_and_scripts(html, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths)
+    html = _embed_images(html, dirname(html_fpath), image_by_key)
 
     return __write_html(html, html_fpath, extra_js_fpaths, extra_css_fpaths, image_by_key)
 
