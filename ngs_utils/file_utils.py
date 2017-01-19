@@ -978,8 +978,9 @@ def safe_symlink_to(fpath, dst_dirpath):
         try:
             if os.lstat(dst):  # broken symlink
                 os.remove(dst)
-        except:
+        except OSError:
             pass
+        debug('Symlink ' + fpath + ' -> ' + dst)
         os.symlink(fpath, dst)
     return dst
 

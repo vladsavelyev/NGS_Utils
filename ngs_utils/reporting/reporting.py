@@ -1799,8 +1799,9 @@ def __write_html(html, html_fpath, extra_js_fpaths, extra_css_fpaths, image_by_k
         debug('__write_html: html_fpath=' + html_fpath)
         debug('__write_html: tx=' + tx)
         safe_mkdir(dirname(tx))
-        with open(tx, 'w') as f:
-            f.write(html)
+        import io
+        with io.open(tx, 'w') as f:
+            f.write(unicode(html))
 
     return html_fpath
 
