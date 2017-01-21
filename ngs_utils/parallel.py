@@ -48,7 +48,7 @@ class ParallelCfg:
 
 
 def get_parallel_view(n_samples, parallel_cfg):
-    if parallel_cfg.scheduler:
+    if parallel_cfg.scheduler and parallel_cfg.threads > 1:
         debug('Starting' + (' test' if is_local() else '') + ' cluster (scheduler: ' + parallel_cfg.scheduler + ', queue: ' + parallel_cfg.queue + ') '
               'using ' + str(parallel_cfg.num_jobs(n_samples)) + ' nodes, ' + str(parallel_cfg.cores_per_job(n_samples)) + ' thread per each sample')
         return ClusterView(n_samples, parallel_cfg)
