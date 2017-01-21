@@ -99,36 +99,31 @@ def get_numeric_value(string_value):
     return number
 
 
-def is_uk():
-    hostname = socket.gethostname()
-    return 'ukap' in hostname
-
-def is_china():
-    hostname = socket.gethostname()
-    return 'cniclhpc' in hostname
-
-def is_local():
-    hostname = socket.gethostname()
-    return 'local' in hostname or 'Home' in hostname or environ.get('PYTHONUNBUFFERED')
-
-def is_ace():
-    hostname = socket.gethostname()
-    return hostname == 'ace'
+hostname = socket.gethostname()
 
 def is_us():
-    hostname = socket.gethostname()
     return any(name in hostname for name in ['rask', 'chara', 'blue', 'green', 'espo',
                                              'orr', 'usbod', 'bn0', 'pedro', 'papi'])
+def is_uk():
+    return 'ukap' in hostname
+
+def is_sweden():
+    return 'seml' in hostname
+
+def is_china():
+    return 'cniclhpc' in hostname
+
 def is_az():
     return is_us() or is_uk() or is_china() or is_sweden()
 
 def is_cloud():
-    hostname = socket.gethostname()
     return 'starcluster' in hostname
 
-def is_sweden():
-    hostname = socket.gethostname()
-    return 'seml' in hostname
+def is_cluster():
+    return is_az() or is_cloud()
+
+def is_local():
+    return not is_cluster()
 
 
 def md5(fpath):

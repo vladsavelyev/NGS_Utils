@@ -71,7 +71,7 @@ def info(msg='', ending='\n', print_date=True, severity='info'):
 
 
 def debug(msg='', ending='\n', print_date=True, severity='debug'):
-    _log(sys.stdout, msg, ending, print_date, severity=severity)
+    _log(sys.stdout, '[DEBUG] ' + msg, ending, print_date, severity=severity)
 
 
 def warn(msg='', ending='\n', print_date=True, severity='warning'):
@@ -204,8 +204,8 @@ def _log(out, msg='', ending='\n', print_date=True, severity=None):
 
     if print_date:
         msg_debug = timestamp() + '  ' + msg
-        if is_debug:
-            msg_debug = severity + ' ' * (12 - len(severity)) + msg_debug
+        # if is_debug:
+        #     msg_debug = severity + ' ' * (12 - len(severity)) + msg_debug
 
     if is_debug:
         out.write(msg_debug + ending)
