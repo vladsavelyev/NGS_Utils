@@ -137,10 +137,10 @@ def get_genes_from_bed(bed_fpath, chrom_index=0, gene_index=3):
     return gene_keys_set, gene_keys_list
 
 
-def is_panel(bed_fpath):
-    """ bed is smaller than 3 megabases
-    """
-    return get_total_bed_size(bed_fpath) < 3 * 1000 * 1000
+# def is_panel(bed_fpath):
+#     """ bed is smaller than 3 megabases
+#     """
+#     return get_total_bed_size(bed_fpath) < 3 * 1000 * 1000
 
 
 def cut(fpath, col_num, output_fpath=None, reuse=False):
