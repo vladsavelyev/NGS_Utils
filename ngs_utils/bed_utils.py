@@ -245,7 +245,7 @@ def annotate_target(work_dir, target_bed, genome_build):
 
     cmdline = '{annotate_bed_py} {target_bed} --work-dir {work_dir} -g {genome_build} -o {output_fpath}'.format(**locals())
     run(cmdline, output_fpath, stdout_to_outputfile=False)
-    output_fpath = remove_comments(work_dir, output_fpath)
+    output_fpath = clean_bed(work_dir, output_fpath)
     return output_fpath
 
 
