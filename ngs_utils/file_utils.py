@@ -790,24 +790,24 @@ def remove_quotes(s):
 
 def convert_file(work_dir, input_fpath, convert_file_fn, suffix=None, output_fpath=None,
                  check_result=True, overwrite=False, reuse=True, ctx=None):
-    output_fpath = output_fpath or intermediate_fname(work_dir, input_fpath, suf=suffix or 'tmp')
+    assert output_fpath or suffix, str(output_fpath) + ' ' + str(suffix)
+    output_fpath = output_fpath or intermediate_fname(work_dir, input_fpath, suf=suffix)
     if output_fpath.endswith('.gz'):
         debug('output_fpath is .gz, but writing to uncompressed.')
         output_fpath = splitext(output_fpath)[0]
-
+    
+    if not overwrite:
+        if can_reuse(output_fpath, cmp_f=input_fpath):
+            debug('Reusing ' + output_fpath)
+            return output_fpath
+        if can_reuse(output_fpath + '.gz', cmp_f=input_fpath):
+            debug('Reusing ' + output_fpath + '.gz')
+            return output_fpath
+    
     if islink(output_fpath):
         os.unlink(output_fpath)
 
-    if (suffix or output_fpath) and reuse and not overwrite and \
-            (file_exists(output_fpath) or file_exists(output_fpath + '.gz')):
-        if file_exists(output_fpath):
-            debug(output_fpath + ' exists, reusing')
-        if file_exists(output_fpath + '.gz'):
-            debug(output_fpath + '.gz exists, reusing')
-        return output_fpath
-    else:
-        debug('Writing to ' + output_fpath)
-
+    debug('Writing to ' + output_fpath)
     with file_transaction(work_dir, output_fpath) as tx_fpath:
         with open_gzipsafe(input_fpath) as inp_f, open(tx_fpath, 'w') as out_f:
             if ctx:
