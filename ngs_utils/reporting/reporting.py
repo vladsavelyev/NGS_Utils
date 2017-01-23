@@ -591,35 +591,6 @@ class PerRegionSampleReport(SampleReport):
             rows.append(row)
         return rows
 
-    def save_html(self, output_fpath, caption='', #type_=None,
-                  extra_js_fpaths=None, extra_css_fpaths=None,
-                  tmpl_fpath=None, data_dict=None):
-        return None
-        # sample_reports = []
-        # fr = FullReport(self.report_name, sample_reports, self.metric_storage)
-
-        # for i in range(len(next(r for r in self.records if isinstance(r.value, list)).value)):row = []
-        #     row = []
-        #     for m in self.metric_storage.get_metrics(self.metric_storage.sections):
-        #         try:
-        #             r = next((r for r in self.records if r.metric.name == m.name), None)
-        #             if r:
-        #                 if m.name in self.metric_storage.general_section.metrics_by_name:
-        #                     val = r.value
-        #                 elif not r.value:
-        #                     val = None
-        #                 else:
-        #                     val = r.value[i]
-        #                 row.append(r.metric.format(val))
-        #         except StopIteration:
-        #             row.append('-')  # if no record for the metric
-
-            # records = []
-            # sr = SampleReport(self.sample, self.html_fpath, records=None, metric_storage=None,
-            #      report_name='', plots=None, json_fpath=None,
-            #      )
-            # return Report.save_html(self, output_dirpath, base_fname, caption=caption, type_='SquareSampleReport')
-
     # def add_record(self, metric_name, value, meta=None):
     #     raise NotImplementedError
     #

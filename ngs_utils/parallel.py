@@ -6,7 +6,7 @@ from cluster_helper.cluster import ClusterView as CV
 from joblib import Parallel, delayed
 
 from ngs_utils.file_utils import safe_mkdir
-from ngs_utils.logger import debug
+from ngs_utils.logger import debug, err
 from ngs_utils.utils import is_local
 
 
@@ -91,8 +91,16 @@ class ClusterView(BaseView):
         debug('Starting cluster with ' + str(self.num_jobs) + ' open nodes, ' + str(self.cores_per_job) + ' cores per node')
 
     def run(self, fn, param_lists):
+        if self.n_samples == 0:
+            return []
         assert self.n_samples == len(param_lists)
         n_params = len(param_lists[0])
+        for sample_i, params in enumerate(param_lists):
+            if params is None:
+                err('Parameter list for sample ' + str(sample_i) + ' is None')
+            if len(params) != n_params:
+                err('Parameter list for sample ' + str(sample_i) + ' (' + str(len(params)) +
+                    ') does not equal to the one for sample 1 (' + str(n_params) + ')')
         res = self._view.view.map(fn, *([params[param_i] for params in param_lists] for param_i in range(n_params)))
         return res
 
@@ -106,6 +114,7 @@ class ThreadedView(BaseView):
         self._view = Parallel(n_jobs=self.num_jobs)
 
     def run(self, fn, param_lists):
+        debug('Starting multithreaded function' + str(fn))
         assert self.n_samples == len(param_lists)
         return self._view(delayed(fn)(*params) for params in param_lists)
 
