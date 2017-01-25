@@ -35,6 +35,15 @@ var colors = [
     '#000080', //navy
     '#008080', //team
     '#00FF00', //lime
+    '#CC0000',
+    '#80CC80',
+    '#8080A5',
+    '#FFA5FF',
+    '#CCA5A5',
+    '#FFCCA5',
+    '#0000A5',
+    '#008099',
+    '#33CCFF'
 ];
 
 function distinctColors(count) {
