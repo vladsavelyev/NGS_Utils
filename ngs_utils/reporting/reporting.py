@@ -1172,8 +1172,6 @@ def make_cell_td(rec, class_=''):
     if rec.id:
         html += ' id=' + rec.id
     if rec.rowspan:
-        if not rec.value:
-            return ''
         html += ' rowspan="' + rec.rowspan + '"'
     html += ' quality="' + str(rec.metric.quality) + '"'
     html += ' class="td ' + class_ + ' ' + rec.metric.td_class + ' ' + rec.metric.class_ + ' '
