@@ -35,6 +35,7 @@ Array - Specifc table
 			var sorted_table_data = new Array(); // To contain sorted tables
 			var sorting_history = new Array();
 			var tsort_id = 0; // For applying classes for rows
+			var row_height = 0;
 			var column_widths = new Array();
 			var column_paddings = new Array();
 			var sorting_criteria = new Array(); // User defined sorting methods
@@ -177,7 +178,9 @@ Array - Specifc table
 					}
 				}
 			});
+
 			if (!isLargeTable) {
+				var widths_sum = 0;
 				// Set each td's width
 				//var padding = 6;  // for some reason, minWidth setting doesn't properly act with cell paddings
 				$(table).find('th').each(function() {
@@ -187,8 +190,11 @@ Array - Specifc table
 					//    console.log($(this).text() + ' pad: ' + pad);
 					//}
 					column_widths.push(width);
+					widths_sum += width + pad;
 					column_paddings.push(pad);
 				});
+
+				row_height = $(table).find('tbody tr:first').outerHeight(true);
 
 				$(table).find('tr td, tr th').each(function() {
 					$(this).css( {
@@ -201,8 +207,8 @@ Array - Specifc table
 
 				// Set each row's height and width
 				$(table).find('tr').each(function() {
-					$(this).width($(this).outerWidth(true));
-					$(this).height($(this).outerHeight(true));
+					$(this).width(widths_sum);
+					$(this).height(row_height);
 				});
 
 				// Set table height and width
