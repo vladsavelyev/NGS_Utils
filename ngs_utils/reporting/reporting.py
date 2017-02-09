@@ -301,7 +301,7 @@ class BaseReport:
     def __init__(self, sample=None, html_fpath=None, url=None, json_fpath=None,
                  records=None, plots=None, metric_storage=None, display_name='',
                  report_name='', caller_tag=None, project_tag=None, expandable=False,
-                 unique=False, keep_order=False, large_table=False, heatmap_by_rows=False, vertical_sample_names=False, **kwargs):
+                 unique=False, keep_order=False, heatmap_by_rows=False, vertical_sample_names=False, **kwargs):
         self.sample = sample
         self.html_fpath = html_fpath
         self.plots = plots or []  # TODO: make real JS plots, not just included PNG
@@ -328,7 +328,6 @@ class BaseReport:
         self.unique = unique
 
         self.keep_order = keep_order
-        self.large_table = large_table
         self.heatmap_by_rows = heatmap_by_rows
         self.vertical_sample_names = vertical_sample_names
 
@@ -1241,13 +1240,11 @@ def build_section_html(report, section, sortable=True):
     if not report.keep_order:
         rows.sort(key=lambda r: r.records[0].num if r.records[0].metric.numbers else r.records[0].value)
 
-    table_class = 'report_table fix-align-char'
+    table_class = 'report_table fix-align-char large_table'
     if sortable:
         table_class += ' tableSorter'
     if report.expandable:
         table_class += ' table_short'
-    if report.large_table:
-        table_class += ' large_table'
     if report.vertical_sample_names:
         table_class += ' vertical_header'
 
