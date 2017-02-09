@@ -1,5 +1,5 @@
-setuptools>=18.5
 pip
+setuptools>=18.5
 pyyaml
 numpy
 pandas
