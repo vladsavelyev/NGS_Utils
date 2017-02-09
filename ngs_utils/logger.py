@@ -14,7 +14,6 @@ log_fpath = None
 project_name = None
 project_fpath = None
 proc_name = None
-email_address = None
 is_debug = False
 
 smtp_host = None  # set up in source/config.py and system_info.yaml
@@ -97,29 +96,27 @@ def critical(msg=''):
     raise CriticalError(msg)
 
 
-def send_email(msg_other='', subj='', only_me=False, email_by_prid=None):
+def send_email(msg_other='', subj='', only_me=False, addr_by_username=None, addr=None):
     if not msg_other or not smtp_host:
         return
 
-    me_address = email_by_prid['klpf990'] if email_by_prid else None
-
-    prid = getpass.getuser()
+    username = getpass.getuser()
 
     other_address = None
     if not only_me:
-        if email_address:
-            other_address = email_address
-        elif email_by_prid and prid in email_by_prid:
-            other_address = email_by_prid[prid]
-    if other_address == me_address:
+        if addr:
+            other_address = addr
+        elif addr_by_username and username in addr_by_username:
+            other_address = addr_by_username[username]
+    if other_address == my_address:
         other_address = None
 
-    if not other_address and not me_address:
+    if not other_address and not my_address:
         return
 
     msg_other += '\n'
     msg_other += '\n'
-    msg_other += 'Ran by ' + prid + '\n'
+    msg_other += 'Ran by ' + username + '\n'
     msg_other += '\n'
     if critical_msgs:
         msg_other += 'Critical errors during the processing:\n'
@@ -156,9 +153,9 @@ def send_email(msg_other='', subj='', only_me=False, email_by_prid=None):
 
     msg_other['Subject'] = msg_me['Subject'] = subj
 
-    msg_other['From'] = msg_me['From'] = 'TargQC notification'  # 'klpf990@rask.usbod.astrazeneca.com'
+    msg_other['From'] = msg_me['From'] = 'AZ NGS reporting suite'  # 'klpf990@rask.usbod.astrazeneca.com'
     msg_other['To'] = other_address
-    msg_me['To'] = me_address
+    msg_me['To'] = my_address
 
     def try_send(host, msg_):
         s = smtplib.SMTP(host)
@@ -174,7 +171,7 @@ def send_email(msg_other='', subj='', only_me=False, email_by_prid=None):
     msgs = []
     if other_address:
         msgs.append(msg_other)
-    if me_address:
+    if my_address:
         msgs.append(msg_me)
     for msg in msgs:
         try:
