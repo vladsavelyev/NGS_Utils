@@ -56,7 +56,7 @@ class BaseTestCase(unittest.TestCase):
         if not exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def _check_file(self, fpath, diff_ignore_re=''):
+    def _check_file(self, fpath, ignore_matching_lines='', cmp_line_number_only=True):
         assert isfile(fpath), fpath
         assert getsize(fpath) > 0, fpath
 
@@ -67,10 +67,13 @@ class BaseTestCase(unittest.TestCase):
             cmp_fpath = get_prev(fpath)
 
         if cmp_fpath and isfile(cmp_fpath):
-            if diff_ignore_re:
-                cmdl = ['diff', '-q', '--ignore-matching-lines', diff_ignore_re, fpath, cmp_fpath]
-            else:
-                cmdl = ['diff', '-q', fpath, cmp_fpath]
+            cmdl = ['diff', '-q']
+            if ignore_matching_lines:
+                if isinstance(ignore_matching_lines, basestring):
+                    ignore_matching_lines = [ignore_matching_lines]
+                for r in ignore_matching_lines:
+                    cmdl.extend(['-I', r])
+            cmdl.extend([fpath, cmp_fpath])
             check_call(cmdl)
 
 
