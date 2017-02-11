@@ -11,25 +11,7 @@ name = 'NGS Utils'
 package_name = reporting_package_name = ngs_utils.__name__
 
 
-def install_bedtools():
-    sys_bedtools_fpath = which('bedtools')
-    if sys_bedtools_fpath:
-        err('Using bedtools in $PATH: ' + sys_bedtools_fpath)
-        return sys_bedtools_fpath
-    else:
-        success_compilation = compile_tool('BEDtools', ngs_utils.bedtools_dirpath, [ngs_utils.bedtools_execuable_fpath])
-        if success_compilation:
-            return ngs_utils.bedtools_execuable_fpath
-        else:
-            err('Compilation of BEDtools at ' + ngs_utils.bedtools_dirpath + ' failed, and no bedtools found in $PATH')
-            sys.exit(1)
-
-
 init(name, package_name, __file__)
-
-print('Installing BEDtools')
-bedtools_fpath = install_bedtools()
-print('Using BedTools at ' + bedtools_fpath)
 print('')
 
 
@@ -49,10 +31,6 @@ setup(
     packages=[package_name, 'tab_utils'],
     package_data={
         package_name: [
-            'bedtools/*.py',
-            'sambamba/*.py',
-            relpath(ngs_utils.bedtools_execuable_fpath, abspath(ngs_utils.__name__)),
-            relpath(ngs_utils.sambamba_executable_path, abspath(ngs_utils.__name__)),
         ] + find_package_files('reporting', package_name, skip_exts=['.sass', '.coffee'])
           + find_package_files('reference_data', package_name)
     },

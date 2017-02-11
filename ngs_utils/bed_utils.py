@@ -6,8 +6,8 @@ from collections import OrderedDict
 from ngs_utils.call_process import run
 from os.path import isfile, join, abspath, basename, dirname, getctime, getmtime, splitext, realpath
 from subprocess import check_output
+from pybedtools import BedTool
 
-from ngs_utils.bedtools import BedTool
 from ngs_utils import call_process
 from ngs_utils.file_utils import intermediate_fname, iterate_file, splitext_plus, verify_file, adjust_path, add_suffix, \
     safe_mkdir, file_transaction, which, file_exists, open_gzipsafe, can_reuse

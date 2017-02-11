@@ -1,16 +1,13 @@
 import subprocess
 import traceback
 from os.path import join, dirname, abspath, basename, isfile, getmtime
-from sys import platform as sys_platform
-import platform
 import sys
 
-import ngs_utils
-from ngs_utils import sambamba_bin_dirpath
+from pybedtools import BedTool
+
 from ngs_utils.call_process import run
 from ngs_utils.file_utils import verify_file, splitext_plus, which, can_reuse
 from ngs_utils.logger import debug, warn, err, critical
-from ngs_utils.bedtools import BedTool
 
 
 def get_executable():
