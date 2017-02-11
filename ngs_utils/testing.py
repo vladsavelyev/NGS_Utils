@@ -57,25 +57,26 @@ class BaseTestCase(unittest.TestCase):
         if not exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def _check_file(self, fpath, ignore_matching_lines='', cmp_line_number_only=True):
+    def _check_file(self, fpath, ignore_matching_lines='', cmp_line_number_only=True, check_diff=True):
         assert isfile(fpath), fpath
         assert getsize(fpath) > 0, fpath
 
-        cmp_fpath = None
-        if isdir(self.gold_standard_dir):
-            cmp_fpath = join(self.gold_standard_dir, relpath(fpath, self.results_dir))
-        elif isfile(get_prev(fpath)):
-            cmp_fpath = get_prev(fpath)
+        if check_diff:
+            cmp_fpath = None
+            if isdir(self.gold_standard_dir):
+                cmp_fpath = join(self.gold_standard_dir, relpath(fpath, self.results_dir))
+            elif isfile(get_prev(fpath)):
+                cmp_fpath = get_prev(fpath)
 
-        if cmp_fpath and isfile(cmp_fpath):
-            cmdl = ['diff', '-q']
-            if ignore_matching_lines:
-                if isinstance(ignore_matching_lines, basestring):
-                    ignore_matching_lines = [ignore_matching_lines]
-                for r in ignore_matching_lines:
-                    cmdl.extend(['-I', r])
-            cmdl.extend([fpath, cmp_fpath])
-            check_call(cmdl)
+            if cmp_fpath and isfile(cmp_fpath):
+                cmdl = ['diff', '-q']
+                if ignore_matching_lines:
+                    if isinstance(ignore_matching_lines, basestring):
+                        ignore_matching_lines = [ignore_matching_lines]
+                    for r in ignore_matching_lines:
+                        cmdl.extend(['-I', r])
+                cmdl.extend([fpath, cmp_fpath])
+                check_call(cmdl)
 
 
     def _check_dir_not_empty(self, dirpath, description=None):
