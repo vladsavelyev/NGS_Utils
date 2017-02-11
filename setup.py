@@ -12,16 +12,17 @@ package_name = reporting_package_name = ngs_utils.__name__
 
 
 def install_bedtools():
-    success_compilation = compile_tool('BEDtools', ngs_utils.bedtools_dirpath, [ngs_utils.bedtools_execuable_fpath])
-    if success_compilation:
-        return ngs_utils.bedtools_execuable_fpath
     sys_bedtools_fpath = which('bedtools')
     if sys_bedtools_fpath:
-        err('Compilation failed, using bedtools in $PATH: ' + sys_bedtools_fpath)
+        err('Using bedtools in $PATH: ' + sys_bedtools_fpath)
         return sys_bedtools_fpath
     else:
-        err('Compilation of BEDtools at ' + ngs_utils.bedtools_dirpath + ' failed, and no bedtools found in $PATH')
-        sys.exit(1)
+        success_compilation = compile_tool('BEDtools', ngs_utils.bedtools_dirpath, [ngs_utils.bedtools_execuable_fpath])
+        if success_compilation:
+            return ngs_utils.bedtools_execuable_fpath
+        else:
+            err('Compilation of BEDtools at ' + ngs_utils.bedtools_dirpath + ' failed, and no bedtools found in $PATH')
+            sys.exit(1)
 
 
 init(name, package_name, __file__)
