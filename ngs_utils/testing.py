@@ -1,7 +1,7 @@
 import subprocess
 import unittest
 import os
-from genericpath import getsize, getmtime
+from genericpath import getsize, getctime
 from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, realpath
 import shutil
 import sys
@@ -18,14 +18,15 @@ def call(cmdl):
     subprocess.call(cmdl)
 
 def check_call(cmdl):
-    info(cmdl if isinstance(cmdl, basestring) else ' '.join(cmdl))
+    info(cmdl if isinstance(cmdl, basestring) else ' '.join(
+            [w if ' ' not in w else ('"' + w + '"') for w in cmdl]))
     subprocess.check_call(cmdl, shell=isinstance(cmdl, basestring))
 
 def swap_output(output_path):
     if not exists(output_path):
         return
 
-    last_changed = datetime.fromtimestamp(getmtime(output_path))
+    last_changed = datetime.fromtimestamp(getctime(output_path))
     prev_output_path = output_path + '_' + last_changed.strftime('%Y_%m_%d__%H_%M_%S')
     os.rename(output_path, prev_output_path)
     return prev_output_path

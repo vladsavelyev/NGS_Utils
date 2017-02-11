@@ -5,7 +5,7 @@ import os
 import subprocess
 from os.path import isfile
 
-from ngs_utils.file_utils import file_transaction, verify_file, file_exists
+from ngs_utils.file_utils import file_transaction, verify_file
 from ngs_utils.logger import info, debug, err
 
 
@@ -31,7 +31,7 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
                 env[k] = v
 
     if checks is None:
-        checks = [file_nonempty]
+        checks = [file_nonempty_check]
 
     def _try_run(_cmd, _output_fpath, _input_fpath, _stderr_fpath):
         try:
@@ -138,16 +138,16 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
         #     e.cmd
 
 
-def file_nonempty(output_fpath=None, input_fpath=None):
+def file_nonempty_check(output_fpath=None, input_fpath=None):
     if output_fpath is None:
         return True
-    ok = file_exists(output_fpath)
+    ok = file_exists_check(output_fpath)
     if not ok:
         err("Did not find non-empty output file {0}".format(output_fpath))
     return ok
 
 
-def file_exists(output_fpath=None, input_fpath=None):
+def file_exists_check(output_fpath=None, input_fpath=None):
     if output_fpath is None:
         return True
     ok = os.path.exists(output_fpath)
@@ -157,7 +157,7 @@ def file_exists(output_fpath=None, input_fpath=None):
 
 
 def file_reasonable_size(output_fpath, input_fpath):
-    ok = file_exists(output_fpath)
+    ok = file_exists_check(output_fpath)
     if not ok:
         return ok
     # named pipes -- we can't calculate size
