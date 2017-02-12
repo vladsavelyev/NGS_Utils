@@ -122,11 +122,11 @@ def is_cloud():
 def is_cluster():
     return is_az() or is_cloud()
 
-def is_local():
-    return not is_cluster()
-
 def is_tavis():
     return hostname == 'travis'
+
+def is_local():
+    return not is_cluster() and not is_tavis()
 
 
 def md5(fpath):
