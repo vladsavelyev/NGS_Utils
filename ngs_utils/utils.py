@@ -125,6 +125,9 @@ def is_cluster():
 def is_local():
     return not is_cluster()
 
+def is_tavis():
+    return hostname == 'travis'
+
 
 def md5(fpath):
     hash = hashlib.md5()
