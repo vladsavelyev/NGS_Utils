@@ -11,6 +11,7 @@ from email.mime.text import MIMEText
 import traceback
 from subprocess import check_output
 
+from ngs_utils.utils import is_cluster, is_local
 
 log_fpath = None
 project_name = None
@@ -53,11 +54,6 @@ def set_log_path(log_fpath_):
     for msg in past_msgs:
         _write_to_file(msg)
     past_msgs = []
-
-
-def is_local():
-    hostname = socket.gethostname()
-    return 'local' in hostname or 'Home' in hostname or environ.get('PYTHONUNBUFFERED')
 
 
 def timestamp():
@@ -224,7 +220,7 @@ def _log(out, msg='', ending='\n', print_date=True, severity=None):
 
     sys.stdout.flush()
     sys.stderr.flush()
-    if is_local():
+    if is_debug and is_local():
         sleep(0.01)
 
     if log_fpath:

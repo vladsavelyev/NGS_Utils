@@ -7,7 +7,7 @@ from joblib import Parallel, delayed
 
 from ngs_utils.file_utils import safe_mkdir
 from ngs_utils.logger import debug, err
-from ngs_utils.utils import is_local
+from ngs_utils.utils import is_cluster
 
 
 class ParallelCfg:
@@ -23,7 +23,7 @@ class ParallelCfg:
         self.threads = threads or 1
         self.extra_params = dict()
     
-        self.extra_params['run_local'] = local or is_local()
+        self.extra_params['run_local'] = local or not is_cluster()
         if tag:
             self.extra_params['tag'] = tag
         if resources:
@@ -49,7 +49,7 @@ class ParallelCfg:
 
 def get_parallel_view(n_samples, parallel_cfg):
     if parallel_cfg.scheduler and parallel_cfg.threads > 1:
-        debug('Starting' + (' test' if is_local() else '') + ' cluster (scheduler: ' + parallel_cfg.scheduler + ', queue: ' + parallel_cfg.queue + ') '
+        debug('Starting' + (' test' if not is_cluster() else '') + ' cluster (scheduler: ' + parallel_cfg.scheduler + ', queue: ' + parallel_cfg.queue + ') '
               'using ' + str(parallel_cfg.num_jobs(n_samples)) + ' nodes, ' + str(parallel_cfg.cores_per_job(n_samples)) + ' thread per each sample')
         return ClusterView(n_samples, parallel_cfg)
     else:

@@ -40,10 +40,6 @@ def main():
         sys.stderr.write('See more info in http://wiki.rd.astrazeneca.net/display/NG/SOP+-+Making+the+full+list+of+UCSC+exons+with+approved+HUGO+gene+symbols\n')
         sys.exit(1)
 
-    # if is_local():
-    #     sys.stderr.write('Local: will run only for chr21\n')
-    #     sys.stderr.write('\n')
-
     input_fpath = adjust_path(sys.argv[1])
     hgnc_fpath = adjust_path(sys.argv[2])
     approved_gene_by_name = None
@@ -322,10 +318,6 @@ def _proc_ensembl(inp, out, approved_gene_by_name):
     for l in inp:
         if l and not l.startswith('#'):
             chrom, _, feature, start, end, _, strand, _, props_line = l.replace('\n', '').split('\t')
-
-            # if is_local():
-            #     if chrom != '21':
-            #         continue
 
             # total_lines += 1
             # if total_lines % 1000 == 0:

@@ -3,7 +3,6 @@ from traceback import format_exc
 
 from ngs_utils.logger import info, err, critical, debug, warn
 from ngs_utils.file_utils import verify_file, verify_module, adjust_path
-from ngs_utils.utils import is_uk, is_us, is_cloud, is_sweden, is_china, is_local
 
 from yaml import load as load_yaml
 try:

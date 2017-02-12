@@ -119,11 +119,11 @@ def is_cloud():
 def is_cluster():
     return is_az() or is_cloud()
 
-def is_tavis():
+def is_travis():
     return 'TRAVIS' in environ
 
 def is_local():
-    return not is_cluster() and not is_tavis()
+    return 'Vlads-MBP' in hostname or 'local' in hostname or 'Home' in hostname or environ.get('PYTHONUNBUFFERED')
 
 
 def md5(fpath):
