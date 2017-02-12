@@ -5,9 +5,6 @@ import re
 from collections import OrderedDict
 from os.path import join
 
-from ngs_utils.logger import err
-from ngs_utils.file_utils import verify_file
-
 
 class OrderedDefaultDict(OrderedDict):
     def __init__(self, *args, **kwargs):
@@ -123,7 +120,7 @@ def is_cluster():
     return is_az() or is_cloud()
 
 def is_tavis():
-    return hostname == 'travis'
+    return 'TRAVIS' in environ
 
 def is_local():
     return not is_cluster() and not is_tavis()
