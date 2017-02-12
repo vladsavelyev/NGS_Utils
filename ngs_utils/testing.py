@@ -18,9 +18,11 @@ def call(cmdl):
     subprocess.call(cmdl)
 
 def check_call(cmdl):
-    info(cmdl if isinstance(cmdl, basestring) else ' '.join(
-            [w if ' ' not in w else ('"' + w + '"') for w in cmdl]))
-    subprocess.check_call(cmdl, shell=isinstance(cmdl, basestring))
+    info(cmdl if isinstance(cmdl, basestring) else subprocess.list2cmdline(cmdl))
+    if isinstance(cmdl, basestring):
+        subprocess.check_call(cmdl, shell=True, executable='/bin/bash')
+    else:
+        subprocess.check_call(cmdl)
 
 def swap_output(output_path):
     if not exists(output_path):
@@ -69,15 +71,17 @@ class BaseTestCase(unittest.TestCase):
                 cmp_fpath = get_prev(fpath)
 
             if cmp_fpath and isfile(cmp_fpath):
-                cmdl = ['diff']
+                cmdl = 'diff'
                 if ignore_matching_lines:
                     if isinstance(ignore_matching_lines, basestring):
                         ignore_matching_lines = [ignore_matching_lines]
                     for r in ignore_matching_lines:
-                        cmdl.extend(['-I', r])
-                cmdl.extend([fpath, cmp_fpath])
+                        cmdl += ' -I ' + subprocess.list2cmdline([r])
+                if fpath.endswith('.gz'):
+                    fpath = '<(gunzip -c ' + fpath + ')'
+                    cmp_fpath = '<(gunzip -c ' + cmp_fpath + ')'
+                cmdl += ' ' + fpath + ' ' + cmp_fpath
                 check_call(cmdl)
-
 
     def _check_dir_not_empty(self, dirpath, description=None):
         assert verify_dir(dirpath, description=description), dirpath
