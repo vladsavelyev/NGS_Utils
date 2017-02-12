@@ -69,7 +69,7 @@ class BaseTestCase(unittest.TestCase):
                 cmp_fpath = get_prev(fpath)
 
             if cmp_fpath and isfile(cmp_fpath):
-                cmdl = ['diff', '-q']
+                cmdl = ['diff']
                 if ignore_matching_lines:
                     if isinstance(ignore_matching_lines, basestring):
                         ignore_matching_lines = [ignore_matching_lines]

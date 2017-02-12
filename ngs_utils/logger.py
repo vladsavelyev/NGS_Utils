@@ -1,4 +1,6 @@
 import getpass
+import os
+
 from os import environ
 import socket
 import sys
@@ -32,7 +34,11 @@ def init(is_debug_=None, log_fpath_=None):
     if log_fpath_:
         set_log_path(log_fpath_)
     info(check_output('hostname', shell=True).strip())
-    info(check_output('finger $(whoami) | head -n1', shell=True).strip())
+    with open(os.devnull, 'w') as devnull:
+        username = check_output('finger $(whoami) | head -n1', shell=True, stderr=devnull).strip()
+        if not username:
+            username = getpass.getuser()
+        info(username)
     info()
     info(' '.join(sys.argv))
     info()
