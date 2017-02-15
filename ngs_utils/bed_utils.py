@@ -332,7 +332,7 @@ def clean_bed(bed_fpath, work_dir):
         with file_transaction(work_dir, clean_fpath) as tx_out_file:
             bed.saveas(tx_out_file)
         verify_bed(clean_fpath, is_critical=True)
-        debug('Saved Seq2C clean BED file into ' + clean_fpath)
+        debug('Saved clean BED file into ' + clean_fpath)
     return clean_fpath
 
 

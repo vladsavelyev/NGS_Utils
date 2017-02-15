@@ -1,3 +1,4 @@
+import os
 import subprocess
 import traceback
 from os.path import join, dirname, abspath, basename, isfile, getmtime
@@ -11,6 +12,7 @@ from ngs_utils.logger import debug, warn, err, critical
 
 
 def get_executable():
+    print('PATH: ' + os.environ['PATH'])
     sys_path = which('sambamba')
     if not sys_path:
         critical('Error: sambamba executable is not found')
@@ -36,13 +38,7 @@ def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', no_index=
     if not no_index:
         index_bam(bam_fpath)
     sambamba = get_executable()
-    try:
-        run(sambamba + ' ' + cmdl, output_fpath=output_fpath)
-    except subprocess.CalledProcessError:
-        sys.stderr.write(traceback.format_exc())
-        err('Failed to run sambamba, trying with system executable.')
-        sambamba = which('sambamba')
-        run(sambamba + ' ' + cmdl, output_fpath=output_fpath)
+    run(sambamba + ' ' + cmdl, output_fpath=output_fpath)
     return output_fpath
 
 
