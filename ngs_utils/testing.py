@@ -22,7 +22,14 @@ def check_call(cmdl):
     if isinstance(cmdl, basestring):
         subprocess.check_call(cmdl, shell=True, executable='/bin/bash')
     else:
-        subprocess.check_call(cmdl)
+        subprocess.check_call(cmdl, stderr=subprocess.STDOUT)
+
+def check_output(cmdl):
+    info(cmdl if isinstance(cmdl, basestring) else subprocess.list2cmdline(cmdl))
+    if isinstance(cmdl, basestring):
+        return subprocess.check_output(cmdl, shell=True, executable='/bin/bash', stderr=subprocess.STDOUT)
+    else:
+        return subprocess.check_output(cmdl, stderr=subprocess.STDOUT)
 
 def swap_output(output_path):
     if not exists(output_path):
@@ -59,7 +66,7 @@ class BaseTestCase(unittest.TestCase):
         if not exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def _check_file(self, fpath, ignore_matching_lines='', cmp_line_number_only=True, check_diff=True):
+    def _check_file(self, fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True, check_diff=True):
         assert isfile(fpath), fpath
         assert getsize(fpath) > 0, fpath
 
@@ -77,11 +84,22 @@ class BaseTestCase(unittest.TestCase):
                         ignore_matching_lines = [ignore_matching_lines]
                     for r in ignore_matching_lines:
                         cmdl += ' -I ' + subprocess.list2cmdline([r])
-                if fpath.endswith('.gz'):
+                if wrapper:
+                    if isinstance(ignore_matching_lines, basestring):
+                        wrapper.split()
+                    wrapper = subprocess.list2cmdline(wrapper)
+                    if not fpath.endswith('.gz'):
+                        fpath = '<(' + wrapper + ' ' + fpath + ')'
+                        cmp_fpath = '<(' + wrapper + ' ' + cmp_fpath + ')'
+                    else:
+                        fpath = '<(gunzip -c ' + fpath + ' | ' + wrapper + ')'
+                        cmp_fpath = '<(gunzip -c ' + cmp_fpath + ' | ' + wrapper + ')'
+                elif fpath.endswith('.gz'):
                     fpath = '<(gunzip -c ' + fpath + ')'
                     cmp_fpath = '<(gunzip -c ' + cmp_fpath + ')'
                 cmdl += ' ' + fpath + ' ' + cmp_fpath
-                check_call(cmdl)
+                ret = check_output(cmdl).strip()
+                assert not ret, 'error running diff:\n' + ret
 
     def _check_dir_not_empty(self, dirpath, description=None):
         assert verify_dir(dirpath, description=description), dirpath
