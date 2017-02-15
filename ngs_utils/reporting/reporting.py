@@ -1768,7 +1768,11 @@ def __write_html(html, html_fpath, extra_js_fpaths, extra_css_fpaths, image_by_k
         safe_mkdir(dirname(tx))
         import io
         with io.open(tx, 'w') as f:
-            f.write(unicode(html))
+            try:
+                u = unicode(html, 'utf-8')
+            except TypeError:
+                u = unicode(html)
+            f.write(u)
 
     return html_fpath
 
