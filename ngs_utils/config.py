@@ -5,16 +5,12 @@ from ngs_utils.logger import info, err, critical, debug, warn
 from ngs_utils.file_utils import verify_file, verify_module, adjust_path
 
 from yaml import load as load_yaml
-try:
-    from yaml import CDumper as Dumper, CLoader as Loader
-except ImportError:
-    from yaml import Dumper, Loader
 
 
 def load_yaml_config(fpath):
     verify_file(fpath, is_critical=True)
     try:
-        dic = load_yaml(open(fpath), Loader=Loader)
+        dic = load_yaml(open(fpath))
     except StandardError:
         err(format_exc())
         critical('Could not parse bcbio YAML ' + fpath)

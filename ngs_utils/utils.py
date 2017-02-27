@@ -122,6 +122,9 @@ def is_cluster():
 def is_travis():
     return 'TRAVIS' in environ
 
+def is_chihua():
+    return hostname == 'chihua'
+
 def is_local():
     return 'Vlads-MBP' in hostname or 'local' in hostname or 'Home' in hostname or environ.get('PYTHONUNBUFFERED')
 
