@@ -1540,28 +1540,35 @@ def write_html_report(report, html_fpath, caption='',
                       extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None,
                       tmpl_fpath=None, data_dict=None):
 
-    tmpl_fpath = tmpl_fpath or template_fpath
-    with open(tmpl_fpath) as f: html = f.read()
-
-    html = _insert_into_html(html, caption, 'caption')
-    html = _insert_into_html(html, datetime.datetime.now().strftime('%d %B %Y, %A, %H:%M:%S'), 'report_date')
-
-    if data_dict:
-        for keyword, text in data_dict.iteritems():
-            html = _insert_into_html(html, text, keyword)
-
-    html = _embed_css_and_scripts(html, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths)
-    html = _embed_images(html, dirname(html_fpath), image_by_key)
-
     report_html = build_report_html(report)
-    html = _insert_into_html(html, report_html, 'report')
-
     plots_html = ''.join('<img src="' + plot + '"/>' for plot in report.plots)
-    html = _insert_into_html(html, plots_html, 'plots')
 
-    return __write_html(html, html_fpath,
-        extra_js_fpaths, extra_css_fpaths, image_by_key)
+    tmpl_fpath = tmpl_fpath or template_fpath
+    with open(tmpl_fpath) as in_f:
+        with file_transaction(None, html_fpath) as tx:
+            debug('__write_html: work_dir=' + dirname(tx))
+            debug('__write_html: html_fpath=' + html_fpath)
+            debug('__write_html: tx=' + tx)
+            safe_mkdir(dirname(tx))
 
+            import io
+            with io.open(tx, 'w') as out_f:
+                for l in in_f:
+                    l = _embed_css_and_scripts(l, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths)
+                    l = _embed_images(l, dirname(html_fpath), image_by_key)
+                    l = _insert_into_html(l, caption, 'caption')
+                    l = _insert_into_html(l, datetime.datetime.now().strftime('%d %B %Y, %A, %H:%M:%S'), 'report_date')
+                    l = _insert_into_html(l, report_html, 'report')
+                    l = _insert_into_html(l, plots_html, 'plots')
+                    if data_dict:
+                        for keyword, text in data_dict.iteritems():
+                            l = _insert_into_html(l, text, keyword)
+                    try:
+                        u = unicode(l, 'utf-8')
+                    except TypeError:
+                        u = unicode(l)
+                    out_f.write(u)
+    
 
 def calc_heatmap_stats(metric):
     def _cmp(a, b):  # None is always less than anything
@@ -1663,24 +1670,26 @@ def _embed_images(html, report_dirpath, image_by_key):
     return html
 
 
+js_line_tmpl = '<script type="text/javascript" src="{file_rel_path}"></script>'
+js_l_tag = '<script type="text/javascript" name="{name}">'
+js_r_tag = '    </script>'
+
+css_line_tmpl = '<link rel="stylesheet" type="text/css" href="{file_rel_path}" />'
+css_l_tag = '<style type="text/css" rel="stylesheet" name="{name}">'
+css_r_tag = '    </style>'
+
 def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css_fpaths=None):
     extra_js_fpaths = extra_js_fpaths or []
     extra_css_fpaths = extra_css_fpaths or []
 
-    js_line_tmpl = '<script type="text/javascript" src="{file_rel_path}"></script>'
-    js_l_tag = '<script type="text/javascript" name="{name}">'
-    js_r_tag = '    </script>'
-
-    css_line_tmpl = '<link rel="stylesheet" type="text/css" href="{file_rel_path}" />'
-    css_l_tag = '<style type="text/css" rel="stylesheet" name="{name}">'
-    css_r_tag = '    </style>'
+    if '<link' not in html and '<script' not in html:
+        return html
 
     for line_tmpl, files, l_tag, r_tag in [
             (js_line_tmpl, extra_js_fpaths + js_files, js_l_tag, js_r_tag),
             (css_line_tmpl, extra_css_fpaths + css_files, css_l_tag, css_r_tag),
         ]:
         for rel_fpath in files:
-            debug('Embedding ' + rel_fpath + '...', ending=' ')
             if verify_file(rel_fpath, silent=True):
                 fpath = rel_fpath
                 rel_fpath = basename(fpath)
@@ -1707,17 +1716,13 @@ def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css
                     contents = f.read()
                     contents = '\n'.join(' ' * 8 + l for l in contents.split('\n'))
 
-                    # line_ascii = line.encode('ascii', 'ignore')
-                    # html = html.decode('utf-8', 'ignore').encode('ascii')
-                    # try:
-                    #     html_ascii = html.decode('utf-8', 'ignore').encode('ascii')  #.encode('ascii', 'ignore')
-                    # except:
-                    #     pass
                     try:
                         html = ''.join(i for i in html if ord(i) < 128)
                         contents = ''.join(i for i in contents if ord(i) < 128)
-                        html = html.replace(line, l_tag_formatted + '\n' + contents + '\n' + r_tag)
-                    except:
+                        if line in html:
+                            debug('Embedding ' + rel_fpath + '...', ending=' ')
+                            html = html.replace(line, l_tag_formatted + '\n' + contents + '\n' + r_tag)
+                    except StandardError:
                         err()
                         # print contents
                         err()
@@ -1732,8 +1737,6 @@ def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css
                 # except:
                 #     pass
                     # err('line - cannot replace')  # + str(l_tag_fmt + '\n' + contents + '\n' + r_tag))
-
-            debug('Done.', print_date=False)
     return html
 
 
