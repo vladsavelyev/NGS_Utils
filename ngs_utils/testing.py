@@ -14,15 +14,18 @@ def info(msg=''):
     sys.stdout.write(msg + '\n')
 
 def call(cmdl):
-    info(cmdl)
-    subprocess.call(cmdl)
+    info(cmdl if isinstance(cmdl, basestring) else subprocess.list2cmdline(cmdl))
+    if isinstance(cmdl, basestring):
+        return subprocess.call(cmdl, shell=True, executable='/bin/bash')
+    else:
+        return subprocess.call(cmdl)
 
 def check_call(cmdl):
     info(cmdl if isinstance(cmdl, basestring) else subprocess.list2cmdline(cmdl))
     if isinstance(cmdl, basestring):
         subprocess.check_call(cmdl, shell=True, executable='/bin/bash')
     else:
-        subprocess.check_call(cmdl, stderr=subprocess.STDOUT)
+        subprocess.check_call(cmdl)
 
 def check_output(cmdl):
     info(cmdl if isinstance(cmdl, basestring) else subprocess.list2cmdline(cmdl))
@@ -98,8 +101,8 @@ class BaseTestCase(unittest.TestCase):
                     fpath = '<(gunzip -c ' + fpath + ')'
                     cmp_fpath = '<(gunzip -c ' + cmp_fpath + ')'
                 cmdl += ' ' + fpath + ' ' + cmp_fpath
-                ret = check_output(cmdl).strip()
-                assert not ret, 'error running diff:\n' + ret
+                ret_code = call(cmdl)
+                assert ret_code == 0, 'diff returned non-zero'
 
     def _check_dir_not_empty(self, dirpath, description=None):
         assert verify_dir(dirpath, description=description), dirpath
