@@ -182,6 +182,7 @@ class Metric:
 
             sort_by=None,  # legacy
             header_length=1,
+            vertical_text=False,
 
             numbers=None,
             values=None,
@@ -194,7 +195,7 @@ class Metric:
             top_outer_fence=None,
 
             section_name=None,
-            multiqc=None
+            multiqc=None,
         ):
         self.name = name
         self.short_name = short_name
@@ -218,6 +219,7 @@ class Metric:
         self.sort_direction = sort_direction
         self.parse = parse
         self.header_length = header_length
+        self.vertical_text = vertical_text
 
         self.numbers = []
         self.values = []
@@ -301,7 +303,7 @@ class BaseReport:
     def __init__(self, sample=None, html_fpath=None, url=None, json_fpath=None,
                  records=None, plots=None, metric_storage=None, display_name='',
                  report_name='', caller_tag=None, project_tag=None, expandable=False,
-                 unique=False, keep_order=False, heatmap_by_rows=False, vertical_sample_names=False, **kwargs):
+                 unique=False, keep_order=False, heatmap_by_rows=False, **kwargs):
         self.sample = sample
         self.html_fpath = html_fpath
         self.plots = plots or []  # TODO: make real JS plots, not just included PNG
@@ -329,7 +331,6 @@ class BaseReport:
 
         self.keep_order = keep_order
         self.heatmap_by_rows = heatmap_by_rows
-        self.vertical_sample_names = vertical_sample_names
 
     def set_project_tag(self, tag):
         if not self.project_tag and tag:
@@ -1093,6 +1094,8 @@ def make_cell_th(metric, class_='', sortable=True):
 
     if metric.is_hidden:
         class_ += 'always_hidden_row'
+    if metric.vertical_text:
+        class_ += ' vertical_th'
 
     style = metric.style
     class_ = class_  + ' ' + metric.class_
@@ -1245,8 +1248,6 @@ def build_section_html(report, section, sortable=True):
         table_class += ' tableSorter'
     if report.expandable:
         table_class += ' table_short'
-    if report.vertical_sample_names:
-        table_class += ' vertical_header'
 
     table = '\n<table cellspacing="0" class="' + table_class + '" id="report_table_' + section.name + '">'
     table += '\n<thead>\n<tr class="top_row_tr">'
