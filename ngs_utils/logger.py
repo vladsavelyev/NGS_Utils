@@ -54,6 +54,12 @@ def set_log_path(log_fpath_):
     for msg in past_msgs:
         _write_to_file(msg)
     past_msgs = []
+    
+    
+def set_smtp_host(smtp_host_):
+    if smtp_host_:
+        global smtp_host
+        smtp_host = smtp_host_
 
 
 def timestamp():
@@ -178,14 +184,14 @@ def send_email(msg_other='', subj='', only_me=False, addr_by_username=None, addr
     for msg in msgs:
         try:
             try_send(smtp_host, msg)
-        except:
+        except StandardError:
             warn('Could not send email using the sever "' + smtp_host + '" with exception: ')
             warn('  ' + '; '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value)))
             if smtp_host != 'localhost':
                 warn('Trying "localhost" as a server...')
                 try:
                     try_send('localhost', msg)
-                except:
+                except StandardError:
                     warn('Could not send email using the sever "localhost" with exception: ')
                     warn('  ' + '; '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value)))
                     print_msg()
