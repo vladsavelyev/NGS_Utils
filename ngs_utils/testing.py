@@ -69,7 +69,7 @@ class BaseTestCase(unittest.TestCase):
         if not exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def _check_file(self, fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True, check_diff=True):
+    def _check_file_throws(self, fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True, check_diff=True):
         assert isfile(fpath), fpath
         assert getsize(fpath) > 0, fpath
 
@@ -104,7 +104,8 @@ class BaseTestCase(unittest.TestCase):
                 ret_code = call(cmdl)
                 assert ret_code == 0, 'diff returned non-zero'
 
-    def _check_dir_not_empty(self, dirpath, description=None):
+    @staticmethod
+    def _check_dir_not_empty(dirpath, description=None):
         assert verify_dir(dirpath, description=description), dirpath
         contents = [join(dirpath, fname) for fname in os.listdir(dirpath)
                     if not fname.startswith('.')]
