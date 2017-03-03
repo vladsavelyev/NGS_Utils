@@ -1,8 +1,7 @@
 import subprocess
 import unittest
 import os
-from genericpath import getsize, getctime
-from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, realpath
+from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, getctime, getsize, abspath, expanduser
 import shutil
 import sys
 from datetime import datetime
@@ -61,9 +60,12 @@ class BaseTestCase(unittest.TestCase):
     results_dir = 'results'
     gold_standard_dir = 'gold_standard'
 
+    source_dir = abspath(dirname(dirname(__file__)))
+
     remove_work_dir_on_success = False
 
     def setUp(self):
+        os.environ['PATH'] = self.source_dir + '/venv_ngs_reporting/bin:' + expanduser('~/bin') + ':/usr/local/bin:/usr/bin:/bin:/usr/sbin:' + os.environ['PATH']
         if not isdir(self.data_dir):
             os.makedirs(self.data_dir)
         if not exists(self.results_dir):
