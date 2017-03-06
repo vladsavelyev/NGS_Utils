@@ -60,6 +60,7 @@ def set_smtp_host(smtp_host_):
     if smtp_host_:
         global smtp_host
         smtp_host = smtp_host_
+        debug('Set smtp host ' + smtp_host)
 
 
 def timestamp():
@@ -107,6 +108,7 @@ def critical(msg=''):
 def send_email(msg_other='', subj='', only_me=False, addr_by_username=None, addr=None):
     if not msg_other or not smtp_host:
         return
+    debug('Emailing using smtp host ' + smtp_host)
 
     username = getpass.getuser()
 
@@ -161,7 +163,7 @@ def send_email(msg_other='', subj='', only_me=False, addr_by_username=None, addr
 
     msg_other['Subject'] = msg_me['Subject'] = subj
 
-    msg_other['From'] = msg_me['From'] = 'AZ NGS reporting suite'  # 'klpf990@rask.usbod.astrazeneca.com'
+    msg_other['From'] = msg_me['From'] = 'klpf990@rask.usbod.astrazeneca.com'
     msg_other['To'] = other_address
     msg_me['To'] = my_address
 
@@ -184,14 +186,14 @@ def send_email(msg_other='', subj='', only_me=False, addr_by_username=None, addr
     for msg in msgs:
         try:
             try_send(smtp_host, msg)
-        except StandardError:
+        except smtplib.SMTPException:
             warn('Could not send email using the sever "' + smtp_host + '" with exception: ')
             warn('  ' + '; '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value)))
             if smtp_host != 'localhost':
                 warn('Trying "localhost" as a server...')
                 try:
                     try_send('localhost', msg)
-                except StandardError:
+                except smtplib.SMTPException:
                     warn('Could not send email using the sever "localhost" with exception: ')
                     warn('  ' + '; '.join(traceback.format_exception_only(sys.exc_type, sys.exc_value)))
                     print_msg()
