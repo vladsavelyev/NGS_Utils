@@ -300,7 +300,7 @@ def intersect_bed(work_dir, bed1, bed2):
         return output_fpath
     bedtools = which('bedtools')
     cmdline = '{bedtools} intersect -u -a {bed1} -b {bed2}'.format(**locals())
-    call_process.run(cmdline, output_fpath=output_fpath, checks=[call_process.file_exists])
+    call_process.run(cmdline, output_fpath=output_fpath, checks=[call_process.file_exists_check])
     return output_fpath
 
 
