@@ -1706,8 +1706,7 @@ def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css
                 aux_dirpath = safe_mkdir(join(report_dirpath, aux_dirname))
                 fpath_in_aux = join(aux_dirpath, rel_fpath)
                 safe_mkdir(dirname(fpath_in_aux))
-                if not os.path.exists(fpath_in_aux):
-                    shutil.copy(fpath, fpath_in_aux)
+                shutil.copy(fpath, fpath_in_aux)
                 relpath_in_aux = relpath(fpath_in_aux, report_dirpath)
                 line_formatted = line.replace(rel_fpath, relpath_in_aux)
                 html = html.replace(line, line_formatted)

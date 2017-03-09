@@ -46,6 +46,7 @@ def sambamba_depth(work_dir, bed, bam, depth_thresholds=None,
                    output_fpath=None, sample_name=None, threads=1):
     sample_name = sample_name or splitext_plus(basename(bam))[0]
     depth_thresholds = depth_thresholds or []
+    
     if isinstance(bed, BedTool):
         bed = bed.saveas().fn
     if not output_fpath:
