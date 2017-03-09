@@ -243,7 +243,7 @@ def annotate_target(work_dir, target_bed, genome_build):
     if not annotate_bed_py:
         critical('Error: annotate_bed.py not found in PATH, please install TargQC.')
 
-    cmdline = '{annotate_bed_py} {target_bed} --work-dir {work_dir} -g {genome_build} -o {output_fpath}'.format(**locals())
+    cmdline = '{annotate_bed_py} {target_bed} -g {genome_build} -o {output_fpath}'.format(**locals())
     run(cmdline, output_fpath, stdout_to_outputfile=False)
     output_fpath = clean_bed(output_fpath, work_dir)
     return output_fpath
