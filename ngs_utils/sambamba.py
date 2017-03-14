@@ -22,7 +22,7 @@ def get_executable():
 def index_bam(bam_fpath, sambamba=None, samtools=None):
     sambamba = sambamba or get_executable()
     indexed_bam = bam_fpath + '.bai'
-    if not can_reuse(indexed_bam, cmp_f=bam_fpath):
+    if not can_reuse(indexed_bam, cmp_f=bam_fpath, silent=True):
         # info('Indexing BAM, writing ' + indexed_bam + '...')
         cmdline = '{sambamba} index {bam_fpath}'.format(**locals())
         res = run(cmdline, output_fpath=indexed_bam, stdout_to_outputfile=False, stdout_tx=False)

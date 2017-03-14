@@ -625,11 +625,12 @@ def verify_obj_by_path(path, description='', silent=False, is_critical=False, ve
         _log(msg, silent, is_critical)
         return None
 
-def can_reuse(fpath, cmp_f):
+def can_reuse(fpath, cmp_f, silent=False):
     if not fpath or not isfile(fpath):
         return False
     elif verify_file(fpath, cmp_f=cmp_f, silent=True):
-        debug('Reusing ' + fpath)
+        if not silent:
+            debug('Reusing ' + fpath)
         return True
     else:
         return False
