@@ -12,7 +12,6 @@ from ngs_utils.logger import debug, warn, err, critical
 
 
 def get_executable():
-    print('PATH: ' + os.environ['PATH'])
     sys_path = which('sambamba')
     if not sys_path:
         critical('Error: sambamba executable is not found')
