@@ -44,6 +44,7 @@ class ParallelCfg:
             queue=self.queue,
             num_jobs=self.num_jobs(n_samples),
             cores_per_job=self.cores_per_job(self.num_jobs(n_samples)),
+            start_wait=999,
             extra_params=self.extra_params)
 
 
