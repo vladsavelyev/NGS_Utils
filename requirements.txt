@@ -17,3 +17,5 @@ lxml
 xlsxwriter>=0.5.5
 cython
 python-slugify
+simplejson
+unidecode
