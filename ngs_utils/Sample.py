@@ -2,7 +2,7 @@ class BaseSample:
     def __init__(self, name=None, dirpath=None, work_dir=None, bam=None, bed=None, vcf=None, genome=None,
                  targqc_dirpath=None, clinical_report_dirpath=None,
                  normal_match=None, sv_fpath=None, sv_bed=None,
-                 l_fpath=None, r_fpath=None):
+                 l_fpath=None, r_fpath=None, **kwargs):
         self.name = name
         self.dirpath = dirpath
         self.work_dir = work_dir
@@ -20,9 +20,11 @@ class BaseSample:
         self.sv_fpath = sv_fpath
         self.targqc_dirpath = targqc_dirpath
         self.clinical_html = None
+        for k, v in kwargs.items():
+            self.__dict__[k] = v
 
     def __cmp__(self, other):
-        return cmp(self.key_to_sort(), other.key_to_sort())
+        return self.key_to_sort().__cmp__(other.key_to_sort())
 
     def key_to_sort(self):
         parts = []
