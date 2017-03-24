@@ -24,6 +24,7 @@ Array - Specifc table
 			sortAs				: { },
 			speed				: 300,
 			distance			: '300px',
+			table               : null,
 			delay				: 1
 		}, options);
 
@@ -41,7 +42,8 @@ Array - Specifc table
 			var sorting_criteria = new Array(); // User defined sorting methods
 			var is_ascending = new Array(); // User defined sorting direction  # Vlad
 			var th_index_selected; // The header index that was clicked on
-			var table = $(this); // The table element we are manipulating
+			var table = settings.table ? settings.table : $(this); // The table element we are manipulating
+			var table_selected = $(this); // The table element that was clicked on
 			var animating = false; // Keep track of animation
 
 			/* PERFORM INITIALIZATION */
@@ -55,7 +57,7 @@ Array - Specifc table
 			//alert(column_widths);
 
 			/* GET SORTING CRITERIA */
-			$(table).find('th').each(function(index) {
+			$(table_selected).find('th').each(function(index) {
                 // And set directions (added by Vlad)
 				is_ascending[index] = $(this).attr('data-direction') == 'ascending';
 
@@ -165,7 +167,7 @@ Array - Specifc table
 			$(table).css('position', 'relative');
 
 			// Add divs for directional arrows
-			$(table).find('th').each(function(index) {
+			$(table_selected).find('th').each(function(index) {
 				if ( sorting_criteria[index] != 'nosort' ) {
 					var arrows = $(this).find($('.sortArrow'));
 					if (!arrows){
@@ -183,7 +185,7 @@ Array - Specifc table
 				var widths_sum = 0;
 				// Set each td's width
 				//var padding = 6;  // for some reason, minWidth setting doesn't properly act with cell paddings
-				$(table).find('th').each(function() {
+				$(table_selected).find('th').each(function() {
 					var width = parseInt($(this).outerWidth(true));
 					var pad = parseInt($(this).css('padding-right')) + parseInt($(this).css('padding-left'));
 					//if ($(this).css('text-align') == 'right') {
@@ -229,7 +231,7 @@ Array - Specifc table
 			});*/
 
 			// Set th hover cursor to pointer
-			$(table).find('tr th').each(function(index) {
+			$(table_selected).find('tr th').each(function(index) {
 				if (sorting_criteria[index] != 'nosort') {
 					$(this).css('cursor', 'pointer');
 				}
@@ -237,7 +239,7 @@ Array - Specifc table
 
 
 			/* FUNCTIONALITY */
-			$(table).find('tr th').click(function() {
+			$(table_selected).find('tr th').click(function() {
 
 				if (animating) return; // Disables animation spamming
 
@@ -323,18 +325,18 @@ Array - Specifc table
 
 			// Display arrow direction
 			function display_arrow(column_index) {
-				$(table).find('th div.sortArrow div')
+				$(table_selected).find('th div.sortArrow div')
 					.fadeTo(settings['speed'], 0, 'swing', function(){$('th div.sortArrow div')
 						.css("visibility", "hidden");
 					});   //.fadeOut(settings['speed'], 'swing');
                 if (is_ascending[column_index]) {
-                    $(table).find('th div.sortArrow div.sortArrowAscending')
+                    $(table_selected).find('th div.sortArrow div.sortArrowAscending')
 						.eq(column_index)
 						.fadeTo(settings['speed'], 1, 'swing', function(){$('th div.sortArrow div')
 							.css("visibility", "visible")
 						});   //.fadeIn(settings['speed'], 'swing');
                 } else {
-                    $(table).find('th div.sortArrow div.sortArrowDescending')
+                    $(table_selected).find('th div.sortArrow div.sortArrowDescending')
 						.eq(column_index)
 						.fadeTo(settings['speed'], 1, 'swing', function(){$('th div.sortArrow div')
 							.css("visibility", "visible")

@@ -775,8 +775,8 @@ class ReportSection:
         self.name = name
         self.title = title
         self.metrics = metrics or []
-        self.metrics_by_name = dict((m.name, m) for m in metrics)
-        for m in metrics:
+        self.metrics_by_name = dict((m.name, m) for m in self.metrics)
+        for m in self.metrics:
             m.section_name = name
 
     def add_metric(self, metric, prepend=False):
@@ -1228,6 +1228,22 @@ def make_cell_td(rec, class_=''):
     return html
 
 
+def build_table_header_row(section, sortable=True):
+    row = '<tr class="top_row_tr">'
+
+    # spanning = 0
+    for col_num, metric in enumerate(section.get_metrics()):
+        # if spanning > 0:
+        #     spanning -= 1
+        #     continue
+        row += make_cell_th(metric, class_='left_column_td' if col_num == 0 else '', sortable=sortable)
+        # if metric.header_length > 1:
+        #     spanning = metric.header_length - 1
+
+    row += '\n</tr>'
+    return row
+
+
 def build_section_html(report, section, sortable=True):
     html = ''
 
@@ -1250,18 +1266,7 @@ def build_section_html(report, section, sortable=True):
         table_class += ' table_short'
 
     table = '\n<table cellspacing="0" class="' + table_class + '" id="report_table_' + section.name + '">'
-    table += '\n<thead>\n<tr class="top_row_tr">'
-
-    # spanning = 0
-    for col_num, metric in enumerate(section.get_metrics()):
-        # if spanning > 0:
-        #     spanning -= 1
-        #     continue
-        table += make_cell_th(metric, class_='left_column_td' if col_num == 0 else '', sortable=sortable)
-        # if metric.header_length > 1:
-        #     spanning = metric.header_length - 1
-
-    table += '\n</tr>\n</thead>\n<tbody>'
+    table += '\n<thead>' + build_table_header_row(section, sortable=True) + '\n</tr>\n</thead>\n<tbody>'
 
     full_table = None
     if report.expandable and not report.unique:
@@ -1569,7 +1574,7 @@ def write_html_report(report, html_fpath, caption='',
                     except TypeError:
                         u = unicode(l)
                     out_f.write(u)
-    
+
 
 def calc_heatmap_stats(metric):
     def _cmp(a, b):  # None is always less than anything
