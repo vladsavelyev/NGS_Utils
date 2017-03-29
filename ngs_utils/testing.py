@@ -1,7 +1,8 @@
 import subprocess
 import unittest
 import os
-from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, getctime, getsize, abspath, expanduser
+from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, getctime, getsize, abspath, expanduser, \
+    realpath
 import shutil
 import sys
 from datetime import datetime
