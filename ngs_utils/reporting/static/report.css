@@ -58,6 +58,20 @@ tr.af_less_threshold {
   z-index: 0;
   position: relative; }
 
+.three-col-layout {
+  column-count: 3;
+  -moz-column-count: 3;
+  -webkit-column-count: 3; }
+  .three-col-layout table {
+    margin-bottom: 0 !important; }
+
+.three-col-layout.header th {
+  display: inline-block; }
+
+.three-col-layout.without_header thead {
+  height: 0;
+  opacity: 0; }
+
 table.moving_table {
   box-shadow: 0px 0 5px 1px #888888;
   -moz-box-shadow: 0px 0 5px 1px #888888;

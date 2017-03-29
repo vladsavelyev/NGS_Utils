@@ -90,6 +90,4 @@ ENV/
 # Rope project settings
 .ropeproject
 
-ngs_utils/sambamba/bin/sambamba_centos
-
 .idea/
