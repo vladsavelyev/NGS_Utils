@@ -447,14 +447,6 @@ def __call(cnf, cmdline, output_fpath=None):
     return ret_code
 
 
-# def __sort_bed(fpath, cnf):
-#     work_dirpath = dirname(fpath)
-#     output_fpath = __intermediate_fname(work_dirpath, fpath, 'sort')
-#     cmdline = 'sort -k1,1V -k2,2n -k3,3n ' + fpath  # TODO: -k1,1V not working on Mac
-#     __call(cnf, cmdline, output_fpath)
-#     return fpath
-
-
 def main():
     input_bed_fpath, output_bed_fpath, work_dirpath, cnf = _read_args(sys.argv[1:])
 
