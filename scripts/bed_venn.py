@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from __future__ import print_function
+from __future__ import print_function
 import sys
 from optparse import OptionParser
 import subprocess
@@ -21,7 +24,7 @@ def main():
     parser.add_option('-o', '--output-dir', dest='output_dir')
     (opts, args) = parser.parse_args(sys.argv[1:])
 
-    if len(args) < 1:
+    if len(args) == 0:
         bed_fpaths = tuple([join(beds_dirpath, bed) for bed in [
             'AZ.bed',
             'CRE.bed',
@@ -41,7 +44,7 @@ def main():
         bed_fpaths = [verify_bed(bed) for bed in args]
         names_map = dict()
 
-    if not opts.__dict__.get('output_fpath'):
+    if not opts.__dict__.get('output_dir'):
         output_dir = beds_dirpath
     else:
         output_dir = adjust_path(opts.output_dir)
@@ -53,12 +56,10 @@ def main():
     json_txt = save_venn_diagram_data(intersection_size_by_subset, names_map)
     
     html_file = write_html(output_dir, json_txt, bed_fpaths)
-    
-    print ''
-    print 'HTML:'
-    print '-----------------------'
-    print html_file
-    print '-----------------------'
+
+    print('-----------------------')
+    print('')
+    print('HTML: ' + html_file)
 
 
 if __name__ == '__main__':

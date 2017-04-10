@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
 from optparse import OptionParser
 import subprocess
@@ -15,18 +16,18 @@ from ngs_utils.logger import critical
 
 
 def call(cmdl):
-    print cmdl
+    print(cmdl)
     subprocess.call(cmdl, shell=True)
 
 
 def check_output(cmdl):
-    print cmdl
+    print(cmdl)
     return subprocess.check_output(cmdl, shell=True)
 
 
 def bedsize(bed):
     size = check_output("cat " + bed + " | awk -F'\\t' 'BEGIN{ SUM=0 }{ SUM+=$3-$2 }END{ print SUM }'")
-    print 'Size of ' + basename(bed) + ': ' + size
+    print('Size of ' + basename(bed) + ': ' + size)
     return int(size)
 
 
@@ -37,7 +38,7 @@ def intersect_pair(work_dirpath, bed1, bed2):
     bed1, bed2 = sorted([bed1, bed2])
     output_fpath = join(work_dirpath, splitext(basename(bed1))[0] + '__' + basename(bed2))
     if not isfile(output_fpath):
-        print 'intersect_pair: ' + splitext(basename(bed1))[0] + ' and ' + splitext(basename(bed2))[0]
+        print('intersect_pair: ' + splitext(basename(bed1))[0] + ' and ' + splitext(basename(bed2))[0])
         call('/usr/local/bin/bedtools intersect -a ' + bed1 + ' -b ' + bed2 + ' > ' + output_fpath)
         # global total_calls
         # total_calls += 1
@@ -55,7 +56,7 @@ def calc_set_intersection(work_dirpath, sorted_beds_subset, intersection_bed_by_
         remaining_subset = [b for b in sorted_beds_subset if b != bed]  # sorted_beds_subset.index(b) > sorted_beds_subset.index(bed)]
         if not remaining_subset:
             continue
-        print 'comparing ' + basename(bed) + ' and ' + str([basename(k) for k in remaining_subset])
+        print('comparing ' + basename(bed) + ' and ' + str([basename(k) for k in remaining_subset]))
         subset_intersection_bed = intersection_bed_by_subset.get(tuple(sorted(remaining_subset)))
         if not subset_intersection_bed:
             subset_intersection_bed = calc_set_intersection(work_dirpath, remaining_subset, intersection_bed_by_subset)
@@ -67,7 +68,7 @@ def calc_set_intersection(work_dirpath, sorted_beds_subset, intersection_bed_by_
 
 def save_venn_diagram_data(size_by_set, names_map):
     data = []
-    for venn_set, size in size_by_set.iteritems():
+    for venn_set, size in size_by_set.items():
         set_info = dict()
         set_info['size'] = size
         # if isinstance(venn_set, tuple):
@@ -90,7 +91,7 @@ def run(work_dirpath, bed_fpaths):
         bed_set = tuple([splitext(basename(b))[0] for b in bed_set])
         intersection_size_by_subset[bed_set] = bedsize(intersection_bed)
         # label_by_subset[bed_set] = basename(splitext(intersection_bed)[0])
-        print (str(bed_set) + ': ' + basename(intersection_bed) + ', size: ' + str(intersection_size_by_subset[bed_set]))
+        print(str(bed_set) + ': ' + basename(intersection_bed) + ', size: ' + str(intersection_size_by_subset[bed_set]))
     return intersection_size_by_subset
 
 
@@ -103,7 +104,8 @@ def write_html(output_dir, json_txt, bed_fpaths):
             'title': 'Venn comparison for ' + ', '.join([basename(bf) for bf in bed_fpaths]),
             'diagram_data': json_txt,
         }, output_html,
-        tmpl_fpath=join(dirname(abspath(__file__)), 'venn_template.html'))
+        tmpl_fpath=join(dirname(abspath(__file__)), 'venn_template.html'),
+        extra_js_fpaths=['venn.js', 'd3.min.js', 'd3.tip.js', 'draw_venn_diagram.js'])
 
     # output_html = join(output_dir, 'venn.html')
     # with open(join(dirname(__file__), 'venn_template.html')) as tmpl_f:
