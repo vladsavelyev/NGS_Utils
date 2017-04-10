@@ -7,11 +7,12 @@ import ngs_utils
 from ngs_utils.file_utils import which
 from ngs_utils.setup_utils import get_reqs, init, err, compile_tool, find_package_files
 
-name = 'NGS Utils'
-package_name = reporting_package_name = ngs_utils.__name__
+
+package_name = ngs_utils.__name__
+print package_name
 
 
-init(name, package_name, __file__)
+init(package_name, package_name, __file__)
 print('')
 
 
@@ -21,7 +22,8 @@ scripts = [path for path in scripts if isfile(path)]
 
 from setuptools import setup
 setup(
-    name=name,
+    name=package_name,
+    version='1.0',
     author='Vlad Saveliev',
     author_email='vlad.saveliev@astrazeneca.com',
     description='Utils for NGS pipelines by Vlad Saveliev',
