@@ -92,6 +92,7 @@ def silent_err(msg='', ending='\n', print_date=True, severity='silent_err'):
 
 def err(msg='', ending='\n', print_date=True, severity='error'):
     warn(msg, ending, print_date, severity=severity)
+error = err
 
 
 def critical(msg=''):

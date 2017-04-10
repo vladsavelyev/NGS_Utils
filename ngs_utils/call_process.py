@@ -6,19 +6,19 @@ import subprocess
 from os.path import isfile
 
 from ngs_utils.file_utils import file_transaction, verify_file
-from ngs_utils.logger import info, debug, err
+from ngs_utils.logger import info, err
 
 
 def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputfile=True,
-        stdout_tx=True, reuse=False, stderr_fpath=None, env_vars=None, verbose=False):
+        stdout_tx=True, reuse=False, stderr_fpath=None, env_vars=None):
     """Run the provided command, logging details and checking for errors.
     """
     if output_fpath and reuse:
         if verify_file(output_fpath, silent=True):
-            debug(output_fpath + ' exists, reusing')
+            info(output_fpath + ' exists, reusing')
             return output_fpath
         if not output_fpath.endswith('.gz') and verify_file(output_fpath + '.gz', silent=True):
-            debug(output_fpath + '.gz exists, reusing')
+            info(output_fpath + '.gz exists, reusing')
             return output_fpath
 
     env = os.environ.copy()
@@ -35,11 +35,8 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
 
     def _try_run(_cmd, _output_fpath, _input_fpath, _stderr_fpath):
         try:
-            if verbose:
-                info(' '.join(str(x) for x in _cmd) if not isinstance(_cmd, basestring) else _cmd)
-            else:
-                debug(' '.join(str(x) for x in _cmd) if not isinstance(_cmd, basestring) else _cmd)
-            _do_run(_cmd, checks, env, _output_fpath, _input_fpath, _stderr_fpath, verbose=verbose)
+            info(' '.join(str(x) for x in _cmd) if not isinstance(_cmd, basestring) else _cmd)
+            _do_run(_cmd, checks, env, _output_fpath, _input_fpath, _stderr_fpath)
         except:
             raise
 
@@ -97,7 +94,7 @@ def _normalize_cmd_args(cmd):
         return [str(x) for x in cmd], False, None
 
 
-def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_fpath=None, verbose=False):
+def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_fpath=None):
     """Perform running and check results, raising errors for issues.
     """
     cmd, shell_arg, executable_arg = _normalize_cmd_args(cmd)
@@ -109,10 +106,7 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
         line = s.stdout.readline()
         if line:
             debug_stdout.append(line)
-            if verbose:
-                info('  ' + line.rstrip())
-            else:
-                debug('  ' + line.rstrip())
+            info('  ' + line.rstrip())
         exitcode = s.poll()
         if exitcode is not None:
             for line in s.stdout:
