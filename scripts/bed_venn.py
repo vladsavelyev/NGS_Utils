@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from __future__ import print_function
-from __future__ import print_function
 import sys
 from optparse import OptionParser
 import subprocess
-
-from ngs_utils.bed_venn.venn import run, save_venn_diagram_data, write_html
 from os.path import dirname, basename, join, splitext, isfile
 import json
 import itertools
 
+from ngs_utils.bed_venn.venn import run, save_venn_diagram_data, write_html
 from ngs_utils.bed_utils import verify_bed
 from ngs_utils.file_utils import adjust_path, safe_mkdir
 from ngs_utils.logger import critical

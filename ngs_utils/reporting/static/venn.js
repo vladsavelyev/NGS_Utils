@@ -1643,7 +1643,9 @@
             var centre = computeTextCentre(interior, exterior);
             ret[area] = centre;
             if (centre.disjoint && (areas[i].size > 0)) {
-                console.log("WARNING: area " + area + " not represented on screen");
+                var msg = "WARNING: area " + area + " not represented on screen";
+                console.log(msg);
+                $("#venn_warnings_placeholder").append("<span>" + msg + "</span><br>");
             }
         }
         return  ret;

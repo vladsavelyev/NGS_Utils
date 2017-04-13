@@ -20,7 +20,7 @@ function drawVennDiagrams(diagramData) {
 
             // Display a tooltip with the current size
             tooltip.transition().duration(400).style("opacity", .9);
-            tooltip.text(d.size);
+            tooltip.text(d3.format(",")(d.size));
 
             // highlight the current path
             var selection = d3.select(this).transition("tooltip").duration(400);
@@ -32,7 +32,8 @@ function drawVennDiagrams(diagramData) {
         })
 
         .on("mousemove", function () {
-            tooltip.style("left", (d3.event.pageX) + "px")
+            tooltip
+                .style("left", (d3.event.pageX) + "px")
                 .style("top", (d3.event.pageY - 28) + "px");
         })
 
