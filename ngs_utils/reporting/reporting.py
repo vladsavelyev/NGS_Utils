@@ -1574,6 +1574,7 @@ def write_html_report(report, html_fpath, caption='',
                     except TypeError:
                         u = unicode(l)
                     out_f.write(u)
+    return report_html
 
 
 def calc_heatmap_stats(metric):
