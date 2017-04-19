@@ -626,6 +626,9 @@ def verify_obj_by_path(path, description='', silent=False, is_critical=False, ve
         return None
 
 def can_reuse(fpath, cmp_f, silent=False):
+    do_reuse = os.environ.get('REUSE', '1')
+    if do_reuse == '0':
+        return False
     if not fpath or not isfile(fpath):
         return False
     elif verify_file(fpath, cmp_f=cmp_f, silent=True):
