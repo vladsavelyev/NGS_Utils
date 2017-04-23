@@ -3,6 +3,7 @@ import sys
 import math
 from collections import OrderedDict
 
+import pybedtools
 from ngs_utils.call_process import run
 from os.path import isfile, join, abspath, basename, dirname, getctime, getmtime, splitext, realpath
 from subprocess import check_output
@@ -262,7 +263,9 @@ def calc_sum_of_regions(bed_fpath):
     return total_bed_size
 
 
-def get_total_bed_size(bed_fpath):
+def get_total_bed_size(bed_fpath, work_dir=None):
+    if work_dir:
+        pybedtools.set_tempdir(safe_mkdir(join(work_dir, 'pybedtools_tmp')))
     return sum(len(x) for x in BedTool(bed_fpath).merge())
 
 
@@ -325,6 +328,7 @@ def clean_bed(bed_fpath, work_dir):
     clean_fpath = intermediate_fname(work_dir, bed_fpath, 'clean')
 
     if not can_reuse(clean_fpath, bed_fpath):
+        pybedtools.set_tempdir(safe_mkdir(join(work_dir, 'pybedtools_tmp')))
         bed = BedTool(bed_fpath)
         bed = bed.filter(lambda x: x.chrom and
                          not any(x.chrom.startswith(e) for e in ['#', ' ', 'track', 'browser']))
