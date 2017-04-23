@@ -4,7 +4,6 @@ import sys
 from os.path import join, isfile, abspath, dirname, relpath, exists
 
 import ngs_utils
-from ngs_utils.file_utils import which
 from ngs_utils.setup_utils import get_reqs, init, err, compile_tool, find_package_files
 
 
@@ -15,10 +14,6 @@ print package_name
 init(package_name, package_name, __file__)
 print('')
 
-
-scripts = [join('scripts', fn) for fn in os.listdir(join(dirname(__file__), 'scripts'))] + \
-          [join('scripts', 'converters', fn) for fn in os.listdir(join(dirname(__file__), 'scripts', 'converters'))]
-scripts = [path for path in scripts if isfile(path)]
 
 from setuptools import setup
 setup(
@@ -40,7 +35,10 @@ setup(
     zip_safe=False,
     install_requires=get_reqs(),
     setup_requires=['numpy'],
-    scripts=scripts,
+    scripts=[path for path in
+       [join('scripts', fn) for fn in os.listdir(join(dirname(__file__), 'scripts'))] +
+       [join('scripts', 'converters', fn) for fn in os.listdir(join(dirname(__file__), 'scripts', 'converters'))]
+       if isfile(path)],
     classifiers=[
         'Environment :: Console',
         'Environment :: Web Environment',
@@ -56,4 +54,3 @@ setup(
         'Topic :: Scientific/Engineering :: Bio-Informatics',
     ],
 )
-
