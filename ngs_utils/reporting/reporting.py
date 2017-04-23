@@ -1014,7 +1014,7 @@ css_files = [
     'table_sorter/style.css'
 ]
 js_files = [
-    'jquery-1.12.0.min.js',
+    'jquery-2.2.0.min.js',
     'flot/jquery.flot.js',
     # 'flot/jquery.flot.dashes.js',
     # 'scripts/hsvToRgb.js',
