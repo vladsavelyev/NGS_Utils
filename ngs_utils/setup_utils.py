@@ -9,14 +9,15 @@ from pip.req import parse_requirements
 
 def err(msg=''):
     sys.stderr.write(msg + '\n')
-
+    
 
 def init(name, package_name, setup_py_fpath, kwargs=None):
-    print('Upgrading pip and setuptools...')
-    try:
-        pip.main(['install', '--upgrade', 'setuptools', 'pip'])
-    except StandardError:
-        err('Cannot update pip and setuptools, that might cause errors during the following intallation')
+    if is_installing():
+        print('Upgrading pip and setuptools...')
+        try:
+            pip.main(['install', '--upgrade', 'setuptools', 'pip'])
+        except StandardError:
+            err('Cannot update pip and setuptools, that might cause errors during the following intallation')
 
     if abspath(dirname(setup_py_fpath)) != abspath(os.getcwd()):
         sys.stderr.write('Please, change to ' + dirname(setup_py_fpath) + ' before running setup.py\n')
@@ -120,7 +121,7 @@ def run_cmdl(_cmd):
 
 def is_installing():
     cmd = [a for a in sys.argv if not a.startswith('-')][-1]
-    return cmd in ['install', 'develop', 'build', 'build_ext']
+    return cmd not in ['tag', 'up', 'clean']
 
 
 def is_cleaning():
