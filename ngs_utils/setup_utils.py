@@ -15,7 +15,8 @@ def init(name, package_name, setup_py_fpath, kwargs=None):
     if is_installing():
         print('Upgrading pip and setuptools...')
         try:
-            pip.main(['install', '--upgrade', 'setuptools', 'pip'])
+            os.subprocess.call('pip install --upgrade pip', shell=True)
+            os.subprocess.call('pip install --upgrade --ignore-installed setuptools', shell=True)
         except StandardError:
             err('Cannot update pip and setuptools, that might cause errors during the following intallation')
 

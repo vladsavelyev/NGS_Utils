@@ -3,9 +3,13 @@ import os
 import sys
 from os.path import join, isfile, abspath, dirname, relpath, exists
 
-import ngs_utils
-from ngs_utils.setup_utils import get_reqs, init, err, compile_tool, find_package_files
 
+os.subprocess.call('pip install --upgrade pip', shell=True)
+os.subprocess.call('pip install --upgrade --ignore-installed setuptools', shell=True)
+
+
+import ngs_utils
+from ngs_utils.setup_utils import get_reqs, init, err, find_package_files
 
 package_name = ngs_utils.__name__
 print package_name
