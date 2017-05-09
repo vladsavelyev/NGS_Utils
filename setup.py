@@ -4,8 +4,6 @@ import sys
 from os.path import join, isfile, abspath, dirname, relpath, exists
 
 
-os.subprocess.call('pip install --upgrade pip', shell=True)
-os.subprocess.call('pip install --upgrade --ignore-installed setuptools', shell=True)
 
 
 import ngs_utils
