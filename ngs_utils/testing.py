@@ -70,8 +70,8 @@ class BaseTestCase(unittest.TestCase):
             os.makedirs(self.results_dir)
 
     def _check_file_throws(self, fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True, check_diff=True):
-        assert isfile(fpath), fpath
-        assert getsize(fpath) > 0, fpath
+        assert isfile(fpath), 'file does not exist: ' + fpath
+        assert getsize(fpath) > 0, 'file is empty: ' + fpath
 
         if check_diff:
             cmp_fpath = None
@@ -102,7 +102,7 @@ class BaseTestCase(unittest.TestCase):
                     cmp_fpath = '<(gunzip -c ' + cmp_fpath + ')'
                 cmdl += ' ' + fpath + ' ' + cmp_fpath
                 ret_code = call(cmdl)
-                assert ret_code == 0, 'diff returned non-zero'
+                assert ret_code == 0, 'diff returned non-zero: ' + fpath
 
     @staticmethod
     def _check_dir_not_empty(dirpath, description=None):
