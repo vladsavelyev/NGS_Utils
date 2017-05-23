@@ -49,14 +49,6 @@ def human_sorted(l):
     return l
 
 
-def get_ext_tools_dirname(is_common_file=False):
-    from sys import platform as _platform
-    if not is_common_file and 'darwin' in _platform:
-        return join('ext_tools', 'osx')
-    else:
-        return 'ext_tools'
-
-
 def format_integer(name, value, unit=''):
     value = int(value)
     if value is not None:
