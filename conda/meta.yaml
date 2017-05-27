@@ -1,0 +1,46 @@
+package:
+  name: ngs_utils
+  version: "1.0"
+
+source:
+  git_url: https://github.com/vladsaveliev/NGS_Utils
+
+requirements:
+  build:
+    - python
+    - pip
+    - setuptools >=18.5
+    - numpy
+  run:
+    - python
+    - bedtools
+    - sambamba
+    - tabix
+    # pip packages:
+    - cython
+    - numpy
+    - pyyaml
+    - simplejson
+    - joblib
+    - ipython >=4.0.0,<5.0.0
+    - ipyparallel
+    - ipython-cluster-helper
+    - pysam
+    - pytabix
+    - pybedtools
+    - gffutils
+    - jsontemplate
+    - jinja2
+    - beautifulsoup4
+    - lxml
+    - xlsxwriter >=0.5.5
+    - nose
+
+test:
+  imports:
+    - ngs_utils.file_utils
+    - tab_utils
+
+about:
+  home: https://github.com/vladsaveliev/NGS_Utils
+  license: GPLv3
