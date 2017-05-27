@@ -5,7 +5,7 @@ Adds a new constant column to each line in a tab-delimited file
 
 import sys,os
 
-from support import gzip_opener
+from .support import gzip_opener
 
 def tab_tag(fname, colname, colvalue, colidx, delim='\t', noheader=False):
     f = gzip_opener(fname).open()
@@ -28,9 +28,9 @@ def tab_tag(fname, colname, colvalue, colidx, delim='\t', noheader=False):
     
 def usage(msg=""):
     if msg:
-        print msg
-    print __doc__
-    print """Usage: %s {opts} filename.tab tag
+        print(msg)
+    print(__doc__)
+    print("""Usage: %s {opts} filename.tab tag
 
 Note: columns start at 1
 
@@ -41,7 +41,7 @@ Options:
     -noheader   This file doesn't have a header
 
 
-""" % os.path.basename(sys.argv[0])
+""" % os.path.basename(sys.argv[0]))
     sys.exit(1)
     
 def main(argv):

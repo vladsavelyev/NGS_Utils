@@ -25,7 +25,7 @@ class OrderedDefaultDict(OrderedDict):
 
     def __reduce__(self):  # optional, for pickle support
         args = (self.default_factory,) if self.default_factory else ()
-        return self.__class__, args, None, None, self.iteritems()
+        return self.__class__, args, None, None, self.items()
 
 
 def _tryint(s):
@@ -72,9 +72,9 @@ def median(values):
     values = sorted(values)
 
     if len(values) % 2 == 1:  # odd number of values
-        return values[(len(values) - 1) / 2]
+        return values[(len(values) - 1) // 2]
     else:  # even number of values - take the avg of central
-        return (values[len(values) / 2] + values[len(values) / 2 - 1]) / 2
+        return (values[len(values) // 2] + values[len(values) // 2 - 1]) // 2
 
 
 def get_numeric_value(string_value):

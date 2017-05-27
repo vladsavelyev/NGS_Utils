@@ -3,12 +3,12 @@
 Filters a tab-delmited file based upon configurable critera
 '''
 
-import sys,os,gzip
-from support import gzip_opener
+import sys, os, gzip
+from .support import gzip_opener
 
 def usage():
-    print __doc__
-    print """\
+    print(__doc__)
+    print("""\
 Usage: %s -header file.txt {criteria}
 
 Where criteria is a set of operations in the form of:
@@ -31,17 +31,17 @@ gte
 contains
 
 All comment lines are printed as-is.
-""" % os.path.basename(sys.argv[0])
+""" % os.path.basename(sys.argv[0]))
     sys.exit(1)
 class Criteria(object):
     @staticmethod
     def parse_args(args):
         c = Criteria()
-        for i in xrange(0,len(args),3):
+        for i in range(0,len(args), 3):
             if args[i+1] in Criteria.__dict__:
                 c.add_criterion(int(args[i])-1,args[i+1],args[i+2])
             else:
-                print "Unknown filter function: %s" % args[i+1]
+                print("Unknown filter function: %s" % args[i+1])
                 sys.exit(1)
         
         return c
@@ -61,7 +61,7 @@ class Criteria(object):
             try:
                 if not Criteria.__dict__[func](self,cols[col],arg):
                     return False
-            except Exception, e:
+            except Exception as e:
                 return False
         return True
     

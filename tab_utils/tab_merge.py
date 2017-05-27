@@ -3,7 +3,7 @@
 Merges tab-delimited files together, combining common columns
 '''
 import sys,os, gzip
-from support import filenames_to_uniq
+from .support import filenames_to_uniq
 
 
 class MergeException(Exception):
@@ -110,7 +110,7 @@ def merge_files(fnames,common_cols,uncommon_cols, keycols, noheader=False,collat
                     if lines[i][0] == '#' or lines[i].strip() == '':
                         lines[i] = None
                     
-            except Exception,e:
+            except Exception as e:
                 lines[i] = None
                 pass
         
@@ -208,8 +208,8 @@ def merge_files(fnames,common_cols,uncommon_cols, keycols, noheader=False,collat
         f.close()
         
 def usage():
-    print __doc__
-    print """\
+    print(__doc__)
+    print("""\
 Usage: %s {opts} common_cols merge_cols files
 
 common_cols and merge_cols should be a comma-separated list of column numbers.
@@ -240,7 +240,7 @@ Valid column definitions:
     1-4
     1-4,5
 
-""" % os.path.basename(sys.argv[0])
+""" % os.path.basename(sys.argv[0]))
 
 def _split_cols(arg):
     ret=[]
@@ -253,7 +253,7 @@ def _split_cols(arg):
         
         if '-' in x:
             s,e = x.split('-')
-            vals = list(xrange(int(s)-1,int(e)))
+            vals = list(range(int(s)-1,int(e)))
             ret.extend(vals)
             for v in vals:
                 nums.append(num)

@@ -11,7 +11,7 @@ This can then be fed into something like 'less' for paging
 '''
 
 import sys,os,math
-from support import gzip_opener
+from .support import gzip_opener
 
 def tab_view(fname,preview_lines=100,delim='\t',max_size=None, min_size=0):
     colsizes = []
@@ -60,10 +60,10 @@ def tab_view(fname,preview_lines=100,delim='\t',max_size=None, min_size=0):
             for preview in preview_buf:
                 _write_cols(preview,colsizes,coltypes)
     except KeyboardInterrupt:
-        print ""
+        print("")
         pass
     except IOError:
-        print ""
+        print("")
         pass
     
 
@@ -98,8 +98,8 @@ def _write_cols(line,colsizes,coltypes):
     sys.stdout.write('\n')
     
 def usage():
-    print __doc__
-    print """Usage: %s {opts} filename.tab
+    print(__doc__)
+    print("""Usage: %s {opts} filename.tab
 
 Options:
 -l lines    The number of lines to read in to estimate the size of a column.
@@ -109,7 +109,7 @@ Options:
 -max size   The maximum length of a column (default: unlimited)
 -min size   The minimum length of a column (default: 0)
 
-""" % os.path.basename(sys.argv[0])
+""" % os.path.basename(sys.argv[0]))
     sys.exit(1)
     
 def main(argv):

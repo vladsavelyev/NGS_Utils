@@ -114,7 +114,7 @@ def _read_args(args_list):
     info('Writing to: ' + output_bed_fpath)
 
     # process configuration
-    # for k, v in opts.__dict__.iteritems():
+    # for k, v in opts.__dict__.items():
     #     if k.endswith('fpath') and verify_file(v, is_critical=True):
     #         opts.__dict__[k] = verify_file(v, k)
     if cnf.output_grch and cnf.output_hg:
@@ -125,7 +125,7 @@ def _read_args(args_list):
 
     # if opts.debug:
     #     info('Configuration: ')
-    #     for k, v in opts.__dict__.iteritems():
+    #     for k, v in opts.__dict__.items():
     #         info('\t' + k + ': ' + str(v))
     info()
 

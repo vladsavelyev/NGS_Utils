@@ -36,7 +36,7 @@ class ParallelCfg:
         return min(self.threads, n_samples)
 
     def cores_per_job(self, n_jobs):
-        return max(1, self.threads / n_jobs)
+        return max(1, self.threads // n_jobs)
 
     def get_cluster_params(self, n_samples):
         return dict(

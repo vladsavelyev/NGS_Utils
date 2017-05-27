@@ -73,7 +73,7 @@ def main():
 
             total_lines += 1
             if total_lines % 10000 == 0:
-                sys.stderr.write('processed ' + str(total_lines / 1000) + 'k lines\n')
+                sys.stderr.write('processed ' + str(total_lines // 1000) + 'k lines\n')
                 sys.stderr.flush()
 
     sys.stderr.write('Processed ' + str(total_lines) + ' lines, found ' + str(len(gene_by_chrom_and_name)) + ' unique genes.\n')

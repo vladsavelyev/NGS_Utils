@@ -3,10 +3,10 @@
 Combines multiple tab-delimited files into one XLSX file
 '''
 
-import sys,os
+import sys, os
 import xlsxwriter
 
-from support import gzip_opener
+from .support import gzip_opener
 
 def tab_combine(outfile, fnames ,delim='\t'):
     workbook = xlsxwriter.Workbook(outfile, {'strings_to_numbers': True})
@@ -31,15 +31,15 @@ def tab_combine(outfile, fnames ,delim='\t'):
     
 def usage(msg=""):
     if msg:
-        print msg
-    print __doc__
-    print """Usage: %s {opts} outfile.xlsx filename1.tab filename2...
+        print(msg)
+    print(__doc__)
+    print("""Usage: %s {opts} outfile.xlsx filename1.tab filename2...
 
 Options:
     -f          Force overwriting the output file.
     -d delim    Use this (opposed to a tab) for the delimiter
 
-""" % os.path.basename(sys.argv[0])
+""" % os.path.basename(sys.argv[0]))
     sys.exit(1)
     
 def main(argv):

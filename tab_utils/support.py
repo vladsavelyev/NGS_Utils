@@ -48,7 +48,7 @@ def filenames_to_uniq(names,new_delim='.'):
             maxlen = len(name_words[-1])
 
     common = [False,] * maxlen
-    for i in xrange(maxlen):
+    for i in range(maxlen):
         last = None
         same = True
         for nameword in name_words:

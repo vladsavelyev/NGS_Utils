@@ -3,8 +3,6 @@ import os
 import sys
 from os.path import join, isfile, abspath, dirname, relpath, isdir
 import shutil
-import pip
-from pip.req import parse_requirements
 
 
 def err(msg=''):
@@ -12,45 +10,45 @@ def err(msg=''):
     
 
 def init(name, package_name, setup_py_fpath, kwargs=None):
-    if is_installing():
-        print('Upgrading pip and setuptools...')
-        try:
-            os.subprocess.call('pip install --upgrade pip', shell=True)
-            os.subprocess.call('pip install --upgrade --ignore-installed setuptools', shell=True)
-        except StandardError:
-            err('Cannot update pip and setuptools, that might cause errors during the following intallation')
+    print('sys.argv=' + str(sys.argv))
 
     if abspath(dirname(setup_py_fpath)) != abspath(os.getcwd()):
         sys.stderr.write('Please, change to ' + dirname(setup_py_fpath) + ' before running setup.py\n')
         sys.exit()
 
-    cmd = [a for a in sys.argv if not a.startswith('-')][-1]
-    if cmd == 'tag':
-        version = write_version_py(package_name, kwargs=kwargs)
-        run_cmdl('git tag -a %s -m "Version %s"' % (version, version))
-        run_cmdl('git push --tags')
-        sys.exit()
+    if len(sys.argv) == 2:
+        cmd = sys.argv[1]
+        if cmd == 'tag':
+            version = write_version_py(package_name, kwargs=kwargs)
+            run_cmdl('git tag -a %s -m "Version %s"' % (version, version))
+            run_cmdl('git push --tags')
+            sys.exit()
+    
+        if cmd == 'publish':
+            run_cmdl('python setup.py sdist upload')
+            sys.exit()
+    
+        if cmd == 'up':
+            run_cmdl('git pull --recurse-submodules --rebase')
+            # if first time: $ git submodule update --init --recursive
+            run_cmdl('git submodule foreach "(git checkout master; git pull --rebase)"')
+            sys.exit()
+    
+        if is_cleaning():
+            clean_package(package_name, '.')
+            sys.exit()
 
-    if cmd == 'publish':
-        run_cmdl('python setup.py sdist upload')
-        # _run('python setup.py bdist_wheel upload')
-        sys.exit()
+    print('Upgrading pip and setuptools...')
+    try:
+        os.subprocess.call('pip install --upgrade pip', shell=True)
+        os.subprocess.call('pip install --upgrade --ignore-installed setuptools', shell=True)
+    except Exception:
+        err('Cannot update pip and setuptools, that might cause errors during the following intallation')
 
-    if cmd == 'up':
-        run_cmdl('git pull --recurse-submodules --rebase')
-        # if first time: $ git submodule update --init --recursive
-        run_cmdl('git submodule foreach "(git checkout master; git pull --rebase)"')
-        sys.exit()
-
-    if cmd == 'clean':
-        clean_package(package_name, '.')
-        sys.exit()
-
-    if is_installing():
-        version = write_version_py(package_name, kwargs=kwargs)
-        print('Installing ' + name + ((' version ' + str(version)) if version else ''))
-        print('')
-        return version
+    version = write_version_py(package_name, kwargs=kwargs)
+    print('Installing ' + name + ((' version ' + str(version)) if version else ''))
+    print('')
+    return version
 
 
 def clean_package(package_name, dirpath='.'):
@@ -65,6 +63,7 @@ def clean_package(package_name, dirpath='.'):
 
 
 def get_reqs():
+    from pip.req import parse_requirements
     try:
         install_reqs = parse_requirements('requirements.txt', session=False)
     except TypeError:
@@ -90,11 +89,9 @@ def find_package_files(dirpath, package, skip_exts=None):
    $ python setup.py tag '''
 def write_version_py(package_name, kwargs=None):
     version_txt = 'VERSION.txt'
-    if not isfile(version_txt):
-        return None
+    if not isfile(version_txt): return None
 
-    with open(version_txt) as f:
-        v = f.read().strip().split('\n')[0]
+    with open(version_txt) as f: v = f.read().strip().split('\n')[0]
 
     try:
         import subprocess
@@ -120,16 +117,6 @@ def run_cmdl(_cmd):
     os.system(_cmd)
 
 
-def is_installing():
-    cmd = [a for a in sys.argv if not a.startswith('-')][-1]
-    return cmd not in ['tag', 'up', 'clean']
-
-
-def is_cleaning():
-    cmd = [a for a in sys.argv if not a.startswith('-')][-1]
-    return cmd in ['clean']
-
-
 def compile_tool(tool_name, dirpath, requirements):
     if not all(isfile(join(dirpath, req)) for req in requirements):
         print('Compiling ' + tool_name)
@@ -138,3 +125,7 @@ def compile_tool(tool_name, dirpath, requirements):
             err('Failed to compile ' + tool_name + ' (' + dirpath + ')\n')
             return False
     return True
+
+
+def is_cleaning():
+    return len(sys.argv) == 2 and sys.argv[1] == 'clean'

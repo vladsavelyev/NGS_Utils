@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import sys
-if not ((2, 7) <= sys.version_info[:2] < (3, 0)):
-    sys.exit('Python 2, versions 2.7 and higher is supported '
+if not ((2, 7) <= sys.version_info[:2]):
+    sys.exit('Python 2.7 and 3 ares supported '
              '(you are running %d.%d.%d)' %
              (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
 
-from itertools import repeat, izip, count
+from itertools import repeat, count
 import subprocess
 import sys
 import getpass
@@ -87,14 +87,18 @@ if cur_fields:
 
 if len(rows) > 0:
     col_widths = repeat(0)
+    try:
+        from itertools import izip as zip
+    except:
+        pass
     for row in rows:
-        col_widths = [max(len(v), w) for v, w in izip(row[:-1], col_widths)]
+        col_widths = [max(len(v), w) for v, w in zip(row[:-1], col_widths)]
 
     line = ''
     for i, row in enumerate(rows):
         if i == 1:
             sys.stdout.write('-' * len(line) + '\n')
-        for val, w in izip(row[:-1], col_widths):
+        for val, w in zip(row[:-1], col_widths):
             cell = val + (' ' * (w - len(val) + 2))
             sys.stdout.write(cell)
             line += cell

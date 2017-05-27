@@ -17,7 +17,7 @@ def execute(html_fpath):
 
     with open(b64_html_fpath, 'wt') as fp:
         fp.write(data)
-    print 'Saved to ' + b64_html_fpath
+    print('Saved to ' + b64_html_fpath)
 
 
 def _html_to_dataurl(html_fpath):
@@ -30,12 +30,17 @@ def _compact_html(html_fpath):
         2. Replace anchors with javascript
     """
     with open(html_fpath) as f:
-        html_unicode = unicode(f.read(), 'utf-8')
+        t = f.read()
+        try:
+            html_unicode = unicode(t, 'utf-8')
+        except TypeError:
+            html_unicode = unicode(t)
+        except NameError:  # py3
+            html_unicode = t
     base_dir = os.path.split(html_fpath)[0]
     soup = BeautifulSoup(html_unicode, 'lxml')
     for img in soup.findAll('img'):
         img_src = img['src']
-        print img_src
         durl_img = _convert_file_contents(os.path.join(base_dir, img['src']))
         img['src'] = durl_img
 
@@ -51,7 +56,7 @@ def _compact_html(html_fpath):
 
 
 def _convert_file_contents(fpath, mime=None):
-    print 'Encoding file ' + fpath
+    print('Encoding file ' + fpath)
     if not os.path.isfile(fpath):
         sys.stderr.write('File ' + fpath + ' does not exists\n')
         return ''
@@ -60,7 +65,7 @@ def _convert_file_contents(fpath, mime=None):
         mime, enc = mimetypes.guess_type(os.path.join('file://', fpath))
         if mime is None:
             raise Exception('rfc2397: failed to determine file type')
-        print 'Mime: ' + str(mime) + ', encoding name: ' + str(enc)
+        print('Mime: ' + str(mime) + ', encoding name: ' + str(enc))
 
     with open(fpath, 'rb') as fp:
         data = fp.read()
@@ -69,7 +74,7 @@ def _convert_file_contents(fpath, mime=None):
 
 
 def _convert_text(text, mime):
-    print 'Encoding ' + 'Mime: ' + str(mime)
+    print('Encoding ' + 'Mime: ' + str(mime))
     b64_string = base64.b64encode(text)
     return 'data:%s;base64,%s' % (mime, b64_string)
 

@@ -7,7 +7,7 @@ Re-orders columns in a tab delimited file
 
 import sys,os
 
-from support import gzip_opener
+from .support import gzip_opener
 
 def tab_reorder(fname, column_order, delim='\t'):
     f = gzip_opener(fname).open()
@@ -40,9 +40,9 @@ def tab_reorder(fname, column_order, delim='\t'):
     
 def usage(msg=""):
     if msg:
-        print msg
-    print __doc__
-    print """Usage: %s {opts} filename.tab col1,col2,col3
+        print(msg)
+    print(__doc__)
+    print("""Usage: %s {opts} filename.tab col1,col2,col3
 
 Columns should be specified by index:
     1,5,3 (etc)
@@ -60,7 +60,7 @@ Note: columns start at 0
 Options:
     -d delim    Use this (opposed to a tab) for the delimiter
 
-""" % os.path.basename(sys.argv[0])
+""" % os.path.basename(sys.argv[0]))
     sys.exit(1)
     
 def main(argv):
@@ -84,7 +84,7 @@ def main(argv):
             for val in arg.split(','):
                 if ':' in val:
                     l,r = [int(x) for x in val.split(':')]
-                    for i in xrange(l,r+1):
+                    for i in range(l,r+1):
                         column_order.append(i)
                 elif val != '*':
                     column_order.append(int(val))
