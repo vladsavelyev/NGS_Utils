@@ -141,7 +141,7 @@ def main():
     log('    Missed ' + str(len(missed_genes)) + ' genes: ' + ', '.join(missed_genes))
 
     for l in lines:
-        print l
+        print(l)
 
 
 def exons_for_gene_list(exons_fpath, gnames):

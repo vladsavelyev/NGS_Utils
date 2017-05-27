@@ -10,11 +10,8 @@ def err(msg=''):
     
 
 def init(name, package_name, setup_py_fpath, kwargs=None):
-    print('sys.argv=' + str(sys.argv))
-
     if abspath(dirname(setup_py_fpath)) != abspath(os.getcwd()):
-        sys.stderr.write('Please, change to ' + dirname(setup_py_fpath) + ' before running setup.py\n')
-        sys.exit()
+        sys.exit('Please, change to ' + dirname(setup_py_fpath) + ' before running setup.py\n')
 
     if len(sys.argv) == 2:
         cmd = sys.argv[1]
@@ -38,12 +35,12 @@ def init(name, package_name, setup_py_fpath, kwargs=None):
             clean_package(package_name, '.')
             sys.exit()
 
-    print('Upgrading pip and setuptools...')
-    try:
-        os.subprocess.call('pip install --upgrade pip', shell=True)
-        os.subprocess.call('pip install --upgrade --ignore-installed setuptools', shell=True)
-    except Exception:
-        err('Cannot update pip and setuptools, that might cause errors during the following intallation')
+    # print('Upgrading pip and setuptools...')
+    # try:
+    #     os.subprocess.call('pip install --upgrade pip', shell=True)
+    #     os.subprocess.call('pip install --upgrade --ignore-installed setuptools', shell=True)
+    # except Exception:
+    #     err('Cannot update pip and setuptools, that might cause errors during the following installation')
 
     version = write_version_py(package_name, kwargs=kwargs)
     print('Installing ' + name + ((' version ' + str(version)) if version else ''))
@@ -89,15 +86,22 @@ def find_package_files(dirpath, package, skip_exts=None):
    $ python setup.py tag '''
 def write_version_py(package_name, kwargs=None):
     version_txt = 'VERSION.txt'
-    if not isfile(version_txt): return None
+    if not isfile(version_txt):
+        return None
 
-    with open(version_txt) as f: v = f.read().strip().split('\n')[0]
+    with open(version_txt) as f:
+        v = f.read().strip().split('\n')[0]
 
     try:
         import subprocess
         git_revision = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).rstrip()
     except:
         git_revision = ''
+        pass
+    
+    try:
+        git_revision = git_revision.decode('ascii')
+    except:
         pass
 
     version_py = os.path.join(package_name, 'version.py')

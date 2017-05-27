@@ -1,20 +1,24 @@
 #!/usr/bin/env python
-import os
-from os.path import join, isfile, abspath, dirname, relpath, exists, basename
-
+import sys
+py_v = sys.version_info[:2]
+if not (py_v == (2, 7) or py_v >= (3, 3)):
+    sys.exit('Only Python 2.7 or 3.3 and up are supported. Current version: ' + '.'.join(py_v))
+    
+from os.path import join
 from ngs_utils import setup_utils
+
 
 import ngs_utils
 package_name = ngs_utils.__name__
 
 
-setup_utils.init(package_name, package_name, __file__)
+version = setup_utils.init(package_name, package_name, __file__)
 
 
 from setuptools import setup
 setup(
     name=package_name,
-    version='1.0',
+    version=version,
     author='Vlad Saveliev',
     author_email='vlad.saveliev@astrazeneca.com',
     description='Utils for NGS pipelines by Vlad Saveliev',
