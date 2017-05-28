@@ -1,0 +1,35 @@
+package:
+  name: ipython-cluster-helper
+  version: 0.5.4
+
+source:
+  fn: ipython-cluster-helper-0.5.4.tar.gz
+  url: https://pypi.python.org/packages/a5/fa/026aa9d1face6ca63c6802f500bf719ab847c6d4cc7388562a805874a2ee/ipython-cluster-helper-0.5.4.tar.gz
+  md5: e3f43fa72e3e0c1f65d01f1e2dbeceff
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - netifaces
+
+  run:
+    - python
+    - setuptools
+    - ipyparallel >=4.0
+    - python-dateutil
+    - pyzmq
+    - netifaces
+    - libgcc
+
+test:
+  imports:
+    - cluster_helper.cluster
+
+about:
+  home: https://github.com/roryk/ipython-cluster-helper
+  license: MIT
+  summary: Tool to easily start up an IPython cluster on different schedulers

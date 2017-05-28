@@ -1,10 +1,13 @@
 package:
   name: ngs_utils
-  version: {{ load_setup_py_data().get('version') }}
+  version: "{{ load_setup_py_data().get('version') }}"
 
 source:
-  git_url: https://github.com/vladsaveliev/NGS_Utils
   git_rev: master
+  git_url: https://github.com/vladsaveliev/NGS_Utils
+
+build:
+  number: 14
 
 requirements:
   build:
@@ -23,11 +26,8 @@ requirements:
     - pyyaml
     - simplejson
     - joblib
-    - ipython >=4.0.0,<5.0.0
-    - ipyparallel
     - ipython-cluster-helper
     - pysam
-    - pytabix
     - pybedtools
     - gffutils
     - jinja2
