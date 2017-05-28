@@ -1,13 +1,15 @@
+{% set version=load_setup_py_data().get('version') %}
+
 package:
   name: ngs_utils
-  version: "{{ load_setup_py_data().get('version') }}"
+  version: "{{ version }}"
 
 source:
-  git_rev: master
   git_url: https://github.com/vladsaveliev/NGS_Utils
+  git_rev: master
 
 build:
-  number: 15
+  number: 0
 
 requirements:
   build:
@@ -39,8 +41,11 @@ requirements:
 test:
   imports:
     - ngs_utils.file_utils
+    - ngs_utils.reference_data
     - tab_utils
 
 about:
   home: https://github.com/vladsaveliev/NGS_Utils
-  license: GPLv3
+  license: GNU General Public License v3 (GPLv3)
+  summary: 'Helper function for NGS projects by Vlad Saveliev'
+  license_family: GPL3
