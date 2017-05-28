@@ -30,9 +30,7 @@ setup(
         'tab_utils'
     ],
     package_data={
-        package_name: [
-        ] + setup_utils.find_package_files('reporting', package_name, skip_exts=['.sass', '.coffee'])
-          + setup_utils.find_package_files('reference_data', package_name)
+        package_name: setup_utils.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
     },
     include_package_data=True,
     zip_safe=False,
