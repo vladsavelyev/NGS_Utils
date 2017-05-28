@@ -5,8 +5,6 @@ numpy
 pyyaml
 simplejson
 joblib
-ipython>=4.0.0,<5.0.0
-ipyparallel
 ipython-cluster-helper
 pysam
 pybedtools
