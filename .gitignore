@@ -93,3 +93,4 @@ ENV/
 .idea/
 
 ngs_utils/version.py
+conda/.index.json

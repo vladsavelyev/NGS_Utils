@@ -19,7 +19,7 @@ requirements:
     - numpy
   run:
     - python
-    - bedtools
+    - bedtools >=2.25
     - sambamba
     - htslib
     # pip packages:
@@ -31,7 +31,6 @@ requirements:
     - ipython-cluster-helper
     - pysam
     - pybedtools
-    - gffutils
     - jinja2
     - beautifulsoup4
     - lxml

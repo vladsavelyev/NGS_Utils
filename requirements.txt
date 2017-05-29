@@ -8,7 +8,6 @@ joblib
 ipython-cluster-helper
 pysam
 pybedtools
-gffutils
 jinja2
 beautifulsoup4
 lxml

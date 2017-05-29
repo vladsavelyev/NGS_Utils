@@ -1,29 +1,34 @@
-# Commands to build and upload the packages for osx and linux, py2 and py3
+# Builds and uploads packages for macos and linux, py2 and py3
 
-conda build ipython-cluster-helper --python 2.7
-conda build ipython-cluster-helper --python 3.6
-cd /Users/vlad/miniconda3/conda-bld
-conda convert -p linux-32 osx-64/ipython-cluster-helper-0.5.4-py36_0.tar.bz2
-conda convert -p linux-64 osx-64/ipython-cluster-helper-0.5.4-py36_0.tar.bz2
-conda convert -p linux-32 osx-64/ipython-cluster-helper-0.5.4-py27_0.tar.bz2
-conda convert -p linux-64 osx-64/ipython-cluster-helper-0.5.4-py27_0.tar.bz2
-anaconda upload osx-64/ipython-cluster-helper-0.5.4-py36_0.tar.bz2
-anaconda upload osx-64/ipython-cluster-helper-0.5.4-py27_0.tar.bz2
-anaconda upload linux-32/ipython-cluster-helper-0.5.4-py36_0.tar.bz2
-anaconda upload linux-32/ipython-cluster-helper-0.5.4-py27_0.tar.bz2
-anaconda upload linux-64/ipython-cluster-helper-0.5.4-py36_0.tar.bz2
-anaconda upload linux-64/ipython-cluster-helper-0.5.4-py27_0.tar.bz2
+set -x
 
-conda build ngs_utils -c bcbio -c bioconda -c conda-forge --python 2.7
-conda build ngs_utils -c bcbio -c bioconda -c conda-forge --python 3.6
-cd /Users/vlad/miniconda3/conda-bld
-conda convert -p linux-32 osx-64/ngs_utils-1.1.3-py36_0.tar.bz2
-conda convert -p linux-64 osx-64/ngs_utils-1.1.3-py36_0.tar.bz2
-conda convert -p linux-32 osx-64/ngs_utils-1.1.3-py27_0.tar.bz2
-conda convert -p linux-64 osx-64/ngs_utils-1.1.3-py27_0.tar.bz2
-anaconda upload osx-64/ngs_utils-1.1.3-py36_0.tar.bz2
-anaconda upload osx-64/ngs_utils-1.1.3-py27_0.tar.bz2
-anaconda upload linux-32/ngs_utils-1.1.3-py36_0.tar.bz2
-anaconda upload linux-32/ngs_utils-1.1.3-py27_0.tar.bz2
-anaconda upload linux-64/ngs_utils-1.1.3-py36_0.tar.bz2
-anaconda upload linux-64/ngs_utils-1.1.3-py27_0.tar.bz2
+function build() {
+	local NAME=$1
+	CHANNELS="-c vladsaveliev -c bcbio -c bioconda -c conda-forge"
+
+	for PY in 3.6 2.7 
+	do
+		PACKAGE_PATH=$(conda build $NAME $CHANNELS --output --py $PY | tail -n1)
+		echo "Building $PACKAGE_PATH"
+		conda build $NAME $CHANNELS --py $PY
+		BASEDIR=$(dirname $(dirname $PACKAGE_PATH))		
+		FILENAME=$(basename $PACKAGE_PATH)
+		echo "Converting packages into $BASEDIR"
+		for PLATFORM in osx-64 linux-32 linux-64
+		do
+			conda convert -p $PLATFORM $PACKAGE_PATH -o $BASEDIR
+			anaconda upload $BASEDIR/$PLATFORM/$FILENAME
+		done
+	done
+	cd ..
+}
+
+# Iterate over directories and build all packages
+for f in */meta.yaml
+do 
+	package_name=$(dirname ${f#/*});
+	echo "Building $package_name";
+	build $package_name;
+done
+
+set +x
