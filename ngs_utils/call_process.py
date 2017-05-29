@@ -98,9 +98,14 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
     """Perform running and check results, raising errors for issues.
     """
     cmd, shell_arg, executable_arg = _normalize_cmd_args(cmd)
-    s = subprocess.Popen(cmd, shell=shell_arg, executable=executable_arg,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT, close_fds=True, env=env, encoding='utf-8')
+    try:
+        s = subprocess.Popen(cmd, shell=shell_arg, executable=executable_arg,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, close_fds=True, env=env, encoding='utf-8')
+    except TypeError:
+        s = subprocess.Popen(cmd, shell=shell_arg, executable=executable_arg,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT, close_fds=True, env=env)
     debug_stdout = collections.deque(maxlen=100)
     while 1:
         line = s.stdout.readline()

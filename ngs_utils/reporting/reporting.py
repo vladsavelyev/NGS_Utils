@@ -136,6 +136,8 @@ class Record:
     @staticmethod
     def load(data):
         data['metric'] = Metric.load(data['metric'])
+        data['value'] = data['_Record__value']
+        del data['_Record__value']
         return Record(**data)
 
 
@@ -1577,6 +1579,8 @@ def write_html_report(report, html_fpath, caption='',
                         u = unicode(l, 'utf-8')
                     except TypeError:
                         u = unicode(l)
+                    except:
+                        u = str(l)
                     out_f.write(u)
     return html_fpath
 
