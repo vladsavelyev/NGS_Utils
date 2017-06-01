@@ -25,6 +25,7 @@ requirements:
     # pip packages:
     - cython
     - numpy
+    - six
     - pyyaml
     - simplejson
     - joblib

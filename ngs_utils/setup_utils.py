@@ -4,6 +4,8 @@ import sys
 from os.path import join, isfile, abspath, dirname, relpath, isdir
 import shutil
 
+import six
+
 
 def err(msg=''):
     sys.stderr.write(msg + '\n')
@@ -98,11 +100,8 @@ def write_version_py(package_name, kwargs=None):
     except:
         git_revision = ''
         pass
-    
-    try:
+    if six.PY3:
         git_revision = git_revision.decode('ascii')
-    except:
-        pass
 
     version_py = os.path.join(package_name, 'version.py')
     with open(version_py, 'w') as f:

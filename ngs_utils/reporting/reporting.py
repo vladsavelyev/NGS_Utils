@@ -6,8 +6,12 @@ from json import load, dump
 from math import floor
 import traceback
 import datetime
-
 import itertools
+import six
+if six.PY2:
+    import StringIO as io
+else:
+    import io
 
 from ngs_utils import jsontemplate
 from ngs_utils.file_utils import file_transaction, verify_file, safe_mkdir
@@ -1562,8 +1566,7 @@ def write_html_report(report, html_fpath, caption='',
             debug('__write_html: html_fpath=' + html_fpath)
             debug('__write_html: tx=' + tx)
             safe_mkdir(dirname(tx))
-
-            import io
+            
             with io.open(tx, 'w') as out_f:
                 for l in in_f:
                     l = _embed_css_and_scripts(l, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths)
@@ -1575,13 +1578,14 @@ def write_html_report(report, html_fpath, caption='',
                     if data_dict:
                         for keyword, text in data_dict.items():
                             l = _insert_into_html(l, text, keyword)
-                    try:
-                        u = unicode(l, 'utf-8')
-                    except TypeError:
-                        u = unicode(l)
-                    except:
-                        u = str(l)
-                    out_f.write(u)
+                    if six.PY2:
+                        try:
+                            l = unicode(l, 'utf-8')
+                        except TypeError:
+                            l = unicode(l)
+                        else:
+                            l = l.encode('ascii', 'ignore')
+                    out_f.write(l)
     return html_fpath
 
 
@@ -1775,15 +1779,13 @@ def __write_html(html, html_fpath, extra_js_fpaths, extra_css_fpaths, image_by_k
         debug('__write_html: html_fpath=' + html_fpath)
         debug('__write_html: tx=' + tx)
         safe_mkdir(dirname(tx))
-        import io
         with io.open(tx, 'w') as f:
-            try:
-                u = unicode(html, 'utf-8')
-            except TypeError:
-                u = unicode(html)
-            except NameError:  # py3
-                u = html
-            f.write(u)
+            if six.PY2:
+                try:
+                    html = unicode(html, 'utf-8')
+                except TypeError:
+                    html = unicode(html)
+            f.write(html)
 
     return html_fpath
 

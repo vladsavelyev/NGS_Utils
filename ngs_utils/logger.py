@@ -1,6 +1,5 @@
 import getpass
 import os
-
 from os import environ
 import socket
 import sys
@@ -10,6 +9,7 @@ import smtplib
 from email.mime.text import MIMEText
 import traceback
 from subprocess import check_output
+import six
 
 from ngs_utils.utils import is_cluster, is_local
 
@@ -34,9 +34,15 @@ def init(is_debug_=None, log_fpath_=None):
         is_debug = is_debug_
     if log_fpath_:
         set_log_path(log_fpath_)
-    info(check_output('hostname', shell=True).strip())
+    txt = check_output('hostname', shell=True)
+    if six.PY3:
+        txt = txt.decode("utf-8")
+    info(txt.strip())
     with open(os.devnull, 'w') as devnull:
-        username = check_output('finger $(whoami) | head -n1', shell=True, stderr=devnull).strip()
+        username = check_output('finger $(whoami) | head -n1', shell=True, stderr=devnull)
+        if six.PY3:
+            username = username.decode("utf-8")
+        username = username.strip()
         if not username:
             username = getpass.getuser()
         info(username)

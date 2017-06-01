@@ -6,6 +6,11 @@ import base64
 import mimetypes
 import traceback
 from bs4 import BeautifulSoup
+import six
+if six.PY2:
+    import StringIO as io
+else:
+    import io
 
 
 def execute(html_fpath):
@@ -29,13 +34,14 @@ def _compact_html(html_fpath):
     """ 1. Embed images in base64 format
         2. Replace anchors with javascript
     """
-    with open(html_fpath) as f:
+    with io.open(html_fpath) as f:
         t = f.read()
-        try:
-            html_unicode = unicode(t, 'utf-8')
-        except TypeError:
-            html_unicode = unicode(t)
-        except NameError:  # py3
+        if six.PY2:
+            try:
+                html_unicode = unicode(t, 'utf-8')
+            except TypeError:
+                html_unicode = unicode(t)
+        else:
             html_unicode = t
     base_dir = os.path.split(html_fpath)[0]
     soup = BeautifulSoup(html_unicode, 'lxml')
