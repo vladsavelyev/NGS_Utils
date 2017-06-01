@@ -3,10 +3,11 @@
 Combines multiple tab-delimited files into one XLSX file
 '''
 
-import sys, os
+import sys
+import os
 import xlsxwriter
 
-from .support import gzip_opener
+from tab_utils.support import gzip_opener
 
 def tab_combine(outfile, fnames ,delim='\t'):
     workbook = xlsxwriter.Workbook(outfile, {'strings_to_numbers': True})

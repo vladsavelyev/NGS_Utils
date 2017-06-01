@@ -3,8 +3,10 @@
 Filters a tab-delmited file based upon configurable critera
 '''
 
-import sys, os, gzip
-from .support import gzip_opener
+import sys
+import os
+import gzip
+from tab_utils.support import gzip_opener
 
 def usage():
     print(__doc__)

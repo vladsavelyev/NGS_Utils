@@ -10,8 +10,10 @@ predetermined size, it is truncated.
 This can then be fed into something like 'less' for paging
 '''
 
-import sys,os,math
-from .support import gzip_opener
+import sys
+import os
+import math
+from tab_utils.support import gzip_opener
 
 def tab_view(fname,preview_lines=100,delim='\t',max_size=None, min_size=0):
     colsizes = []

@@ -2,8 +2,10 @@
 '''
 Merges tab-delimited files together, combining common columns
 '''
-import sys,os, gzip
-from .support import filenames_to_uniq
+import sys
+import os
+import gzip
+from tab_utils.support import filenames_to_uniq
 
 
 class MergeException(Exception):

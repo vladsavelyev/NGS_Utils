@@ -3,9 +3,10 @@
 Adds a new constant column to each line in a tab-delimited file
 '''
 
-import sys,os
+import sys
+import os
 
-from .support import gzip_opener
+from tab_utils.support import gzip_opener
 
 def tab_tag(fname, colname, colvalue, colidx, delim='\t', noheader=False):
     f = gzip_opener(fname).open()

@@ -5,9 +5,10 @@ Re-orders columns in a tab delimited file
 (Reorders based upon column index, not name)
 '''
 
-import sys,os
+import sys
+import os
 
-from .support import gzip_opener
+from tab_utils.support import gzip_opener
 
 def tab_reorder(fname, column_order, delim='\t'):
     f = gzip_opener(fname).open()
