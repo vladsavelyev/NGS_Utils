@@ -111,8 +111,8 @@ def calc_region_number(bed_fpath):
 
 
 def get_genes_from_bed(bed_fpath, chrom_index=0, gene_index=3):
-    gene_keys_set = set()
-    gene_keys_list = list()
+    gene_set = set()
+    gene_list = list()
     with open(bed_fpath) as f:
         for line in f:
             if not line or not line.strip() or line.startswith('#'):
@@ -124,11 +124,11 @@ def get_genes_from_bed(bed_fpath, chrom_index=0, gene_index=3):
 
             chrom = tokens[chrom_index]
             for gn in tokens[gene_index].split(','):
-                if (gn, chrom) not in gene_keys_set:
-                    gene_keys_set.add((gn, chrom))
-                    gene_keys_list.append((gn, chrom))
+                if gn not in gene_set:
+                    gene_set.add(gn)
+                    gene_list.append(gn)
 
-    return gene_keys_set, gene_keys_list
+    return gene_set, gene_list
 
 
 def cut(fpath, col_num, output_fpath=None):
