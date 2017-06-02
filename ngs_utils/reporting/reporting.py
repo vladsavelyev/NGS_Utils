@@ -1580,8 +1580,6 @@ def write_html_report(report, html_fpath, caption='',
                             l = unicode(l, 'utf-8')
                         except TypeError:
                             l = unicode(l)
-                        else:
-                            l = l.encode('ascii', 'ignore')
                     out_f.write(l)
     return html_fpath
 
