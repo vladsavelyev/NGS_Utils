@@ -8,17 +8,15 @@ source:
   md5: e3f43fa72e3e0c1f65d01f1e2dbeceff
 
 build:
-  number: 0
+  number: 2
 
 requirements:
   build:
     - python
-    - setuptools
     - netifaces
 
   run:
     - python
-    - setuptools
     - ipyparallel >=4.0
     - python-dateutil
     - pyzmq
