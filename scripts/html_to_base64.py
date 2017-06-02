@@ -4,13 +4,9 @@ import os
 import sys
 import base64
 import mimetypes
-import traceback
 from bs4 import BeautifulSoup
 import six
-if six.PY2:
-    import StringIO as io
-else:
-    import io
+import io
 
 
 def execute(html_fpath):

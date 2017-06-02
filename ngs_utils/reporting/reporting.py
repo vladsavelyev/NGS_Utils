@@ -8,10 +8,7 @@ import traceback
 import datetime
 import itertools
 import six
-if six.PY2:
-    import StringIO as io
-else:
-    import io
+import io
 
 from ngs_utils import jsontemplate
 from ngs_utils.file_utils import file_transaction, verify_file, safe_mkdir
