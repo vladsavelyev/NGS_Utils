@@ -10,15 +10,16 @@ source:
 
 build:
   number: 0
+  skip: true  # [not py27 and not py3k]
 
 requirements:
   build:
     - python
-    - pip
     - numpy
     - six
   run:
-    - python
+    - python >=2.7  # [py2k]
+    - python >=3.5  # [py3k]
     - bedtools >=2.25
     - sambamba
     - htslib
