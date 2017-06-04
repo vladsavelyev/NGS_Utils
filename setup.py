@@ -45,7 +45,8 @@ setup(
              'sort_bed.py',
              'bed_file_from_gene_list.py',
              'html_to_base64.py',
-             'group_and_merge_by_gene.py'
+             'group_and_merge_by_gene.py',
+             'json_diff.py',
          ]]],
     classifiers=[
         'Environment :: Console',
