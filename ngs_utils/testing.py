@@ -69,7 +69,8 @@ class BaseTestCase(unittest.TestCase):
         if not exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def _check_file_throws(self, fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True, check_diff=True):
+    def _check_file_throws(self, fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True,
+                           check_diff=True, json_diff=False):
         assert isfile(fpath), 'file does not exist: ' + fpath
         assert getsize(fpath) > 0, 'file is empty: ' + fpath
 
@@ -82,6 +83,8 @@ class BaseTestCase(unittest.TestCase):
 
             if cmp_fpath and isfile(cmp_fpath):
                 cmdl = 'diff'
+                if json_diff:
+                    cmdl = 'json_diff.py'
                 if ignore_matching_lines:
                     if isinstance(ignore_matching_lines, str):
                         ignore_matching_lines = [ignore_matching_lines]
