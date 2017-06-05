@@ -317,6 +317,8 @@ class Comparator(object):
             elif name not in new_obj:
                 result[u'_remove'][name] = old_obj[name]
             else:
+                if old_obj[name] == old_obj or new_obj == new_obj[name]:
+                    sys.exit('Recursive dicts')
                 res = self._compare_elements(old_obj[name], new_obj[name])
                 if res is not None:
                     result[u'_update'][name] = res

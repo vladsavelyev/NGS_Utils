@@ -91,12 +91,10 @@ class BaseTestCase(unittest.TestCase):
                     for r in ignore_matching_lines:
                         cmdl += ' -I ' + subprocess.list2cmdline([r])
                 if wrapper:
-                    if isinstance(ignore_matching_lines, str):
-                        wrapper.split()
                     wrapper = subprocess.list2cmdline(wrapper)
                     if not fpath.endswith('.gz'):
-                        fpath = '<(' + wrapper + ' ' + fpath + ')'
-                        cmp_fpath = '<(' + wrapper + ' ' + cmp_fpath + ')'
+                        fpath = '<(cat ' + fpath + ' | ' + wrapper + ')'
+                        cmp_fpath = '<(cat ' + cmp_fpath + ' | ' + wrapper + ')'
                     else:
                         fpath = '<(gunzip -c ' + fpath + ' | ' + wrapper + ')'
                         cmp_fpath = '<(gunzip -c ' + cmp_fpath + ' | ' + wrapper + ')'
