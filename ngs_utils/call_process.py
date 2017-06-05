@@ -4,6 +4,7 @@ import collections
 import os
 import subprocess
 from os.path import isfile
+import six
 
 from ngs_utils.file_utils import file_transaction, verify_file
 from ngs_utils.logger import info, err
@@ -98,23 +99,20 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
     """Perform running and check results, raising errors for issues.
     """
     cmd, shell_arg, executable_arg = _normalize_cmd_args(cmd)
-    try:
-        s = subprocess.Popen(cmd, shell=shell_arg, executable=executable_arg,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT, close_fds=True, env=env, encoding='utf-8')
-    except TypeError:
-        s = subprocess.Popen(cmd, shell=shell_arg, executable=executable_arg,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT, close_fds=True, env=env)
+    s = subprocess.Popen(cmd, shell=shell_arg, executable=executable_arg,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, close_fds=True, env=env)
     debug_stdout = collections.deque(maxlen=100)
     while 1:
         line = s.stdout.readline()
         if line:
+            if six.PY3: line = line.decode()
             debug_stdout.append(line)
             info('  ' + line.rstrip())
         exitcode = s.poll()
         if exitcode is not None:
             for line in s.stdout:
+                if six.PY3: line = line.decode()
                 debug_stdout.append(line)
             if exitcode is not None and exitcode != 0:
                 error_msg = " ".join(cmd) if not isinstance(cmd, str) else cmd
