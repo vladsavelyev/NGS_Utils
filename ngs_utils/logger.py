@@ -102,7 +102,7 @@ error = err
 
 
 def critical(msg=''):
-    if isinstance(msg, str):
+    if isinstance(msg, six.string_types):
         err(msg, severity='critical')
     else:
         if not msg:

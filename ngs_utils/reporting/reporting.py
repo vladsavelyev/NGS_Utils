@@ -96,7 +96,7 @@ class Record:
         if value is None:
             pass
         elif self.metric.parse:
-            if isinstance(value, str):
+            if isinstance(value, six.string_types):
                 try:
                     value = int(value)
                 except ValueError:
@@ -252,7 +252,7 @@ class Metric:
         if unit and is_html:
             unit_str = '<span class=\'rhs\'>&nbsp;</span>' + unit
 
-        if isinstance(value, str):
+        if isinstance(value, six.string_types):
             if human_readable:
                 return '{value}{unit_str}'.format(**locals())
             else:
@@ -318,7 +318,7 @@ class BaseReport:
         self.display_name = display_name
         if not display_name:
             if sample:
-                if isinstance(sample, str):
+                if isinstance(sample, six.string_types):
                     self.display_name = sample
                 else:
                     self.display_name = sample.name
@@ -1211,7 +1211,7 @@ def make_cell_td(rec, class_=''):
         padding_style = ''
 
     if rec.url:
-        if isinstance(rec.url, str):
+        if isinstance(rec.url, six.string_types):
             html += '<a href="' + rec.url + '">' + rec.cell_contents + '</a>'
         else:  # varQC -- several variant callers for one sample are possible
             if len(rec.url) == 0:
@@ -1541,7 +1541,7 @@ def calc_cell_contents(report, rows):
             metric = rec.metric
 
             if metric.ok_threshold is not None:
-                if isinstance(metric.ok_threshold, str):
+                if isinstance(metric.ok_threshold, six.string_types):
                     rec_to_align_with = BaseReport.find_record(row.records, metric.ok_threshold)
                     if rec_to_align_with:
                         rec.text_color = rec_to_align_with.text_color

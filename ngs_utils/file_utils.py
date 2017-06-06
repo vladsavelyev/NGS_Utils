@@ -15,6 +15,7 @@ import collections
 import fnmatch
 import time
 from functools import reduce
+import six
 
 from ngs_utils.logger import info, err, warn, critical, debug
 
@@ -392,7 +393,7 @@ def is_pair(arg):
     return is_sequence(arg) and len(arg) == 2
 
 def is_string(arg):
-    return isinstance(arg, str)
+    return isinstance(arg, six.string_types)
 
 
 def locate(pattern, root=os.curdir):
@@ -670,7 +671,7 @@ def verify_file(fpath, description='', silent=False, is_critical=False, verify_s
         return None
 
     if cmp_f:
-        if isinstance(cmp_f, str):
+        if isinstance(cmp_f, six.string_types):
             cmp_f = [cmp_f]
         try:
             for cmp_f in cmp_f:
@@ -874,7 +875,7 @@ def dots_to_empty_cells(config, tsv_fpath):
 
 
 def __remove_tmpdirs(fnames):
-    if isinstance(fnames, str):
+    if isinstance(fnames, six.string_types):
         fnames = [fnames]
     for x in fnames:
         xdir = os.path.dirname(os.path.abspath(x))
@@ -883,7 +884,7 @@ def __remove_tmpdirs(fnames):
 
 
 def __remove_files(fnames):
-    if isinstance(fnames, str):
+    if isinstance(fnames, six.string_types):
         fnames = [fnames]
 
     for x in fnames:
@@ -956,7 +957,7 @@ def _flatten_plus_safe(tmp_dir, rollback_files):
     """
     tx_fpaths, orig_files = [], []
     for fnames in rollback_files:
-        if isinstance(fnames, str):
+        if isinstance(fnames, six.string_types):
             fnames = [fnames]
         for fname in fnames:
             tx_file = fname + '.tx'
