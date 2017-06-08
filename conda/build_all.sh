@@ -21,7 +21,7 @@ function build() {
 			FILENAME=$(basename $PACKAGE_PATH)
 			echo "Converting packages into $BASEDIR"
 			for PLATFORM in osx-64 linux-32 linux-64 ; do
-				if [-f $BASEDIR/$PLATFORM/$FILENAME ] ; then
+				if [ -f $BASEDIR/$PLATFORM/$FILENAME ] ; then
 				    echo "$BASEDIR/$PLATFORM/$FILENAME exists, skipping"
 			    else
 					conda convert -p $PLATFORM $PACKAGE_PATH -o $BASEDIR -f
