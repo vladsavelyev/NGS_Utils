@@ -28,32 +28,6 @@ except ImportError:
         futures = None
 
 
-@contextlib.contextmanager
-def cpmap(cores=1):
-    """Configurable parallel map context manager.
-
-    Returns appropriate map compatible function based on configuration:
-    - Local single core (the default)
-    - Multiple local cores
-    """
-    if int(cores) == 1:
-        yield itertools.imap
-    else:
-        if futures is None:
-            raise ImportError("concurrent.futures not available")
-        pool = futures.ProcessPoolExecutor(cores)
-        yield pool.map
-        pool.shutdown()
-
-def map_wrap(f):
-    """Wrap standard function to easily pass into 'map' processing.
-    """
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        return apply(f, *args, **kwargs)
-    return wrapper
-
-
 def safe_mkdir(dirpath, descriptive_name=''):
     if isdir(dirpath):
         return dirpath

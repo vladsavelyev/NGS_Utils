@@ -2,23 +2,48 @@ import sys
 import os
 import gzip
 
+def open_gzipsafe(f, mode='r'):
+    if f.endswith('.gz') or f.endswith('.gz.tx') or f.endswith('.gzip.tx'):
+        try:
+            h = gzip.open(f, mode=mode + 't')
+        except IOError as e:
+            # print('Error opening gzip ' + f + ': ' + str(e) + ', opening as plain text')
+            return open(f, mode=mode)
+        else:
+            if 'w' in mode:
+                return h
+            else:
+                try:
+                    h.read(1)
+                except IOError as e:
+                    # print('Error opening gzip ' + f + ': ' + str(e) + ', opening as plain text')
+                    h.close()
+                    return open(f, mode=mode)
+                else:
+                    h.close()
+                    h = gzip.open(f, mode=mode + 't')
+                    return h
+    else:
+        return open(f, mode=mode)
+
 class gzip_opener:
-    '''
+    """
     A Python 2.6 class to handle 'with' opening of text files that may
     or may not be gzip compressed.
-    '''
-    def __init__(self,fname):
+    """
+    def __init__(self, fname):
         self.fname = fname
+
     def open(self):
         return self.__enter__()
+
     def __enter__(self):
         if self.fname == '-':
             self.f = sys.stdin
-        elif self.fname[-3:] == '.gz':
-            self.f = gzip.open(os.path.expanduser(self.fname))
         else:
-            self.f = open(os.path.expanduser(self.fname))
+            self.f = open_gzipsafe(os.path.expanduser(self.fname))
         return self.f
+
     def __exit__(self, type, value, traceback):
         if self.f != sys.stdin:
             self.f.close()
