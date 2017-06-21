@@ -2,7 +2,7 @@
 
 if [ ! -z $2 ]
 then
-    : tabutils view -l $1 $2
+    tabutils view -l $1 $2
 else
-    : tabutils view -l 1000 $1
+    tabutils view -l 1000 $1
 fi
