@@ -1,0 +1,3 @@
+#!/bin/bash
+
+tabutils less $1

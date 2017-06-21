@@ -38,7 +38,6 @@ setup(
     setup_requires=['numpy'],
     scripts=[path for path in
          [join('scripts', fn) for fn in [
-             'tabutils',
              'standardize_bed.py',
              'split_bed.py',
              'qstat.py',
@@ -47,6 +46,9 @@ setup(
              'html_to_base64.py',
              'group_and_merge_by_gene.py',
              'json_diff.py',
+             'tabutils',
+             'tsv',
+             'cols',
          ]]],
     classifiers=[
         'Environment :: Console',

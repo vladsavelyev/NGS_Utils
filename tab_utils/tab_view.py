@@ -15,7 +15,7 @@ import os
 import math
 from tab_utils.support import gzip_opener
 
-def tab_view(fname,preview_lines=100,delim='\t',max_size=None, min_size=0):
+def tab_view(fname,preview_lines=1000,delim='\t',max_size=None, min_size=0):
     colsizes = []
     coltypes = []
     preview_buf = []

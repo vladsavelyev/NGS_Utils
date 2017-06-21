@@ -16,7 +16,7 @@ if [ "$1" == "" ] || [ "$1" == "help" ] && [ "$2" == "" ]; then
     exit -1
 fi
 
-LIBS=`python -c 'import tab_utils, os; print os.path.dirname(tab_utils.__file__)'`
+LIBS=`python -c 'import tab_utils, os; print(os.path.dirname(tab_utils.__file__))'`
 
 if [ "$1" == "help" ]; then
     action=tab_$2.py
