@@ -9,17 +9,20 @@ import six
 from datetime import datetime
 
 from ngs_utils.file_utils import verify_dir, verify_file
+from ngs_utils.utils import is_travis
 
 
 def info(msg=''):
     sys.stdout.write(msg + '\n')
 
-def call(cmdl):
+def call(cmdl, suppress_output=False):
     info(cmdl if isinstance(cmdl, six.string_types) else subprocess.list2cmdline(cmdl))
     if isinstance(cmdl, six.string_types):
-        return subprocess.call(cmdl, shell=True, executable='/bin/bash')
+        return subprocess.call(cmdl, shell=True, executable='/bin/bash',
+                               stdout=subprocess.DEVNULL if suppress_output else None)
     else:
-        return subprocess.call(cmdl)
+        return subprocess.call(cmdl,
+                               stdout=subprocess.DEVNULL if suppress_output else None)
 
 def check_call(cmdl):
     info(cmdl if isinstance(cmdl, six.string_types) else subprocess.list2cmdline(cmdl))
@@ -103,7 +106,7 @@ class BaseTestCase(unittest.TestCase):
                     fpath = '<(gunzip -c ' + fpath + ')'
                     cmp_fpath = '<(gunzip -c ' + cmp_fpath + ')'
                 cmdl += ' ' + fpath + ' ' + cmp_fpath
-                ret_code = call(cmdl)
+                ret_code = call(cmdl, suppress_output=not is_travis())
                 assert ret_code == 0, 'diff returned non-zero: ' + fpath
 
     @staticmethod
