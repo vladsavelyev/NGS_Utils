@@ -22,15 +22,8 @@ def index_bam(bam_fpath, sambamba=None, samtools=None):
     sambamba = sambamba or get_executable()
     indexed_bam = bam_fpath + '.bai'
     if not can_reuse(indexed_bam, cmp_f=bam_fpath, silent=True):
-        # info('Indexing BAM, writing ' + indexed_bam + '...')
         cmdline = '{sambamba} index {bam_fpath}'.format(**locals())
         res = run(cmdline, output_fpath=indexed_bam, stdout_to_outputfile=False, stdout_tx=False)
-        # if not isfile(indexed_bam) or getmtime(indexed_bam) < getmtime(bam_fpath):
-        #     samtools = samtools or get_system_path(cnf, 'samtools')
-        #     cmdline = '{samtools} index {bam_fpath}'.format(**locals())
-        #     call(cnf, cmdline)
-    # else:
-    #     debug('Actual "bai" index exists.')
 
 
 def call_sambamba(cmdl, bam_fpath, output_fpath=None, command_name='', no_index=False):
@@ -57,7 +50,7 @@ def sambamba_depth(work_dir, bed, bam, depth_thresholds=None,
     if can_reuse(output_fpath, [bam, bed]):
         return output_fpath
 
-    thresholds_str = ''.join([' -T' + str(d) for d in depth_thresholds])
+    thresholds_str = ''.join([' -T' + str(int(d)) for d in depth_thresholds if d is not None])
     cmdline = ('depth region -F "not duplicate and not failed_quality_control" '
                '-t {threads} -L {bed} {thresholds_str} {bam}').format(**locals())
 

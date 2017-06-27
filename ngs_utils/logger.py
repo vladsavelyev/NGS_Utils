@@ -1,7 +1,5 @@
 import getpass
 import os
-from os import environ
-import socket
 import sys
 from datetime import datetime
 from time import sleep
@@ -10,8 +8,8 @@ from email.mime.text import MIMEText
 import traceback
 from subprocess import check_output
 import six
+from os.path import exists, getctime
 
-from ngs_utils.file_utils import swap_file
 from ngs_utils.utils import is_cluster, is_local
 
 log_fpath = None
@@ -257,3 +255,10 @@ def _write_to_file(text):
                 open(log_fpath, 'w').write(text)
             except IOError:
                 sys.stderr.write('Logging: cannot write to ' + log_fpath + '\n')
+
+
+def swap_file(fpath):
+    if exists(fpath):
+        last_changed = datetime.fromtimestamp(getctime(fpath))
+        prev_fpath = fpath + '_' + last_changed.strftime('%Y_%m_%d_%H_%M_%S')
+        os.rename(fpath, prev_fpath)

@@ -994,10 +994,3 @@ def is_gz(fpath, mode='rb'):
         else:
             h.close()
             return True
-
-
-def swap_file(fpath):
-    if exists(fpath):
-        last_changed = datetime.fromtimestamp(getctime(fpath))
-        prev_fpath = fpath + '_' + last_changed.strftime('%Y_%m_%d_%H_%M_%S')
-        os.rename(fpath, prev_fpath)
