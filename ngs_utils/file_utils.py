@@ -3,8 +3,9 @@
 
 import shutil
 import os
+from datetime import datetime
 from os.path import isfile, isdir, getsize, exists, basename, join, abspath, splitext, \
-    islink, dirname, realpath, getmtime
+    islink, dirname, realpath, getmtime, getctime
 import gzip
 import tempfile
 import contextlib
@@ -994,3 +995,9 @@ def is_gz(fpath, mode='rb'):
             h.close()
             return True
 
+
+def swap_file(fpath):
+    if exists(fpath):
+        last_changed = datetime.fromtimestamp(getctime(fpath))
+        prev_fpath = fpath + '_' + last_changed.strftime('%Y_%m_%d_%H_%M_%S')
+        os.rename(fpath, prev_fpath)

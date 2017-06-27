@@ -11,6 +11,7 @@ import traceback
 from subprocess import check_output
 import six
 
+from ngs_utils.file_utils import swap_file
 from ngs_utils.utils import is_cluster, is_local
 
 log_fpath = None
@@ -28,15 +29,15 @@ warning_msgs = []
 critical_msgs = []
 
 
-def init(is_debug_=None, log_fpath_=None):
+def init(is_debug_=None, log_fpath_=None, save_previous=False):
     if is_debug_:
         global is_debug
         is_debug = is_debug_
     if log_fpath_:
-        set_log_path(log_fpath_)
+        set_log_path(log_fpath_, save_previous=save_previous)
     txt = check_output('hostname', shell=True)
     if six.PY3:
-        txt = txt.decode("utf-8")
+        txt = txt.decode('utf-8')
     info(txt.strip())
     with open(os.devnull, 'w') as devnull:
         username = check_output('finger $(whoami) | head -n1', shell=True, stderr=devnull)
@@ -53,15 +54,17 @@ def init(is_debug_=None, log_fpath_=None):
 
 
 past_msgs = []
-def set_log_path(log_fpath_):
+def set_log_path(log_fpath_, save_previous=False):
     assert log_fpath_
     global log_fpath, past_msgs
     log_fpath = log_fpath_
+    if save_previous:
+        swap_file(log_fpath)
     for msg in past_msgs:
         _write_to_file(msg)
     past_msgs = []
-    
-    
+
+
 def set_smtp_host(smtp_host_):
     if smtp_host_:
         global smtp_host
