@@ -15,7 +15,8 @@ def init(name, package_name, setup_py_fpath, kwargs=None):
     if abspath(dirname(setup_py_fpath)) != abspath(os.getcwd()):
         sys.exit('Please, change to ' + dirname(setup_py_fpath) + ' before running setup.py\n')
 
-    if len(sys.argv) == 2:
+    cmds = [a for a in sys.argv[1:] if not a.startswith('-')]
+    if cmds:
         cmd = sys.argv[1]
         if cmd == 'tag':
             version = write_version_py(package_name, kwargs=kwargs)
@@ -37,16 +38,7 @@ def init(name, package_name, setup_py_fpath, kwargs=None):
             clean_package(package_name, '.')
             sys.exit()
 
-    # print('Upgrading pip and setuptools...')
-    # try:
-    #     os.subprocess.call('pip install --upgrade pip', shell=True)
-    #     os.subprocess.call('pip install --upgrade --ignore-installed setuptools', shell=True)
-    # except Exception:
-    #     err('Cannot update pip and setuptools, that might cause errors during the following installation')
-
     version = write_version_py(package_name, kwargs=kwargs)
-    print('Installing ' + name + ((' version ' + str(version)) if version else ''))
-    print('')
     return version
 
 
