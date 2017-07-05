@@ -3,6 +3,7 @@
 
 import shutil
 import os
+import string
 from datetime import datetime
 from os.path import isfile, isdir, getsize, exists, basename, join, abspath, splitext, \
     islink, dirname, realpath, getmtime, getctime
@@ -994,3 +995,10 @@ def is_gz(fpath, mode='rb'):
         else:
             h.close()
             return True
+
+
+def str_to_filename(s):
+    valid_chars = "-_.%s%s" % (string.ascii_letters, string.digits)
+    s = ''.join([c if c in valid_chars else '_' for c in s])
+    return s
+
