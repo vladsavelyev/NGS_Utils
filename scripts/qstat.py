@@ -1,10 +1,4 @@
 #!/usr/bin/env python
-import sys
-if not ((2, 7) <= sys.version_info[:2]):
-    sys.exit('Python 2.7 and 3 ares supported '
-             '(you are running %d.%d.%d)' %
-             (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-
 from itertools import repeat, count
 import subprocess
 import sys
