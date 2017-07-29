@@ -643,7 +643,7 @@ class FullReport(BaseReport):
         if self.sample_reports:
             sample_report = self.sample_reports[0]
             for record in sample_report.records:
-                if record.metric and record.metric.common:  #TODO: why can record.metric be None?
+                if record.metric and record.metric.common:  # TODO: why can record.metric be None?
                     common_records.append(record)
         return common_records
 
