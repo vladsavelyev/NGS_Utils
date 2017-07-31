@@ -22,6 +22,9 @@ except ImportError:
     pass
 
 
+EMBED_ASSETS = True
+
+
 def get_int_val(v):
     v = _get_num(v)
     return int(v) if v else None
@@ -368,7 +371,7 @@ class BaseReport:
         self.tsv_fpath = fpath
         return fpath
 
-    def save_html(self, output_fpath, caption='', #type_=None,
+    def save_html(self, output_fpath, caption='',  #type_=None,
                   extra_js_fpaths=list(), extra_css_fpaths=list(),
                   tmpl_fpath=None, data_dict=None):
         # class Encoder(JSONEncoder):
@@ -1655,14 +1658,14 @@ def _embed_images(html, report_dirpath, image_by_key):
         return html
 
     for key, fpath in image_by_key.items():
-        debug('Embedding image ' + fpath + '...', ending=' ')
+        debug('Embedding image ' + fpath + '...')
         if not verify_file(fpath, silent=True):
             fpath = join(static_dirpath, join(*fpath.split('/')))
             if not verify_file(fpath):
                 continue
 
         old_piece = ptrn.format(key=key)
-        if logger.is_debug:  # Not embedding, just adding links
+        if not EMBED_ASSETS:  # Not embedding, just adding links
             new_piece = old_piece.replace(key, relpath(fpath, report_dirpath))
         else:
             with open(fpath, 'rb') as f:
@@ -1707,7 +1710,7 @@ def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css
             line = line_tmpl.format(file_rel_path=rel_fpath)
             l_tag_formatted = l_tag.format(name=rel_fpath)
 
-            if logger.is_debug:  # not embedding, just adding links
+            if not EMBED_ASSETS:  # not embedding, just adding links
                 aux_dirpath = safe_mkdir(join(report_dirpath, aux_dirname))
                 fpath_in_aux = join(aux_dirpath, rel_fpath)
                 safe_mkdir(dirname(fpath_in_aux))
@@ -1725,7 +1728,7 @@ def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css
                         html = ''.join(i for i in html if ord(i) < 128)
                         contents = ''.join(i for i in contents if ord(i) < 128)
                         if line in html:
-                            debug('Embedding ' + rel_fpath + '...', ending=' ')
+                            debug('Embedding ' + rel_fpath + '...')
                             html = html.replace(line, l_tag_formatted + '\n' + contents + '\n' + r_tag)
                     except Exception:
                         err()
@@ -1755,7 +1758,7 @@ def _insert_into_html(html, text, keyword):
 
 
 def write_static_html_report(data_dict, html_fpath, tmpl_fpath=None,
-        extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None):
+                             extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None):
 
     tmpl_fpath = tmpl_fpath or static_template_fpath
     with open(tmpl_fpath) as f: html = f.read()
