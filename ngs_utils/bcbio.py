@@ -11,13 +11,12 @@ from ngs_utils.call_process import run
 from ngs_utils.config import load_yaml_config
 from ngs_utils.file_utils import adjust_path, verify_dir, file_exists, safe_mkdir, verify_file, add_suffix
 from ngs_utils.logger import critical, debug, info, err, warn
-
-from ngs_reporting.utils import get_target_genes, is_small_target
-
-import variant_filtering as vf
+from ngs_utils.key_genes_utils import get_target_genes, is_small_target
+import ngs_utils.variant_filtering as vf
 
 
-CALLER = 'vardict'
+CALLER_PRIORITY = ['vardict', 'freebayes', 'mutect', 'gatk-haplotype']
+MAIN_CALLER = 'vardict'
 
 
 class BcbioSample(BaseSample):
@@ -104,8 +103,15 @@ class BcbioSample(BaseSample):
             variantcallers = sample_info['algorithm'].get('variantcaller') or []
             if isinstance(variantcallers, six.string_types):
                 variantcallers = [variantcallers]
-            if CALLER not in variantcallers:
-                warn('Warning: "' + CALLER + '" is not in the variant callers (' + str(variantcallers) + ')')
+            for caller in CALLER_PRIORITY:
+                if caller in variantcallers:
+                    global MAIN_CALLER
+                    MAIN_CALLER = caller
+                    break
+            if MAIN_CALLER is None:
+                warn('Warning: none of the callers "' + str(CALLER_PRIORITY) +
+                     '" found in the variant callers ' + str(variantcallers))
+            MAIN_CALLER = variantcallers[0]
 
     def find_mutation_files(self, passed=True):
         return _find_mutation_files(join(self.dirpath, BcbioProject.varfilter_dir), passed)
@@ -124,15 +130,15 @@ class BcbioSample(BaseSample):
         
     def find_annotated_vcf(self):
         return verify_file(join(self.dirpath, BcbioProject.varannotate_dir,
-                                self.name + '-' + CALLER + BcbioProject.anno_vcf_ending + '.gz'), silent=True)
+                                self.name + '-' + MAIN_CALLER + BcbioProject.anno_vcf_ending + '.gz'), silent=True)
 
     def find_filt_vcf(self, passed=False):
-        path = join(self.dirpath, BcbioProject.varfilter_dir, self.name + '-' + CALLER +
+        path = join(self.dirpath, BcbioProject.varfilter_dir, self.name + '-' + MAIN_CALLER +
                     ((BcbioProject.filt_vcf_ending + '.gz') if not passed else BcbioProject.pass_filt_vcf_ending))
         return verify_file(path, silent=True)
 
     def find_mutation_file(self, passed=True):
-        mut_fname = CALLER + '.' + vf.mut_file_ext
+        mut_fname = MAIN_CALLER + '.' + vf.mut_file_ext
         mut_fpath = join(self.dirpath, BcbioProject.varfilter_dir, mut_fname)
         if passed:
             mut_fpath = add_suffix(mut_fpath, vf.mut_pass_suffix)
@@ -459,8 +465,8 @@ class BcbioProject:
         return batch_by_name
 
     def find_vcf_file(self, batch_name, silent=False):
-        vcf_fname = batch_name + '-' + CALLER + '.vcf'
-        annot_vcf_fname = batch_name + '-' + CALLER + '-annotated.vcf'
+        vcf_fname = batch_name + '-' + MAIN_CALLER + '.vcf'
+        annot_vcf_fname = batch_name + '-' + MAIN_CALLER + '-annotated.vcf'
 
         vcf_annot_fpath_gz = adjust_path(join(self.date_dir, annot_vcf_fname + '.gz'))  # in datestamp
         var_raw_vcf_annot_fpath_gz = adjust_path(join(self.raw_var_dir, annot_vcf_fname + '.gz'))  # in datestamp/var/raw
@@ -530,13 +536,13 @@ class BcbioProject:
             debug('Not found uncompressed VCF in the datestamp/var dir ' + var_vcf_fpath)
 
         if not silent:
-            warn('Warning: no VCF found for batch ' + batch_name + ', ' + CALLER + ', gzip or '
+            warn('Warning: no VCF found for batch ' + batch_name + ', ' + MAIN_CALLER + ', gzip or '
                 'uncompressed version in the datestamp directory.')
         return None
 
     @staticmethod
     def find_vcf_file_from_sample_dir(sample, silent=False):
-        vcf_fname = sample.get_name_for_files() + '-' + CALLER + '.vcf'
+        vcf_fname = sample.get_name_for_files() + '-' + MAIN_CALLER + '.vcf'
         
         sample_var_dirpath = join(sample.dirpath, 'var')
         vcf_fpath_gz = adjust_path(join(sample.dirpath, vcf_fname + '.gz'))  # in var
@@ -589,7 +595,7 @@ class BcbioProject:
             debug('Not found VCF in the var/raw/ dir ' + var_raw_vcf_fpath)
 
         if not silent:
-            warn('Warning: no VCF found for ' + sample.name + ', ' + CALLER + ', gzip or uncompressed version in and outside '
+            warn('Warning: no VCF found for ' + sample.name + ', ' + MAIN_CALLER + ', gzip or uncompressed version in and outside '
                 'the var directory. Phenotype is ' + str(sample.phenotype))
         return None
 
@@ -648,15 +654,16 @@ class BcbioProject:
         elif not silent:
             err('Log file not found as ' + ', '.join(options))
 
-    def get_target_genes(self):
-        return get_target_genes(self.genome_build, self.coverage_bed)
+    def get_target_genes(self, get_key_genes_file=None):
+        return get_target_genes(self.genome_build, self.coverage_bed,
+                                get_key_genes_file=get_key_genes_file)
         
     def is_small_target(self):
         return is_small_target(self.coverage_bed)
 
 
 def _find_mutation_files(base_dir, passed=True):
-    mut_fname = CALLER + '.' + vf.mut_file_ext
+    mut_fname = MAIN_CALLER + '.' + vf.mut_file_ext
     mut_fpath = join(base_dir, mut_fname)
     single_mut_fpath = add_suffix(mut_fpath, vf.mut_single_suffix)
     paired_mut_fpath = add_suffix(mut_fpath, vf.mut_paired_suffix)
