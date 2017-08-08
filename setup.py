@@ -49,6 +49,7 @@ setup(
              'tabutils',
              'tsv',
              'cols',
+             'hg19_addchr.py',
          ]]],
     classifiers=[
         'Environment :: Console',
