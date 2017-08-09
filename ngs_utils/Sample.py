@@ -7,7 +7,7 @@ class BaseSample:
     def __init__(self, name=None, dirpath=None, work_dir=None, bam=None, bed=None, vcf=None, genome=None,
                  targqc_dirpath=None, clinical_report_dirpath=None,
                  normal_match=None, sv_fpath=None, sv_bed=None,
-                 l_fpath=None, r_fpath=None, **kwargs):
+                 l_fpath=None, r_fpath=None, phenotype=None, **kwargs):
         self.name = name
         self.dirpath = dirpath
         self.work_dir = work_dir
@@ -16,9 +16,9 @@ class BaseSample:
         self.r_fpath = r_fpath
         self.is_wgs = False
         self.vcf = vcf
-        self.phenotype = None
+        self.phenotype = phenotype
         self.gender = None
-        self.genome = None
+        self.genome = genome
         self.var_dirpath = None
         self.normal_match = normal_match
         self.min_af = None
