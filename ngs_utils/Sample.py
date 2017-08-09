@@ -28,6 +28,11 @@ class BaseSample:
         for k, v in kwargs.items():
             self.__dict__[k] = v
 
+    # For Python 3
+    def __lt__(self, other):
+        return self.key_to_sort() < other.key_to_sort()
+
+    # For Python 2
     def __cmp__(self, other):
         return self.key_to_sort().__cmp__(other.key_to_sort())
 
