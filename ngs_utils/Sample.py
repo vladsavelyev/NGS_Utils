@@ -34,7 +34,7 @@ class BaseSample:
 
     # For Python 2
     def __cmp__(self, other):
-        return self.key_to_sort().__cmp__(other.key_to_sort())
+        return self.key_to_sort() < other.key_to_sort()
 
     def key_to_sort(self):
         return BaseSample.natsort_key(self.name)
