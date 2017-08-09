@@ -26,6 +26,7 @@ function build() {
         else
             echo "Building $PACKAGE_PATH"
             conda build $NAME $CHANNELS --py $PY
+            anaconda upload $PACKAGE_PATH
             BASEDIR=$(dirname $(dirname $PACKAGE_PATH))
             FILENAME=$(basename $PACKAGE_PATH)
             echo "Converting packages into $BASEDIR"
