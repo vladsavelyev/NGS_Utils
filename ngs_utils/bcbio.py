@@ -1,6 +1,8 @@
 import re
 
 import copy
+from collections import defaultdict
+
 import six
 import yaml
 import sys
@@ -243,6 +245,16 @@ class Batch:
         return self.name
 
 
+# class Caller:
+#     def __init__(self, name=None, is_germline=False):
+#         self.name = name
+#         self.is_germline = is_germline
+#         self.samples = []
+#
+#     def __str__(self):
+#         return self.name
+
+
 class BcbioProject:
     varfilter_dir = 'varFilter'
     varannotate_dir = 'varAnnotate'
@@ -281,6 +293,7 @@ class BcbioProject:
 
         self.samples = []
         self.batch_by_name = dict()
+        self.samples_by_caller = defaultdict(list)  # (caller, is_germline) -> [samples]
 
         self.variant_regions_bed = None
         self.sv_regions_bed = None          # "sv_regions" or "variant_regions"
@@ -360,6 +373,10 @@ class BcbioProject:
             info('RNAseq')
         elif self.coverage_interval:
             info('Coverage interval: ' + str(self.coverage_interval))
+
+        for s in self.samples:
+            for caller in s.variantcallers:
+                self.samples_by_caller[(caller, s.phenotype == 'germline')].append(s)
 
         debug('Done loading bcbio project ' + self.project_name)
         
@@ -660,8 +677,8 @@ class BcbioProject:
             if verify_file(fpath, silent=True):
                 return fpath
 
-    def find_mutation_files(self, passed=True, caller=MAIN_CALLER):
-        return _find_mutation_files(self.var_dir, passed=passed, caller=caller)
+    def find_mutation_files(self, passed=True, caller=MAIN_CALLER, is_germline=False):
+        return _find_mutation_files(self.var_dir, passed=passed, caller=caller, is_germline=is_germline)
     
     def find_in_log(self, fname, is_critical=False, silent=True):
         options = [join(self.log_dir, fname),
@@ -682,8 +699,8 @@ class BcbioProject:
         return is_small_target(self.coverage_bed)
 
 
-def _find_mutation_files(base_dir, passed=True, caller=MAIN_CALLER):
-    mut_fname = caller + '.' + vf.mut_file_ext
+def _find_mutation_files(base_dir, passed=True, caller=MAIN_CALLER, is_germline=False):
+    mut_fname = caller + ('-germline' if is_germline else '') + '.' + vf.mut_file_ext
     mut_fpath = join(base_dir, mut_fname)
     single_mut_fpath = add_suffix(mut_fpath, vf.mut_single_suffix)
     paired_mut_fpath = add_suffix(mut_fpath, vf.mut_paired_suffix)
