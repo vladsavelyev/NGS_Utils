@@ -33,7 +33,6 @@ class BcbioSample(BaseSample):
         self.project_tag = None
         self.genome_build = None
         self.sample_info = dict()
-        self.fastq_files = None
 
         self.is_rnaseq = None
         self.is_wgs = None
@@ -60,8 +59,6 @@ class BcbioSample(BaseSample):
 
         if 'description_original' in sample_info:
             self.old_name = str(sample_info['description_original']).replace('.', '_')
-        self.fastq_files = sample_info['files']
-
         self.genome_build = sample_info['genome_build']
         self.variant_regions_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('variant_regions'))
         self.sv_regions_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('sv_regions')) or self.variant_regions_bed
@@ -92,6 +89,17 @@ class BcbioSample(BaseSample):
         if isfile(bam) and verify_bam(bam):
             self.bam = bam
         else:
+            input_file = self.sample_info['files']
+            if isinstance(input_file, six.string_types) and input_file.endswith('.bam'):
+                debug('Not found BAM file in final, but bcbio was run from BAMs')
+                if not input_file.startswith('/'):
+                    input_file = abspath(join(self.bcbio_project.work_dir, pardir, input_file))
+                if verify_file(input_file):
+                    debug('Using BAM file from input YAML ' + input_file)
+                    self.bam = input_file
+                else:
+                    debug('Input BAM file for sample ' + self.name + ' in YAML ' + input_file + ' does not exist')
+        if not self.bam:
             warn('No BAM file found for ' + self.name)
 
         if self.is_rnaseq:
