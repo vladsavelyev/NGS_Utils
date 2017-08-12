@@ -90,6 +90,8 @@ class BcbioSample(BaseSample):
             self.bam = bam
         else:
             input_file = self.sample_info['files']
+            if isinstance(input_file, list):
+                input_file = input_file[0]
             if isinstance(input_file, six.string_types) and input_file.endswith('.bam'):
                 debug('Not found BAM file in final, but bcbio was run from BAMs')
                 if not input_file.startswith('/'):
