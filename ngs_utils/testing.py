@@ -74,7 +74,7 @@ class BaseTestCase(unittest.TestCase):
             os.makedirs(self.results_dir)
 
     def _check_file_throws(self, fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True,
-                           check_diff=True, json_diff=False):
+                           check_diff=True):
         assert isfile(fpath), 'file does not exist: ' + fpath
         assert getsize(fpath) > 0, 'file is empty: ' + fpath
 
@@ -84,30 +84,29 @@ class BaseTestCase(unittest.TestCase):
                 cmp_fpath = join(self.gold_standard_dir, relpath(fpath, self.results_dir))
             elif isfile(get_prev(fpath)):
                 cmp_fpath = get_prev(fpath)
+            assert cmp_fpath, 'cmp_file not found (no gold standard dir or *_prev file)'
+            assert isfile(cmp_fpath), 'cmp_file ' + cmp_fpath + ' not found'
 
-            if cmp_fpath and isfile(cmp_fpath):
-                cmdl = 'diff'
-                if json_diff:
-                    cmdl = 'json_diff.py'
-                if ignore_matching_lines:
-                    if isinstance(ignore_matching_lines, six.string_types):
-                        ignore_matching_lines = [ignore_matching_lines]
-                    for r in ignore_matching_lines:
-                        cmdl += ' -I ' + subprocess.list2cmdline([r])
-                if wrapper:
-                    wrapper = subprocess.list2cmdline(wrapper)
-                    if not fpath.endswith('.gz'):
-                        fpath = '<(cat ' + fpath + ' | ' + wrapper + ')'
-                        cmp_fpath = '<(cat ' + cmp_fpath + ' | ' + wrapper + ')'
-                    else:
-                        fpath = '<(gunzip -c ' + fpath + ' | ' + wrapper + ')'
-                        cmp_fpath = '<(gunzip -c ' + cmp_fpath + ' | ' + wrapper + ')'
-                elif fpath.endswith('.gz'):
-                    fpath = '<(gunzip -c ' + fpath + ')'
-                    cmp_fpath = '<(gunzip -c ' + cmp_fpath + ')'
-                cmdl += ' ' + fpath + ' ' + cmp_fpath
-                ret_code = call(cmdl, suppress_output=not is_travis())
-                assert ret_code == 0, 'diff returned non-zero: ' + fpath
+            cmdl = 'diff'
+            if ignore_matching_lines:
+                if isinstance(ignore_matching_lines, six.string_types):
+                    ignore_matching_lines = [ignore_matching_lines]
+                for r in ignore_matching_lines:
+                    cmdl += ' -I ' + subprocess.list2cmdline([r])
+            if wrapper:
+                wrapper = subprocess.list2cmdline(wrapper)
+                if not fpath.endswith('.gz'):
+                    fpath = '<(cat ' + fpath + ' | ' + wrapper + ')'
+                    cmp_fpath = '<(cat ' + cmp_fpath + ' | ' + wrapper + ')'
+                else:
+                    fpath = '<(gunzip -c ' + fpath + ' | ' + wrapper + ')'
+                    cmp_fpath = '<(gunzip -c ' + cmp_fpath + ' | ' + wrapper + ')'
+            elif fpath.endswith('.gz'):
+                fpath = '<(gunzip -c ' + fpath + ')'
+                cmp_fpath = '<(gunzip -c ' + cmp_fpath + ')'
+            cmdl += ' ' + fpath + ' ' + cmp_fpath
+            ret_code = call(cmdl, suppress_output=not is_travis())
+            assert ret_code == 0, 'diff returned non-zero: ' + fpath
 
     @staticmethod
     def _check_dir_not_empty(dirpath, description=None):
