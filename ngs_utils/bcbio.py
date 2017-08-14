@@ -212,8 +212,11 @@ class BcbioSample(BaseSample):
                 return verify_file(fpath, silent=True)
 
     def find_coverage_stats(self):
-        return verify_file(join(self.dirpath, 'qc', 'coverage', self.name + '_coverage.bed'), silent=True)
-    
+        sname = self.name
+        if self.phenotype == 'germline':
+            sname = re.sub(r'-germline$', '', sname)
+        return verify_file(join(self.dirpath, 'qc', 'coverage', sname + '_coverage.bed'), silent=True)
+
     def find_ngs_report(self, silent=False):
         return \
             verify_file(join(self.bcbio_project.date_dir, BcbioProject.reports_dir,
