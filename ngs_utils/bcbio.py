@@ -213,9 +213,11 @@ class BcbioSample(BaseSample):
 
     def find_coverage_stats(self):
         sname = self.name
+        dirpath = self.dirpath
         if self.phenotype == 'germline':
             sname = re.sub(r'-germline$', '', sname)
-        return verify_file(join(self.dirpath, 'qc', 'coverage', sname + '_coverage.bed'), silent=True)
+            dirpath = re.sub(r'-germline$', '', dirpath)
+        return verify_file(join(dirpath, 'qc', 'coverage', sname + '_coverage.bed'), silent=True)
 
     def find_ngs_report(self, silent=False):
         return \
@@ -403,7 +405,9 @@ class BcbioProject:
                 metrics_by_sample[s_data['description']] = s_data.get('summary', dict()).get('metrics')
             for s in self.samples:
                 s.sample_info['metrics'] = metrics_by_sample[s.name]
-            
+                if s.phenotype == 'germline':
+                    s.sample_info['metrics'] = metrics_by_sample[re.sub(r'-germline$', '', s.name)]
+
     # def _load_target_info(self):
     #     interval = None
     #     target_info_file = join(self.date_dir, 'multiqc', 'report', 'metrics', 'target_info.yaml')
