@@ -244,7 +244,7 @@ class BcbioSample(BaseSample):
         return self.get_metric(['Avg_coverage', 'Avg_coverage_per_region'])
     
     def get_reads_count(self):
-        return self.get_metric('Total_reads')
+        return self.get_metric(['Total_reads', 'Total reads'])
     
     def is_dedupped(self):
         return self.sample_info.get('algorithm', {}).get('mark_duplicates', False)
