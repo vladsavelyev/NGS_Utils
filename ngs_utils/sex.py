@@ -1,3 +1,4 @@
+from __future__ import division
 import pybedtools
 from os.path import join, dirname, abspath
 from pybedtools import BedTool

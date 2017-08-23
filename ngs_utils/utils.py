@@ -1,3 +1,4 @@
+from __future__ import division
 import hashlib
 from os import environ
 import socket
