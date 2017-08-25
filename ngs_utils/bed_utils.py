@@ -235,6 +235,29 @@ def sort_bed(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=No
     return output_bed_fpath
 
 
+def sort_bed_gsort(input_bed_fpath, output_bed_fpath=None, work_dir=None, fai_fpath=None, genome=None):
+    input_bed_fpath = verify_bed(input_bed_fpath, is_critical=True)
+    output_bed_fpath = adjust_path(output_bed_fpath) if output_bed_fpath \
+        else intermediate_fname(work_dir, input_bed_fpath, 'sorted')
+
+    debug('Sorting regions in ' + str(input_bed_fpath))
+    if can_reuse(output_bed_fpath, input_bed_fpath):
+        debug(output_bed_fpath + ' exists, reusing')
+        return output_bed_fpath
+
+    if fai_fpath:
+        fai_fpath = verify_file(fai_fpath)
+    elif genome:
+        fai_fpath = verify_file(ref.get_fai(genome))
+    else:
+        critical('Either of fai_fpath or genome build name must be specified')
+
+    with file_transaction(work_dir, output_bed_fpath) as tx:
+        run('gsort {input_bed_fpath} {fai_fpath}'.format(**locals()), output_fpath=tx)
+
+    return output_bed_fpath
+
+
 def annotate_target(work_dir, target_bed, genome_build):
     output_fpath = intermediate_fname(work_dir, target_bed, 'ann')
     if can_reuse(output_fpath, target_bed):
