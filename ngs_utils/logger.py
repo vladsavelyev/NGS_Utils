@@ -20,17 +20,20 @@ is_debug = False
 
 smtp_host = None  # set up in source/config.py and system_info.yaml
 my_address = 'Vlad.Saveliev@astrazeneca.com'
-
+address = None
 
 error_msgs = []
 warning_msgs = []
 critical_msgs = []
 
 
-def init(is_debug_=None, log_fpath_=None, save_previous=False):
+def init(is_debug_=None, log_fpath_=None, save_previous=False, address_=None):
     if is_debug_:
         global is_debug
         is_debug = is_debug_
+    if address_:
+        global address
+        address = address_
     if log_fpath_:
         set_log_path(log_fpath_, save_previous=save_previous)
     txt = check_output('hostname', shell=True)
@@ -124,6 +127,8 @@ def send_email(msg_other='', subj='', only_me=False, addr_by_username=None, addr
     if not only_me:
         if addr:
             other_address = addr
+        elif address:
+            other_address = address
         elif addr_by_username and username in addr_by_username:
             other_address = addr_by_username[username]
     if other_address == my_address:
