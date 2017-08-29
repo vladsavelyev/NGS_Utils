@@ -1002,3 +1002,12 @@ def str_to_filename(s):
     s = ''.join([c if c in valid_chars else '_' for c in s])
     return s
 
+
+def get_ungz_gz(fpath):
+    if fpath.endswith('.gz'):
+        ungz = splitext(fpath)[0]
+        gz = fpath
+    else:
+        ungz = fpath
+        gz = fpath + '.gz'
+    return ungz, gz
