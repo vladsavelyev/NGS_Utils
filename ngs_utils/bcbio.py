@@ -222,7 +222,7 @@ class BcbioSample(BaseSample):
     def find_ngs_report(self, silent=False):
         return \
             verify_file(join(self.bcbio_project.date_dir, BcbioProject.reports_dir,
-                             self.name + '.html')) or \
+                             self.name + '.html'), silent=silent) or \
             verify_file(join(self.dirpath, BcbioProject.ngs_report_name,
                              BcbioProject.ngs_report_name + '.html'), silent=silent)
 
