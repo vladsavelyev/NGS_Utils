@@ -119,7 +119,7 @@ def is_chihua():
     return hostname == 'chihua'
 
 def is_local():
-    return 'Vlads' in hostname or 'Vladislavs' in hostname or 'local' in hostname or 'Home' in hostname or environ.get('PYTHONUNBUFFERED')
+    return 'Vlads' in hostname or 'Vladislavs' in hostname or 'local' in hostname or 'Home' in hostname
 
 
 def md5(fpath):

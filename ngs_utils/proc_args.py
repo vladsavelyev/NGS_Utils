@@ -112,7 +112,7 @@ def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None):
     work_dir = safe_mkdir(work_dir or join(output_dir, 'work'), 'working directory')
     info('Using work directory ' + work_dir)
 
-    log_fpath = set_up_log(log_dir or work_dir, proc_name + '.log')
+    log_fpath = set_up_log(log_dir or safe_mkdir(join(work_dir, 'log')), proc_name + '.log')
 
     return output_dir, work_dir, log_fpath
 
