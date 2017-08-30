@@ -5,6 +5,7 @@ from os.path import splitext, basename, join, isfile, isdir, abspath, realpath, 
 from random import random
 import datetime
 
+import re
 from ngs_utils import logger
 from ngs_utils.bam_utils import verify_bam
 from ngs_utils.file_utils import verify_file, adjust_path, splitext_plus, safe_mkdir, file_exists
@@ -80,7 +81,13 @@ def find_fastq_pairs(fpaths):
             if fn.endswith('_R2'):
                 sname = fn[:-3]
                 r_fpath = fpath
-            if not sname:
+
+            if sname:
+                m = re.match(r'(.*)_S\d+', sname)
+                if m:
+                    sname = m.group(1)
+                sname = sname.replace('-', '_')
+            else:
                 sname = fn
                 info('Cannot detect file for ' + sname)
 
