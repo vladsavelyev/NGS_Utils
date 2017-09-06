@@ -1,4 +1,6 @@
 from __future__ import division
+
+import collections
 import hashlib
 from os import environ
 import socket
@@ -132,3 +134,14 @@ def md5(fpath):
 
 def gray(text):
     return '<span class="gray">' + text + '</span>'
+
+
+def update_dict(d, u):
+    """ Recursively updates nested dict d from nested dict u
+    """
+    for key, val in u.items():
+        if isinstance(val, collections.Mapping):
+            d[key] = update_dict(d.get(key, {}), val)
+        else:
+            d[key] = u[key]
+    return d
