@@ -107,13 +107,13 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None, _stderr_
     while 1:
         line = s.stdout.readline()
         if line:
-            if six.PY3: line = line.decode()
+            if six.PY3: line = line.decode(errors='replace')
             debug_stdout.append(line)
             info('  ' + line.rstrip())
         exitcode = s.poll()
         if exitcode is not None:
             for line in s.stdout:
-                if six.PY3: line = line.decode()
+                if six.PY3: line = line.decode(errors='replace')
                 debug_stdout.append(line)
             if exitcode is not None and exitcode != 0:
                 error_msg = " ".join(cmd) if not isinstance(cmd, six.string_types) else cmd
