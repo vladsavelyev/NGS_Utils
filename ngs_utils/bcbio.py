@@ -286,7 +286,7 @@ class BcbioProject:
     oncoprints_dir = 'oncoprints'
 
     ## RNAseq
-    counts_names = ['counts.tsv', 'dexseq.tsv', 'gene.sf.tpm.tsv', 'isoform.sf.tpm.tsv']
+    counts_names = ['combined.counts', 'combined.dexseq', 'combined.gene.sf.tpm', 'combined.isoform.sf.tpm']
     expression_dir = 'expression'
 
     multiqc_report_name = 'report.html'
