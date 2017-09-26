@@ -1568,7 +1568,7 @@ def write_html_report(report, html_fpath, caption='',
             debug('__write_html: tx=' + tx)
             safe_mkdir(dirname(tx))
             
-            with io.open(tx, 'w') as out_f:
+            with io.open(tx, 'w', encoding='utf-8') as out_f:
                 for l in in_f:
                     l = _embed_css_and_scripts(l, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths)
                     l = _embed_images(l, dirname(html_fpath), image_by_key)
@@ -1579,11 +1579,6 @@ def write_html_report(report, html_fpath, caption='',
                     if data_dict:
                         for keyword, text in data_dict.items():
                             l = _insert_into_html(l, text, keyword)
-                    if six.PY2:
-                        try:
-                            l = unicode(l, 'utf-8')
-                        except TypeError:
-                            l = unicode(l)
                     out_f.write(l)
     return html_fpath
 
@@ -1762,7 +1757,8 @@ def write_static_html_report(data_dict, html_fpath, tmpl_fpath=None,
                              extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None):
 
     tmpl_fpath = tmpl_fpath or static_template_fpath
-    with open(tmpl_fpath) as f: html = f.read()
+    with io.open(tmpl_fpath, encoding='utf-8') as f:
+        html = f.read()
 
     html = jsontemplate.expand(html, data_dict)
 
@@ -1778,13 +1774,7 @@ def __write_html(html, html_fpath, extra_js_fpaths, extra_css_fpaths, image_by_k
         debug('__write_html: html_fpath=' + html_fpath)
         debug('__write_html: tx=' + tx)
         safe_mkdir(dirname(tx))
-        with io.open(tx, 'w') as f:
-            if six.PY2:
-                try:
-                    html = unicode(html, 'utf-8')
-                except TypeError:
-                    html = unicode(html)
+        with io.open(tx, 'w', encoding='utf-8') as f:
             f.write(html)
 
     return html_fpath
-
