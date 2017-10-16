@@ -451,8 +451,10 @@ class BcbioProject:
         # Date dirpath is from bcbio and named after fc_name, not our own project name
         date_dirpath = join(final_dirpath, bcbio_cnf['fc_date'] + '_' + bcbio_cnf['fc_name'])
         if create_dir: safe_mkdir(date_dirpath)
-        elif not verify_dir(date_dirpath):
-            critical('Error: no project directory of format {fc_date}_{fc_name}')
+        elif not verify_dir(date_dirpath, silent=True):
+            date_dirpath = join(final_dirpath, bcbio_cnf['fc_name'] + '_' + bcbio_cnf['fc_date'])
+            if not verify_dir(date_dirpath, silent=True):
+                critical('Error: no project directory of format {fc_date}_{fc_name} or {fc_name}_{fc_date}')
         return date_dirpath
 
     @staticmethod
