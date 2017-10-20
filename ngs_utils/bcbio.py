@@ -448,17 +448,29 @@ class BcbioProject:
 
     @staticmethod
     def _set_date_dir(bcbio_cnf, final_dirpath, create_dir=False):
-        if 'fc_date' not in bcbio_cnf:
-            critical('Error: fc_date not in bcbio config!')
-        if 'fc_name' not in bcbio_cnf:
-            critical('Error: fc_name not in bcbio config!')
-        # Date dirpath is from bcbio and named after fc_name, not our own project name
-        date_dirpath = join(final_dirpath, bcbio_cnf['fc_date'] + '_' + bcbio_cnf['fc_name'])
-        if create_dir: safe_mkdir(date_dirpath)
-        elif not verify_dir(date_dirpath, silent=True):
-            date_dirpath = join(final_dirpath, bcbio_cnf['fc_name'] + '_' + bcbio_cnf['fc_date'])
-            if not verify_dir(date_dirpath, silent=True):
-                critical('Error: no project directory of format {fc_date}_{fc_name} or {fc_name}_{fc_date}')
+        fc_date = bcbio_cnf.get('fc_date')
+        fc_name = bcbio_cnf.get('fc_name') or 'project'
+        if fc_date:
+            # Date dirpath is from bcbio and named after fc_name, not our own project name
+            date_dirpath = join(final_dirpath, fc_date + '_' + fc_name)
+            if create_dir: safe_mkdir(date_dirpath)
+            elif not verify_dir(date_dirpath, silent=True):
+                date_dirpath = join(final_dirpath, fc_name + '_' + fc_date)
+                if not verify_dir(date_dirpath, silent=True):
+                    critical('Error: no project directory of format {fc_date}_{fc_name} or {fc_name}_{fc_date}')
+        else:
+            # bcbio since 1.0.6
+            regexs = [fr'^201\d-[01][0-9]-[0-3][0-9]_{fc_name}',
+                      fr'^{fc_name}_201\d-[01][0-9]-[0-3][0-9]']
+            date_dirpaths = [join(final_dirpath, dirpath)
+                            for dirpath in listdir(final_dirpath)
+                            if any(re.match(regex, dirpath) for regex in regexs)]
+            if len(date_dirpaths) == 0:
+                critical('Error: no datestamp directory!')
+            elif len(date_dirpaths) > 1:
+                critical('Error: more than one datestamp directory found!')
+            date_dirpath = date_dirpaths[0]
+            info('fc_date not in bcbio config, found the datestamp dir ' + date_dirpath)
         return date_dirpath
 
     @staticmethod
@@ -720,7 +732,7 @@ class BcbioProject:
     def get_target_genes(self, get_key_genes_file=None):
         return get_target_genes(self.genome_build, self.coverage_bed,
                                 get_key_genes_file=get_key_genes_file)
-        
+
     def is_small_target(self):
         return is_small_target(self.coverage_bed)
 
