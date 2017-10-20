@@ -30,4 +30,4 @@ def get_target_genes(genome, bed_file=None, get_key_genes_file=None):
 
 
 def is_small_target(bed_file=None):
-    return bed_file and isfile(bed_file) and get_total_bed_size(bed_file) < 1 * 1000 * 1000
+    return bed_file and isfile(bed_file) and get_total_bed_size(bed_file) < 10 * 1000 * 1000
