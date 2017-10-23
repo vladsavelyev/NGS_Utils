@@ -74,7 +74,7 @@ class BcbioSample(BaseSample):
         self._set_name_and_paths(
             name=str(sample_info['description']),
             phenotype=sample_info.get('metadata', dict()).get('phenotype'),
-            batch_name=sample_info.get('metadata', dict()).get('batch'),
+            batch_name=str(sample_info.get('metadata', dict()).get('batch')),
             variantcallers=sample_info['algorithm'].get('variantcaller'))
 
     def _set_name_and_paths(self, name, phenotype, batch_name, variantcallers):
@@ -116,30 +116,34 @@ class BcbioSample(BaseSample):
     def _set_variant_files(self, phenotype, batch_name, variantcallers):
         self.phenotype = phenotype or 'tumor'
         batch_info = batch_name or self.get_name_for_files() + '-batch'
-        self.batch_names = batch_info.split(', ') if isinstance(batch_info, six.string_types) else batch_info
+        self.batch_names = batch_info.split(', ') if isinstance(batch_info, six.string_types) else [batch_info]
         if len(self.batch_names) > 1 and self.phenotype != 'normal':
             critical('Multiple batches for non-normal ' + self.phenotype + ' sample ' + self.name + ': ' +
                 ', '.join(self.batch_names))
 
         if isinstance(variantcallers, dict):
             if 'germline' in variantcallers and self.phenotype == 'normal':
-                s = BcbioSample(self.bcbio_project)
-                germline_sample_info = copy.deepcopy(self.sample_info)
-                germline_sample_info['description'] = self.name + '-germline'
-                germline_sample_info['metadata'] = {
-                    'phenotype': 'germline',
-                    'batch': self.name + '-germline'}
-                germline_sample_info['algorithm']['variantcaller'] = variantcallers['germline']
-                s.load_from_sample_info(germline_sample_info)
-                s.bcbio_project.samples.append(s)
-            variantcallers = variantcallers.get('somatic')
+                if isdir(join(self.bcbio_project.final_dir, self.name + '-germline')):
+                    s = BcbioSample(self.bcbio_project)
+                    germline_sample_info = copy.deepcopy(self.sample_info)
+                    germline_sample_info['description'] = self.name + '-germline'
+                    germline_sample_info['metadata'] = {
+                        'phenotype': 'germline',
+                        'batch': self.name + '-germline'}
+                    germline_sample_info['algorithm']['variantcaller'] = variantcallers['germline']
+                    s.load_from_sample_info(germline_sample_info)
+                    s.bcbio_project.samples.append(s)
+                else:
+                    variantcallers = variantcallers.get('germline')
+            else:
+                variantcallers = variantcallers.get('somatic')
 
         if isinstance(variantcallers, six.string_types):
             variantcallers = [variantcallers]
 
         self.variantcallers = variantcallers or []
 
-        if self.phenotype != 'germline':
+        if self.phenotype != 'germline' and self.phenotype != 'normal':
             global MAIN_CALLER
             MAIN_CALLER = next((c for c in CALLER_PRIORITY if c in self.variantcallers), None)
         else:

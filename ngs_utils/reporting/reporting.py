@@ -1716,7 +1716,7 @@ def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css
                 html = html.replace(line, line_formatted)
 
             else:
-                with open(fpath) as f:
+                with io.open(fpath, encoding='utf-8') as f:
                     contents = f.read()
                     contents = '\n'.join(' ' * 8 + l for l in contents.split('\n'))
 
