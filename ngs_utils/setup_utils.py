@@ -4,8 +4,6 @@ import sys
 from os.path import join, isfile, abspath, dirname, relpath, isdir
 import shutil
 
-import six
-
 
 def err(msg=''):
     sys.stderr.write(msg + '\n')
