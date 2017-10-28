@@ -1579,6 +1579,8 @@ def write_html_report(report, html_fpath, caption='',
                     if data_dict:
                         for keyword, text in data_dict.items():
                             l = _insert_into_html(l, text, keyword)
+                    if six.PY2:
+                        l = l.decode('utf-8')
                     out_f.write(l)
     return html_fpath
 
