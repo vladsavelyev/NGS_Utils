@@ -93,6 +93,9 @@ def get_numeric_value(string_value):
 
 hostname = socket.gethostname()
 
+def is_scp():
+    return 'scp' in hostname
+
 def is_us():
     return any(name in hostname for name in ['rask', 'chara', 'blue', 'green', 'espo',
                                              'orr', 'usbod', 'bn0', 'pedro', 'papi'])
@@ -106,7 +109,7 @@ def is_china():
     return 'cniclhpc' in hostname
 
 def is_az():
-    return is_us() or is_uk() or is_china() or is_sweden()
+    return is_scp() or is_us() or is_uk() or is_china() or is_sweden()
 
 def is_cloud():
     return 'starcluster' in hostname
