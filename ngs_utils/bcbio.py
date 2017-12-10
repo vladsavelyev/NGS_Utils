@@ -261,7 +261,7 @@ class Batch:
     def __init__(self, name=None):
         self.name = name
         self.normal = None
-        self.tumor = []
+        self.tumor = None
 
     def __str__(self):
         return self.name
@@ -299,7 +299,7 @@ class BcbioProject:
     multiqc_report_name = 'report.html'
     call_vis_name = 'call_vis.html'
 
-    def __init__(self):
+    def __init__(self, input_dir, project_name=None, proc_name='postproc'):
         self.dir = None
         self.config_dir = None
         self.final_dir = None
@@ -329,8 +329,11 @@ class BcbioProject:
         self.is_wgs = None
         self.is_rnaseq = None
 
-    def set_project_level_dirs(self, bcbio_cnf, project_name=None, final_dir=None, create_dirs=False,
-                               proc_name='postproc'):
+        if input_dir:
+            self.load_from_bcbio_dir(input_dir, project_name, proc_name)
+
+    def set_project_level_dirs(self, bcbio_cnf, project_name=None, final_dir=None, date_dir=None,
+                               create_dirs=False, proc_name='postproc'):
         assert self.dir
 
         self.final_dir = self.set_final_dir(bcbio_cnf, self.dir, final_dir)
@@ -341,7 +344,7 @@ class BcbioProject:
         self.work_dir = abspath(join(self.dir, 'work', proc_name))
         if create_dirs: safe_mkdir(self.work_dir)
 
-        self.date_dir = self._set_date_dir(bcbio_cnf, self.final_dir, create_dir=create_dirs)
+        self.date_dir = self._set_date_dir(bcbio_cnf, self.final_dir, date_dir, create_dir=create_dirs)
         self.log_dir = join(self.date_dir, 'log')
         self.postproc_log_dir = join(self.log_dir, proc_name)
         if create_dirs: safe_mkdir(self.postproc_log_dir)
@@ -356,11 +359,11 @@ class BcbioProject:
         Analyses existing bcbio folder.
         :param input_dir: root bcbio folder, or any other directory inside it
         """
-        self.dir, detected_final_dir = detect_bcbio_dir(input_dir)
+        self.dir, detected_final_dir, detected_date_dir = detect_bcbio_dir(input_dir)
         self.config_dir = abspath(join(self.dir, 'config'))
         bcbio_cnf, _ = load_bcbio_cnf(self.config_dir)
         self.set_project_level_dirs(bcbio_cnf, project_name=project_name, final_dir=detected_final_dir,
-                                    proc_name=proc_name)
+                                    date_dir=detected_date_dir, proc_name=proc_name)
         self.set_samples(bcbio_cnf)
         self._load_bcbio_summary()
         # self._load_target_info()
@@ -447,31 +450,31 @@ class BcbioProject:
         return adjust_path(join(self.config_dir, val))
 
     @staticmethod
-    def _set_date_dir(bcbio_cnf, final_dirpath, create_dir=False):
-        fc_date = bcbio_cnf.get('fc_date')
-        fc_name = bcbio_cnf.get('fc_name') or 'project'
-        if fc_date:
-            # Date dirpath is from bcbio and named after fc_name, not our own project name
-            date_dirpath = join(final_dirpath, fc_date + '_' + fc_name)
-            if create_dir: safe_mkdir(date_dirpath)
-            elif not verify_dir(date_dirpath, silent=True):
-                date_dirpath = join(final_dirpath, fc_name + '_' + fc_date)
-                if not verify_dir(date_dirpath, silent=True):
+    def _set_date_dir(bcbio_cnf, final_dir, date_dir, create_dir=False):
+        if not date_dir:
+            fc_date = bcbio_cnf.get('fc_date')
+            fc_name = bcbio_cnf.get('fc_name') or 'project'
+            if fc_date:
+                # Date dirpath is from bcbio and named after fc_name, not our own project name
+                date_dir = join(final_dir, fc_date + '_' + fc_name)
+                if not create_dir and not verify_dir(date_dir, silent=True):
                     critical('Error: no project directory of format {fc_date}_{fc_name} or {fc_name}_{fc_date}')
-        else:
-            # bcbio since 1.0.6
-            regexs = [fr'^201\d-[01][0-9]-[0-3][0-9]_{fc_name}',
-                      fr'^{fc_name}_201\d-[01][0-9]-[0-3][0-9]']
-            date_dirpaths = [join(final_dirpath, dirpath)
-                            for dirpath in listdir(final_dirpath)
-                            if any(re.match(regex, dirpath) for regex in regexs)]
-            if len(date_dirpaths) == 0:
-                critical('Error: no datestamp directory!')
-            elif len(date_dirpaths) > 1:
-                critical('Error: more than one datestamp directory found!')
-            date_dirpath = date_dirpaths[0]
-            info('fc_date not in bcbio config, found the datestamp dir ' + date_dirpath)
-        return date_dirpath
+            else:
+                # bcbio since 1.0.6
+                regexs = [fr'^201\d-[01][0-9]-[0-3][0-9]_{fc_name}',
+                          fr'^{fc_name}_201\d-[01][0-9]-[0-3][0-9]']
+                date_dirs = [join(final_dir, dirpath)
+                                for dirpath in listdir(final_dir)
+                                if any(re.match(regex, dirpath) for regex in regexs)]
+                if len(date_dirs) == 0:
+                    critical('Error: no datestamp directory!')
+                elif len(date_dirs) > 1:
+                    critical('Error: more than one datestamp directory found!')
+                date_dir = date_dirs[0]
+                info('fc_date not in bcbio config, found the datestamp dir ' + date_dir)
+        if create_dir:
+            safe_mkdir(date_dir)
+        return date_dir
 
     @staticmethod
     def _set_project_name(dirpath, project_name=None):
@@ -517,25 +520,24 @@ class BcbioProject:
                         critical('Multiple normal samples for batch ' + bn)
                     batch_by_name[bn].normal = sample
                 else:
-                    batch_by_name[bn].tumor.append(sample)
+                    batch_by_name[bn].tumor = sample
 
         for batch in batch_by_name.values():
             if batch.normal and not batch.tumor:
                 info('Batch ' + batch.name + ' contains only normal, treating sample ' + batch.normal.name + ' as tumor')
                 batch.normal.phenotype = 'tumor'
                 batch.normal.batch = batch
-                batch.tumor = [batch.normal]
+                batch.tumor = batch.normal
                 batch.normal = None
 
         # setting up batch properties
         for b in batch_by_name.values():
-            if b.normal and b.tumor:
+            if b.normal == b.tumor:
                 b.paired = True
             else:
                 b.paired = False
         for b in batch_by_name.values():
-            for t_sample in b.tumor:
-                t_sample.normal_match = b.normal
+            b.tumor.normal_match = b.normal
 
         return batch_by_name
 
@@ -753,30 +755,35 @@ def detect_bcbio_dir(input_dir, silent=False):
     :param input_dir: root dir, or any other directory inside it
     :return: (root_dir, final_dir=None)
     """
-    root_dir, final_dir = None, None
+    root_dir, final_dir, date_dir = None, None, None
     input_dir = abspath(input_dir)
 
     if isdir(join(input_dir, 'config')):
         root_dir = input_dir
         final_dir = None
+        date_dir = None
 
     elif isdir(abspath(join(input_dir, pardir, 'config'))):
         root_dir = abspath(join(input_dir, pardir))
         if 'final' in basename(input_dir):
             final_dir = input_dir
+            date_dir = None
 
     elif isdir(abspath(join(input_dir, pardir, pardir, 'config'))):
         root_dir = abspath(join(input_dir, pardir, pardir))
         if 'final' in basename(abspath(join(input_dir, pardir))):
             final_dir = abspath(join(input_dir, pardir))
+            date_dir = input_dir
 
     elif isdir(abspath(join(input_dir, pardir, pardir, pardir, 'config'))):
         root_dir = abspath(join(input_dir, pardir, pardir, pardir))
         if 'final' in basename(abspath(join(input_dir, pardir, pardir))):
             final_dir = abspath(join(input_dir, pardir, pardir))
+            date_dir = abspath(join(input_dir, pardir))
+
     else:
         if silent:
-            return None, None
+            return None, None, None
         else:
             critical(
                 'Are you running on a bcbio directory?\n'
@@ -788,7 +795,10 @@ def detect_bcbio_dir(input_dir, silent=False):
         info('Bcbio project directory: ' + root_dir)
         if final_dir:
             info('"final" directory: ' + final_dir)
-    return root_dir, final_dir
+            if date_dir:
+                info('"datestamp" directory: ' + date_dir)
+
+    return root_dir, final_dir, date_dir
 
 
 def load_bcbio_cnf(config_dir):
