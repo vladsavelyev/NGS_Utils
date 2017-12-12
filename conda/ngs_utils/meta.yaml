@@ -40,7 +40,6 @@ requirements:
     - natsort
     - more-itertools
     - toolz
-    - Pygments
 
 test:
   imports:

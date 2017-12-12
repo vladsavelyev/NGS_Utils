@@ -19,11 +19,8 @@ function build() {
     echo "Building $NAME";
 
     CHANNELS="-c vladsaveliev -c bioconda -c defaults -c conda-forge"
-    for PY in 3.6 2.7 ; do
+    for PY in 3.6 ; do
         PACKAGE_PATH=$(conda build $NAME $CHANNELS --output --py $PY | tail -n1)
-        if [ -f $PACKAGE_PATH ] ; then
-            echo "$PACKAGE_PATH exists, skipping"
-        else
             echo "Building $PACKAGE_PATH"
             conda build $NAME $CHANNELS --py $PY
             anaconda upload $PACKAGE_PATH
@@ -38,7 +35,6 @@ function build() {
                     anaconda upload $BASEDIR/$PLATFORM/$FILENAME
                 fi
             done
-        fi
     done
 }
 
