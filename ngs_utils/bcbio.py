@@ -7,7 +7,7 @@ import six
 import yaml
 import sys
 from os import listdir
-from os.path import join, abspath, pardir, splitext, basename, dirname, realpath, isdir, isfile
+from os.path import join, abspath, pardir, splitext, basename, dirname, realpath, isdir, isfile, exists
 
 from ngs_utils.Sample import BaseSample
 from ngs_utils.bam_utils import verify_bam
@@ -17,6 +17,7 @@ from ngs_utils.file_utils import adjust_path, verify_dir, file_exists, safe_mkdi
 from ngs_utils.logger import critical, debug, info, err, warn
 from ngs_utils.key_genes_utils import get_target_genes, is_small_target
 import ngs_utils.variant_filtering as vf
+import az
 
 
 CALLER_PRIORITY = ['vardict', 'freebayes', 'mutect', 'gatk-haplotype']
@@ -63,6 +64,14 @@ class BcbioSample(BaseSample):
         self.variant_regions_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('variant_regions'))
         self.sv_regions_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('sv_regions')) or self.variant_regions_bed
         self.coverage_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('coverage')) or self.sv_regions_bed
+        if self.coverage_bed and not isfile(self.coverage_bed):
+            debug('coverage bed ' + str(self.coverage_bed) + ' not found. Looking relatively to genomes "basedir"')
+            genome_cfg = az.get_refdata(self.genome_build)
+            ref_basedir = genome_cfg.get('basedir')
+            if not ref_basedir:
+                critical('coverage bed ' + str(self.coverage_bed) + ' not found and "basedir" not provided in system config')
+            self.coverage_bed = join(ref_basedir, 'coverage', 'prioritize', self.coverage_bed) + '.bed'
+
         self.is_rnaseq = 'rna' in sample_info['analysis'].lower()
         self.min_allele_fraction = (1.0/100) * float(sample_info['algorithm'].get('min_allele_fraction', 1.0))
         if self.variant_regions_bed is None:
@@ -299,7 +308,7 @@ class BcbioProject:
     multiqc_report_name = 'report.html'
     call_vis_name = 'call_vis.html'
 
-    def __init__(self, input_dir, project_name=None, proc_name='postproc'):
+    def __init__(self, input_dir=None, project_name=None, proc_name='postproc'):
         self.dir = None
         self.config_dir = None
         self.final_dir = None
@@ -447,7 +456,11 @@ class BcbioProject:
     def config_path(self, val):
         if not val:
             return val
-        return adjust_path(join(self.config_dir, val))
+        full_path = adjust_path(join(self.config_dir, val))
+        if exists(full_path):
+            return full_path
+        else:
+            return val
 
     @staticmethod
     def _set_date_dir(bcbio_cnf, final_dir, date_dir, create_dir=False):
