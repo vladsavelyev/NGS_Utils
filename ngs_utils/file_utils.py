@@ -214,7 +214,7 @@ def open_gzipsafe(f, mode='r'):
     # mode_b = mode if 'b' in mode else mode + 'b'
     if f.endswith('.gz') or f.endswith('.gzip') or f.endswith('.gz.tx') or f.endswith('.gzip.tx'):
         try:
-            h = gzip.open(f, mode=mode + 't')
+            h = gzip.open(f, mode=mode + 't', encoding='UTF-8')
         except IOError as e:
             err('Error opening gzip ' + f + ': ' + str(e) + ', opening as plain text')
             return open(f, mode=mode)
