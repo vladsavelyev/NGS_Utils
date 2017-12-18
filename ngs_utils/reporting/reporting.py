@@ -1756,11 +1756,14 @@ def _insert_into_html(html, text, keyword):
 
 
 def write_static_html_report(data_dict, html_fpath, tmpl_fpath=None,
-                             extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None):
+                             extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None, tmpl_str=None):
 
-    tmpl_fpath = tmpl_fpath or static_template_fpath
-    with io.open(tmpl_fpath, encoding='utf-8') as f:
-        html = f.read()
+    if tmpl_str:
+        html = tmpl_str
+    else:
+        tmpl_fpath = tmpl_fpath or static_template_fpath
+        with io.open(tmpl_fpath, encoding='utf-8') as f:
+            html = f.read()
 
     html = jsontemplate.expand(html, data_dict)
 

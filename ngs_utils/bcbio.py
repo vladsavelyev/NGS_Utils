@@ -17,7 +17,6 @@ from ngs_utils.file_utils import adjust_path, verify_dir, file_exists, safe_mkdi
 from ngs_utils.logger import critical, debug, info, err, warn
 from ngs_utils.key_genes_utils import get_target_genes, is_small_target
 import ngs_utils.variant_filtering as vf
-import az
 
 
 CALLER_PRIORITY = ['vardict', 'freebayes', 'mutect', 'gatk-haplotype']
@@ -66,11 +65,16 @@ class BcbioSample(BaseSample):
         self.coverage_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('coverage')) or self.sv_regions_bed
         if self.coverage_bed and not isfile(self.coverage_bed):
             debug('coverage bed ' + str(self.coverage_bed) + ' not found. Looking relatively to genomes "basedir"')
-            genome_cfg = az.get_refdata(self.genome_build)
-            ref_basedir = genome_cfg.get('basedir')
-            if not ref_basedir:
-                critical('coverage bed ' + str(self.coverage_bed) + ' not found and "basedir" not provided in system config')
-            self.coverage_bed = join(ref_basedir, 'coverage', 'prioritize', self.coverage_bed) + '.bed'
+            try:
+                import az
+            except ImportError:
+                pass
+            else:
+                genome_cfg = az.get_refdata(self.genome_build)
+                ref_basedir = genome_cfg.get('basedir')
+                if not ref_basedir:
+                    critical('coverage bed ' + str(self.coverage_bed) + ' not found and "basedir" not provided in system config')
+                self.coverage_bed = join(ref_basedir, 'coverage', 'prioritize', self.coverage_bed) + '.bed'
 
         self.is_rnaseq = 'rna' in sample_info['analysis'].lower()
         self.min_allele_fraction = (1.0/100) * float(sample_info['algorithm'].get('min_allele_fraction', 1.0))
@@ -80,13 +84,16 @@ class BcbioSample(BaseSample):
             self.coverage_interval = 'regional'
         self.is_wgs = self.coverage_interval == 'genome'
 
+        batch_names = sample_info.get('metadata', dict()).get('batch')
+        if isinstance(batch_names, str):
+            batch_names = [batch_names]
         self._set_name_and_paths(
             name=str(sample_info['description']),
             phenotype=sample_info.get('metadata', dict()).get('phenotype'),
-            batch_name=str(sample_info.get('metadata', dict()).get('batch')),
+            batch_names=batch_names,
             variantcallers=sample_info['algorithm'].get('variantcaller'))
 
-    def _set_name_and_paths(self, name, phenotype, batch_name, variantcallers):
+    def _set_name_and_paths(self, name, phenotype, batch_names, variantcallers):
         self.raw_name = name
         self.name = self.raw_name.replace('.', '_')
         self.dirpath = verify_dir(join(self.bcbio_project.final_dir, self.name))
@@ -120,12 +127,13 @@ class BcbioSample(BaseSample):
             else:
                 warn('Counts for ' + self.name + ' not found')
         else:
-            self._set_variant_files(phenotype, batch_name, variantcallers)
+            self._set_variant_files(phenotype, batch_names, variantcallers)
 
-    def _set_variant_files(self, phenotype, batch_name, variantcallers):
+    def _set_variant_files(self, phenotype, batch_names, variantcallers):
         self.phenotype = phenotype or 'tumor'
-        batch_info = batch_name or self.get_name_for_files() + '-batch'
-        self.batch_names = batch_info.split(', ') if isinstance(batch_info, six.string_types) else [batch_info]
+        if not batch_names:
+            batch_names = [self.get_name_for_files() + '-batch']
+        self.batch_names = batch_names
         if len(self.batch_names) > 1 and self.phenotype != 'normal':
             critical('Multiple batches for non-normal ' + self.phenotype + ' sample ' + self.name + ': ' +
                 ', '.join(self.batch_names))
@@ -404,9 +412,9 @@ class BcbioProject:
         _check_dup_props('is_wgs', is_critical=False)
         _check_dup_props('coverage_interval', is_critical=False)
         if self.is_rnaseq:
-            info('RNAseq')
+            debug('RNAseq')
         elif self.coverage_interval:
-            info('Coverage interval: ' + str(self.coverage_interval))
+            debug('Coverage interval: ' + str(self.coverage_interval))
 
         for s in self.samples:
             for caller in s.variantcallers:
