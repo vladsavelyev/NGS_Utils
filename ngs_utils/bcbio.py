@@ -268,7 +268,8 @@ class BcbioSample(BaseSample):
         return self.get_metric(['Total_reads', 'Total reads'])
 
     def get_usable_count(self):
-        return int(self.get_reads_count() * self.get_metric('Usable_pct') / 100)
+        if self.get_metric('Usable_pct'):
+            return int(self.get_reads_count() * self.get_metric('Usable_pct') / 100)
 
     def is_dedupped(self):
         return self.sample_info.get('algorithm', {}).get('mark_duplicates', False)
