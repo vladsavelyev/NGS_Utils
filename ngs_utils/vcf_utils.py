@@ -52,9 +52,10 @@ def get_sample_ids(vcf_path, return_names=False):
                     if control_name:
                         control_id = samples.index(control_name)
                 else:
-                    tumor_id, control_id = 0, 1
+                    tumor_id, control_id = 0, None
                     tumor_name = samples[tumor_id]
                     if len(samples) > 1:
+                        control_id = 1
                         control_name = samples[control_id]
 
                 if return_names:
