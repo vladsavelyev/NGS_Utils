@@ -31,7 +31,6 @@ def get_sample_ids(vcf_path, return_names=False):
            sample in #CHROM header.
     """
     tumor_name, control_name = None, None
-    tumor_id, control_id = None, None
 
     with open_gzipsafe(vcf_path) as f:
         for line in f:
@@ -47,15 +46,26 @@ def get_sample_ids(vcf_path, return_names=False):
 
             if line.startswith('#CHROM'):
                 samples = line.strip().split('\t')[9:]
+                tumor_id, control_id = None, None
                 if tumor_name:
                     tumor_id = samples.index(tumor_name)
-                    if control_name:
-                        control_id = samples.index(control_name)
-                else:
-                    tumor_id, control_id = 0, None
-                    tumor_name = samples[tumor_id]
+                if control_name:
+                    control_id = samples.index(control_name)
+
+                if tumor_id is None and control_id is not None:
+                    tumor_id = 1 if control_id == 0 else 0
+
+                elif control_id is None and tumor_id is not None and len(samples) > 1:
+                    control_id = 1 if tumor_id == 0 else 0
+
+                elif control_id is None and tumor_id is None:
+                    tumor_id = 0
                     if len(samples) > 1:
                         control_id = 1
+
+                if tumor_name is None:
+                    tumor_name = samples[tumor_id]
+                    if control_name is None and len(samples) > 1:
                         control_name = samples[control_id]
 
                 if return_names:
