@@ -140,13 +140,13 @@ class BcbioSample(BaseSample):
 
         if isinstance(variantcallers, dict):
             if 'germline' in variantcallers and self.phenotype == 'normal':
-                if isdir(join(self.bcbio_project.final_dir, self.name + '-germline')):
+                if isdir(join(self.bcbio_project.final_dir, self.name)):
                     s = BcbioSample(self.bcbio_project)
                     germline_sample_info = copy.deepcopy(self.sample_info)
-                    germline_sample_info['description'] = self.name + '-germline'
+                    germline_sample_info['description'] = self.name
                     germline_sample_info['metadata'] = {
                         'phenotype': 'germline',
-                        'batch': self.name + '-germline'}
+                        'batch': self.name}
                     germline_sample_info['algorithm']['variantcaller'] = variantcallers['germline']
                     s.load_from_sample_info(germline_sample_info)
                     s.bcbio_project.samples.append(s)
@@ -280,6 +280,12 @@ class Batch:
         self.name = name
         self.normal = None
         self.tumor = None
+
+    def is_paired(self):
+        return self.normal and self.tumor
+
+    def is_germline(self):
+        return self.tumor.phenotype == 'germline'
 
     def __str__(self):
         return self.name
@@ -432,9 +438,10 @@ class BcbioProject:
             for s_data in data.get('samples', []):
                 metrics_by_sample[s_data['description']] = s_data.get('summary', dict()).get('metrics')
             for s in self.samples:
-                s.sample_info['metrics'] = metrics_by_sample[s.name]
+                sname = s.name
                 if s.phenotype == 'germline':
-                    s.sample_info['metrics'] = metrics_by_sample[re.sub(r'-germline$', '', s.name)]
+                    sname = re.sub(r'-germline$', '', s.name)
+                s.sample_info['metrics'] = metrics_by_sample[sname]
 
     # def _load_target_info(self):
     #     interval = None
@@ -553,11 +560,6 @@ class BcbioProject:
                 batch.normal = None
 
         # setting up batch properties
-        for b in batch_by_name.values():
-            if b.normal == b.tumor:
-                b.paired = True
-            else:
-                b.paired = False
         for b in batch_by_name.values():
             b.tumor.normal_match = b.normal
 
@@ -762,7 +764,7 @@ class BcbioProject:
 
 
 def _find_mutation_files(base_dir, passed=True, caller=MAIN_CALLER, is_germline=False):
-    mut_fname = caller + ('-germline' if is_germline else '') + '.' + vf.mut_file_ext
+    mut_fname = caller + '.' + vf.mut_file_ext
     mut_fpath = join(base_dir, mut_fname)
     single_mut_fpath = add_suffix(mut_fpath, vf.mut_single_suffix)
     paired_mut_fpath = add_suffix(mut_fpath, vf.mut_paired_suffix)
