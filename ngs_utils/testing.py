@@ -7,6 +7,7 @@ import shutil
 import sys
 import six
 from datetime import datetime
+from glob import glob
 
 from ngs_utils.file_utils import verify_dir, verify_file
 from ngs_utils.utils import is_travis
@@ -73,19 +74,26 @@ class BaseTestCase(unittest.TestCase):
         if not exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def _check_file_throws(self, fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True,
+    def _check_file_throws(self, wc_fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True,
                            check_diff=True):
-        assert isfile(fpath), 'file does not exist: ' + fpath
+        found = glob(wc_fpath)
+        assert found, 'file is not found ' + wc_fpath
+        assert len(found) == 1, 'more than 1 file is found as ' + wc_fpath
+        fpath = found[0]
+        assert isfile(fpath), 'is not a file: ' + fpath
         assert getsize(fpath) > 0, 'file is empty: ' + fpath
 
         if check_diff:
-            cmp_fpath = None
             if isdir(self.gold_standard_dir):
-                cmp_fpath = join(self.gold_standard_dir, relpath(fpath, self.results_dir))
-            elif isfile(get_prev(fpath)):
-                cmp_fpath = get_prev(fpath)
-            assert cmp_fpath, 'cmp_file not found (no gold standard dir or *_prev file)'
-            assert isfile(cmp_fpath), 'cmp_file ' + cmp_fpath + ' not found'
+                cmp_wc_path = join(self.gold_standard_dir, relpath(wc_fpath, self.results_dir))
+            else:
+                cmp_wc_path = get_prev(wc_fpath)
+
+            cmp_found = glob(cmp_wc_path)
+            assert cmp_found, 'cmp_file not found (no gold standard dir or *_prev file): ' + cmp_wc_path
+            assert len(cmp_found) == 1, 'more than 1 cmp_file is found as ' + cmp_wc_path
+            cmp_fpath = cmp_found[0]
+            assert isfile(cmp_fpath), 'cmp_file is not a file: ' + cmp_fpath
 
             cmdl = 'diff'
             if ignore_matching_lines:
