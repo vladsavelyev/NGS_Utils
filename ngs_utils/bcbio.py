@@ -331,6 +331,7 @@ class BcbioProject:
         self.log_dir = None
         self.postproc_log_dir = None
         self.work_dir = None
+        self.bcbio_yaml_fpath = None
 
         self.var_dir = None
         self.raw_var_dir = None
@@ -385,7 +386,7 @@ class BcbioProject:
         """
         self.dir, detected_final_dir, detected_date_dir = detect_bcbio_dir(input_dir)
         self.config_dir = abspath(join(self.dir, 'config'))
-        bcbio_cnf, _ = load_bcbio_cnf(self.config_dir)
+        bcbio_cnf, self.bcbio_yaml_fpath = load_bcbio_cnf(self.config_dir)
         self.set_project_level_dirs(bcbio_cnf, project_name=project_name, final_dir=detected_final_dir,
                                     date_dir=detected_date_dir, proc_name=proc_name)
         self.set_samples(bcbio_cnf)
