@@ -83,18 +83,18 @@ class BaseTestCase(unittest.TestCase):
         assert isfile(fpath), 'is not a file: ' + fpath
         assert getsize(fpath) > 0, 'file is empty: ' + fpath
 
+        if isdir(self.gold_standard_dir):
+            cmp_wc_path = join(self.gold_standard_dir, relpath(wc_fpath, self.results_dir))
+        else:
+            cmp_wc_path = get_prev(wc_fpath)
+
+        cmp_found = glob(cmp_wc_path)
+        assert cmp_found, 'cmp_file not found (no gold standard dir or *_prev file): ' + cmp_wc_path
+        assert len(cmp_found) == 1, 'more than 1 cmp_file is found as ' + cmp_wc_path
+        cmp_fpath = cmp_found[0]
+        assert isfile(cmp_fpath), 'cmp_file is not a file: ' + cmp_fpath
+
         if check_diff:
-            if isdir(self.gold_standard_dir):
-                cmp_wc_path = join(self.gold_standard_dir, relpath(wc_fpath, self.results_dir))
-            else:
-                cmp_wc_path = get_prev(wc_fpath)
-
-            cmp_found = glob(cmp_wc_path)
-            assert cmp_found, 'cmp_file not found (no gold standard dir or *_prev file): ' + cmp_wc_path
-            assert len(cmp_found) == 1, 'more than 1 cmp_file is found as ' + cmp_wc_path
-            cmp_fpath = cmp_found[0]
-            assert isfile(cmp_fpath), 'cmp_file is not a file: ' + cmp_fpath
-
             cmdl = 'diff'
             if ignore_matching_lines:
                 if isinstance(ignore_matching_lines, six.string_types):
