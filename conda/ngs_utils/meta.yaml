@@ -15,7 +15,6 @@ requirements:
   build:
     - python
     - numpy
-    - six
   run:
     - python
     - bedtools >=2.25
@@ -35,7 +34,6 @@ requirements:
     - jinja2
     - beautifulsoup4
     - lxml
-    - xlsxwriter >=0.5.5
     - nose
     - natsort
     - more-itertools

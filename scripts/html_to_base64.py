@@ -5,7 +5,6 @@ import sys
 import base64
 import mimetypes
 from bs4 import BeautifulSoup
-import six
 import io
 
 
@@ -31,16 +30,9 @@ def _compact_html(html_fpath):
         2. Replace anchors with javascript
     """
     with io.open(html_fpath) as f:
-        t = f.read()
-        if six.PY2:
-            try:
-                html_unicode = unicode(t, 'utf-8')
-            except TypeError:
-                html_unicode = unicode(t)
-        else:
-            html_unicode = t
+        html_text = f.read()
     base_dir = os.path.split(html_fpath)[0]
-    soup = BeautifulSoup(html_unicode, 'lxml')
+    soup = BeautifulSoup(html_text, 'lxml')
     for img in soup.findAll('img'):
         img_src = img['src']
         durl_img = _convert_file_contents(os.path.join(base_dir, img['src']))

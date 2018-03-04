@@ -7,7 +7,7 @@ import shutil
 
 def err(msg=''):
     sys.stderr.write(msg + '\n')
-    
+
 
 def init(name, package_name, setup_py_fpath, kwargs=None):
     if abspath(dirname(setup_py_fpath)) != abspath(os.getcwd()):

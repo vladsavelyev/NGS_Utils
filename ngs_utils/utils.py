@@ -1,12 +1,12 @@
-from __future__ import division
-
 import collections
 import hashlib
+import random
+from functools import reduce
 from os import environ
 import socket
 import re
 from collections import OrderedDict
-from os.path import join
+import itertools
 
 
 class OrderedDefaultDict(OrderedDict):
@@ -139,12 +139,123 @@ def gray(text):
     return '<span class="gray">' + text + '</span>'
 
 
-def update_dict(d, u):
-    """ Recursively updates nested dict d from nested dict u
+#########################
+### Dict utils
+
+def update_dict(to_update, updates):
+    """ Recursively updates a nested dict `to_update` from a nested dict `updates`
     """
-    for key, val in u.items():
+    for key, val in updates.items():
         if isinstance(val, collections.Mapping):
-            d[key] = update_dict(d.get(key, {}), val)
+            to_update[key] = update_dict(to_update.get(key, {}), val)
         else:
-            d[key] = u[key]
+            to_update[key] = updates[key]
+    return to_update
+
+
+def get_in(d, t, default=None):
+    """
+    look up if you can get a tuple of values from a nested dictionary,
+    each item in the tuple a deeper layer
+
+    example: get_in({1: {2: 3}}, (1, 2)) -> 3
+    example: get_in({1: {2: 3}}, (2, 3)) -> {}
+    """
+    result = reduce(lambda d, t: d.get(t, {}), t, d)
+    if not result:
+        return default
+    else:
+        return result
+
+
+##########################
+### Functional programming
+
+def partition_all(n, iterable):
+    """Partition a list into equally sized pieces, including last smaller parts
+    http://stackoverflow.com/questions/5129102/python-equivalent-to-clojures-partition-all
+    """
+    it = iter(iterable)
+    while True:
+        chunk = list(itertools.islice(it, n))
+        if not chunk:
+            break
+        yield chunk
+
+
+def partition(pred, iterable):
+    'Use a predicate to partition entries into false entries and true entries'
+    # partition(is_odd, range(10)) --> 0 2 4 6 8   and  1 3 5 7 9
+    t1, t2 = itertools.tee(iterable)
+    return itertools.filterfalse(pred, t1), filter(pred, t2)
+
+
+def flatten(l):
+    """
+    Flatten an irregular list of lists
+    example: flatten([[[1, 2, 3], [4, 5]], 6]) -> [1, 2, 3, 4, 5, 6]
+    lifted from: http://stackoverflow.com/questions/2158395/
+    """
+    for el in l:
+        if isinstance(el, collections.Iterable) and not isinstance(el, str):
+            for sub in flatten(el):
+                yield sub
+        else:
+            yield el
+
+
+def compose(f, g):
+    return lambda x: f(g(x))
+
+
+##########################
+### Misc
+
+def is_sequence(arg):
+    """
+    check if 'arg' is a sequence
+
+    example: arg([]) -> True
+    example: arg("lol") -> False
+
+    """
+    return (not hasattr(arg, "strip") and
+            hasattr(arg, "__getitem__") or
+            hasattr(arg, "__iter__"))
+
+
+def is_pair(arg):
+    """check if 'arg' is a two-item sequence
+    """
+    return is_sequence(arg) and len(arg) == 2
+
+
+def is_string(arg):
+    return isinstance(arg, str)
+
+
+def reservoir_sample(stream, num_items, item_parser=lambda x: x):
+    """
+    samples num_items from the stream keeping each with equal probability
+    """
+    kept = []
+    for index, item in enumerate(stream):
+        if index < num_items:
+            kept.append(item_parser(item))
+        else:
+            r = random.randint(0, index)
+            if r < num_items:
+                kept[r] = item_parser(item)
+    return kept
+
+
+def dictapply(d, fn):
+    """
+    apply a function to all non-dict values in a dictionary
+    """
+    for k, v in d.items():
+        if isinstance(v, dict):
+            v = dictapply(v, fn)
+        else:
+            d[k] = fn(v)
     return d

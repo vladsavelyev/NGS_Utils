@@ -7,7 +7,6 @@ import smtplib
 from email.mime.text import MIMEText
 import traceback
 from subprocess import check_output
-import six
 from os.path import exists, getctime
 
 from ngs_utils.utils import is_cluster, is_local
@@ -36,14 +35,11 @@ def init(is_debug_=None, log_fpath_=None, save_previous=False, address_=None):
         address = address_
     if log_fpath_:
         set_log_path(log_fpath_, save_previous=save_previous)
-    txt = check_output('hostname', shell=True)
-    if six.PY3:
-        txt = txt.decode('utf-8')
+    txt = check_output('hostname', shell=True).decode('utf-8')
     info(txt.strip())
     with open(os.devnull, 'w') as devnull:
-        username = check_output('finger $(whoami) | head -n1', shell=True, stderr=devnull)
-        if six.PY3:
-            username = username.decode("utf-8")
+        username = check_output('finger $(whoami) | head -n1', shell=True, stderr=devnull
+                                ).decode("utf-8")
         username = username.strip()
         if not username:
             username = getpass.getuser()
@@ -106,7 +102,7 @@ error = err
 
 
 def critical(msg=''):
-    if isinstance(msg, six.string_types):
+    if isinstance(msg, str):
         err(msg, severity='critical')
     else:
         if not msg:

@@ -5,7 +5,6 @@ from os.path import dirname, join, exists, isfile, splitext, basename, isdir, re
     realpath
 import shutil
 import sys
-import six
 from datetime import datetime
 from glob import glob
 
@@ -17,8 +16,8 @@ def info(msg=''):
     sys.stdout.write(msg + '\n')
 
 def call(cmdl, suppress_output=False):
-    info(cmdl if isinstance(cmdl, six.string_types) else subprocess.list2cmdline(cmdl))
-    if isinstance(cmdl, six.string_types):
+    info(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
+    if isinstance(cmdl, str):
         return subprocess.call(cmdl, shell=True, executable='/bin/bash',
                                stdout=subprocess.DEVNULL if suppress_output else None)
     else:
@@ -26,15 +25,15 @@ def call(cmdl, suppress_output=False):
                                stdout=subprocess.DEVNULL if suppress_output else None)
 
 def check_call(cmdl):
-    info(cmdl if isinstance(cmdl, six.string_types) else subprocess.list2cmdline(cmdl))
-    if isinstance(cmdl, six.string_types):
+    info(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
+    if isinstance(cmdl, str):
         subprocess.check_call(cmdl, shell=True, executable='/bin/bash')
     else:
         subprocess.check_call(cmdl)
 
 def check_output(cmdl):
-    info(cmdl if isinstance(cmdl, six.string_types) else subprocess.list2cmdline(cmdl))
-    if isinstance(cmdl, six.string_types):
+    info(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
+    if isinstance(cmdl, str):
         return subprocess.check_output(cmdl, shell=True, executable='/bin/bash', stderr=subprocess.STDOUT)
     else:
         return subprocess.check_output(cmdl, stderr=subprocess.STDOUT)

@@ -3,7 +3,6 @@ import re
 import copy
 from collections import defaultdict
 
-import six
 import yaml
 import sys
 from os import listdir
@@ -108,7 +107,7 @@ class BcbioSample(BaseSample):
             input_file = self.sample_info['files']
             if isinstance(input_file, list):
                 input_file = input_file[0]
-            if isinstance(input_file, six.string_types) and input_file.endswith('.bam'):
+            if isinstance(input_file, str) and input_file.endswith('.bam'):
                 debug('Not found BAM file in final, but bcbio was run from BAMs')
                 if not input_file.startswith('/'):
                     input_file = abspath(join(self.bcbio_project.work_dir, pardir, input_file))
@@ -155,7 +154,7 @@ class BcbioSample(BaseSample):
             else:
                 variantcallers = variantcallers.get('somatic')
 
-        if isinstance(variantcallers, six.string_types):
+        if isinstance(variantcallers, str):
             variantcallers = [variantcallers]
 
         self.variantcallers = variantcallers or []
@@ -248,7 +247,7 @@ class BcbioSample(BaseSample):
                              BcbioProject.ngs_report_name + '.html'), silent=silent)
 
     def get_metric(self, names):
-        if isinstance(names, six.string_types):
+        if isinstance(names, str):
             names = [names]
         if not self.sample_info or not self.sample_info.get('metrics'):
             return None

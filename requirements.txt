@@ -2,7 +2,6 @@ pip
 setuptools>=18.5
 cython
 numpy
-six
 pyyaml
 simplejson
 joblib
@@ -12,7 +11,6 @@ pybedtools
 jinja2
 beautifulsoup4
 lxml
-xlsxwriter>=0.5.5
 nose
 natsort
 pandas

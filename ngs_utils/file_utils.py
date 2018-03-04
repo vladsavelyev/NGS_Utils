@@ -1,41 +1,31 @@
-"""Partly taken from bcbio-nextgen.
+"""
+Different utilities for dealing with files, directories, and their names.
+A lot of functions are grabbed from https://github.com/chapmanb/bcbio-nextgen
 """
 
 import shutil
 import os
 import string
-from datetime import datetime
 from os.path import isfile, isdir, getsize, exists, basename, join, abspath, splitext, \
     islink, dirname, realpath, getmtime, getctime
 import gzip
 import tempfile
 import contextlib
-import itertools
-import functools
-import random
-import collections
 import fnmatch
 import time
-from functools import reduce
-import six
 
 from ngs_utils.logger import info, err, warn, critical, debug
-
-try:
-    from concurrent import futures
-except ImportError:
-    try:
-        import futures
-    except ImportError:
-        futures = None
+from ngs_utils.utils import is_sequence, is_string
 
 
 def safe_mkdir(dirpath, descriptive_name=''):
+    """ Multiprocessing-safely and recursively creates a directory
+    """
+    if not dirpath:
+        critical(f'Path is empty' + ((': ' + descriptive_name) if descriptive_name else ''))
+
     if isdir(dirpath):
         return dirpath
-
-    if not dirpath:
-        critical(descriptive_name + ' path is empty.')
 
     if isfile(dirpath):
         critical(descriptive_name + ' ' + dirpath + ' is a file.')
@@ -56,98 +46,6 @@ def safe_mkdir(dirpath, descriptive_name=''):
     return dirpath
 
 
-def transform_to(ext):
-    """
-    Decorator to create an output filename from an output filename with
-    the specified extension. Changes the extension, in_file is transformed
-    to a new type.
-
-    Takes functions like this to decorate:
-    f(in_file, out_dir=None, out_file=None) or,
-    f(in_file=in_file, out_dir=None, out_file=None)
-
-    examples:
-    @transform(".bam")
-    f("the/input/path/file.sam") ->
-        f("the/input/path/file.sam", out_file="the/input/path/file.bam")
-
-    @transform(".bam")
-    f("the/input/path/file.sam", out_dir="results") ->
-        f("the/input/path/file.sam", out_file="results/file.bam")
-
-    """
-
-    def decor(f):
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            out_file = kwargs.get("out_file", None)
-            if not out_file:
-                in_path = kwargs.get("in_file", args[0])
-                out_dir = kwargs.get("out_dir", os.path.dirname(in_path))
-                safe_mkdir(out_dir)
-                out_name = replace_suffix(os.path.basename(in_path), ext)
-                out_file = os.path.join(out_dir, out_name)
-            kwargs["out_file"] = out_file
-            if not file_exists(out_file):
-                out_file = f(*args, **kwargs)
-            return out_file
-        return wrapper
-    return decor
-
-
-def filter_to(word):
-    """
-    Decorator to create an output filename from an input filename by
-    adding a word onto the stem. in_file is filtered by the function
-    and the results are written to out_file. You would want to use
-    this over transform_to if you don't know the extension of the file
-    going in. This also memoizes the output file.
-
-    Takes functions like this to decorate:
-    f(in_file, out_dir=None, out_file=None) or,
-    f(in_file=in_file, out_dir=None, out_file=None)
-
-    examples:
-    @filter_to(".foo")
-    f("the/input/path/file.sam") ->
-        f("the/input/path/file.sam", out_file="the/input/path/file.foo.bam")
-
-    @filter_to(".foo")
-    f("the/input/path/file.sam", out_dir="results") ->
-        f("the/input/path/file.sam", out_file="results/file.foo.bam")
-
-    """
-
-    def decor(f):
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            out_file = kwargs.get("out_file", None)
-            if not out_file:
-                in_path = kwargs.get("in_file", args[0])
-                out_dir = kwargs.get("out_dir", os.path.dirname(in_path))
-                safe_mkdir(out_dir)
-                out_name = append_stem(os.path.basename(in_path), word)
-                out_file = os.path.join(out_dir, out_name)
-            kwargs["out_file"] = out_file
-            if not file_exists(out_file):
-                out_file = f(*args, **kwargs)
-            return out_file
-        return wrapper
-    return decor
-
-
-def memoize_outfile(ext=None, stem=None):
-    """
-    Memoization decorator.
-
-    See docstring for transform_to and filter_to for details.
-    """
-    if ext:
-        return transform_to(ext)
-    if stem:
-        return filter_to(stem)
-
-
 @contextlib.contextmanager
 def chdir(new_dir):
     """Context manager to temporarily change to a new directory.
@@ -162,38 +60,6 @@ def chdir(new_dir):
     finally:
         os.chdir(cur_dir)
 
-def file_uptodate(fname, cmp_fname):
-    """Check if a file exists, is non-empty and is more recent than cmp_fname.
-    """
-    try:
-        return (file_exists(fname) and file_exists(cmp_fname) and
-                getmtime(fname) >= getmtime(cmp_fname))
-    except OSError:
-        return False
-
-def create_dirs(config, names=None):
-    if names is None:
-        names = config["dir"].keys()
-    for dname in names:
-        d = config["dir"][dname]
-        safe_mkdir(d)
-
-def save_diskspace(fname, reason, config):
-    """Overwrite a file in place with a short message to save disk.
-
-    This keeps files as a sanity check on processes working, but saves
-    disk by replacing them with a short message.
-    """
-    if config["algorithm"].get("save_diskspace", False):
-        with open(fname, "w") as out_handle:
-            out_handle.write("File removed to save disk space: %s" % reason)
-
-def add_full_path(dirname, basedir=None):
-    if basedir is None:
-        basedir = os.getcwd()
-    if not dirname.startswith("/"):
-        dirname = os.path.join(basedir, dirname)
-    return dirname
 
 def symlink_plus(orig, new):
     """Create relative symlinks and handle associated biological index files.
@@ -208,6 +74,7 @@ def symlink_plus(orig, new):
         if os.path.exists(orig_noext + sub_ext) and not os.path.lexists(new_noext + sub_ext):
             with chdir(os.path.dirname(new_noext)):
                 os.symlink(os.path.relpath(orig_noext + sub_ext), os.path.basename(new_noext + sub_ext))
+
 
 def open_gzipsafe(f, mode='r'):
     # mode_t = mode.replace('b', '')
@@ -236,191 +103,34 @@ def open_gzipsafe(f, mode='r'):
         return open(f, mode=mode)
 
 
-def append_stem(to_transform, word):
-    """
-    renames a filename or list of filenames with 'word' appended to the stem
-    of each one:
-    example: append_stem("/path/to/test.sam", "_filtered") ->
-    "/path/to/test_filtered.sam"
-
-    """
-    if is_sequence(to_transform):
-        return [append_stem(f, word) for f in to_transform]
-    elif is_string(to_transform):
-        (base, ext) = splitext_plus(to_transform)
-        return "".join([base, word, ext])
-    else:
-        raise ValueError("append_stem takes a single filename as a string or "
-                         "a list of filenames to transform.")
-
-
 def replace_suffix(to_transform, suffix):
     """
     replaces the suffix on a filename or list of filenames
     example: replace_suffix("/path/to/test.sam", ".bam") ->
     "/path/to/test.bam"
-
     """
     if is_sequence(to_transform):
         transformed = []
         for f in to_transform:
-            (base, _) = os.path.splitext(f)
+            base, _ = os.path.splitext(f)
             transformed.append(base + suffix)
         return transformed
     elif is_string(to_transform):
-        (base, _) = os.path.splitext(to_transform)
+        base, _ = os.path.splitext(to_transform)
         return base + suffix
     else:
         raise ValueError("replace_suffix takes a single filename as a string or "
                          "a list of filenames to transform.")
 
-# ## Functional programming
-
-def partition_all(n, iterable):
-    """Partition a list into equally sized pieces, including last smaller parts
-    http://stackoverflow.com/questions/5129102/python-equivalent-to-clojures-partition-all
-    """
-    it = iter(iterable)
-    while True:
-        chunk = list(itertools.islice(it, n))
-        if not chunk:
-            break
-        yield chunk
-
-def partition(pred, iterable):
-    'Use a predicate to partition entries into false entries and true entries'
-    # partition(is_odd, range(10)) --> 0 2 4 6 8   and  1 3 5 7 9
-    t1, t2 = itertools.tee(iterable)
-    try:
-        return itertools.ifilterfalse(pred, t1), itertools.ifilter(pred, t2)
-    except:
-        return itertools.filterfalse(pred, t1), filter(pred, t2)
-
-# ## Dealing with configuration files
-
-def merge_config_files(fnames):
-    """Merge configuration files, preferring definitions in latter files.
-    """
-    import yaml
-    def _load_yaml(fname):
-        with open(fname) as in_handle:
-            config = yaml.load(in_handle)
-        return config
-    out = _load_yaml(fnames[0])
-    for fname in fnames[1:]:
-        cur = _load_yaml(fname)
-        for k, v in cur.items():
-            if k in out and isinstance(out[k], dict):
-                out[k].update(v)
-            else:
-                out[k] = v
-    return out
-
-
-def get_in(d, t, default=None):
-    """
-    look up if you can get a tuple of values from a nested dictionary,
-    each item in the tuple a deeper layer
-
-    example: get_in({1: {2: 3}}, (1, 2)) -> 3
-    example: get_in({1: {2: 3}}, (2, 3)) -> {}
-    """
-    result = reduce(lambda d, t: d.get(t, {}), t, d)
-    if not result:
-        return default
-    else:
-        return result
-
-
-def flatten(l):
-    """
-    flatten an irregular list of lists
-    example: flatten([[[1, 2, 3], [4, 5]], 6]) -> [1, 2, 3, 4, 5, 6]
-    lifted from: http://stackoverflow.com/questions/2158395/
-
-    """
-    for el in l:
-        if isinstance(el, collections.Iterable) and not isinstance(el,
-                                                                   str):
-            for sub in flatten(el):
-                yield sub
-        else:
-            yield el
-
-
-def is_sequence(arg):
-    """
-    check if 'arg' is a sequence
-
-    example: arg([]) -> True
-    example: arg("lol") -> False
-
-    """
-    return (not hasattr(arg, "strip") and
-            hasattr(arg, "__getitem__") or
-            hasattr(arg, "__iter__"))
-
-
-def is_pair(arg):
-    """
-    check if 'arg' is a two-item sequence
-
-    """
-    return is_sequence(arg) and len(arg) == 2
-
-def is_string(arg):
-    return isinstance(arg, six.string_types)
-
 
 def locate(pattern, root=os.curdir):
-    '''Locate all files matching supplied filename pattern in and below
-    supplied root directory.'''
+    """Locate all files matching supplied filename pattern in and below
+    supplied root directory.
+    """
     for path, dirs, files in os.walk(os.path.abspath(root)):
         for filename in fnmatch.filter(files, pattern):
             yield os.path.join(path, filename)
 
-
-def itersubclasses(cls, _seen=None):
-    """
-    snagged from:  http://code.activestate.com/recipes/576949/
-    itersubclasses(cls)
-
-    Generator over all subclasses of a given class, in depth first order.
-
-    >>> list(itersubclasses(int)) == [bool]
-    True
-    >>> class A(object): pass
-    >>> class B(A): pass
-    >>> class C(A): pass
-    >>> class D(B,C): pass
-    >>> class E(D): pass
-    >>>
-    >>> for cls in itersubclasses(A):
-    ...     print(cls.__name__)
-    B
-    D
-    E
-    C
-    >>> # get ALL (new-style) classes currently defined
-    >>> [cls.__name__ for cls in itersubclasses(object)] #doctest: +ELLIPSIS
-    ['type', ...'tuple', ...]
-    """
-
-    if not isinstance(cls, type):
-        raise TypeError('itersubclasses must be called with '
-                        'new-style classes, not %.100r' % cls)
-    if _seen is None:
-        _seen = set()
-    try:
-        subs = cls.__subclasses__()
-    except TypeError:  # fails only when cls is type
-        subs = cls.__subclasses__(cls)
-    for sub in subs:
-        if sub not in _seen:
-            _seen.add(sub)
-            yield sub
-            for sub in itersubclasses(sub, _seen):
-                yield sub
 
 def replace_directory(out_files, dest_dir):
     """
@@ -453,43 +163,6 @@ def which(program):
             if is_exe(exe_file):
                 return exe_file
     return None
-
-def reservoir_sample(stream, num_items, item_parser=lambda x: x):
-    """
-    samples num_items from the stream keeping each with equal probability
-    """
-    kept = []
-    for index, item in enumerate(stream):
-        if index < num_items:
-            kept.append(item_parser(item))
-        else:
-            r = random.randint(0, index)
-            if r < num_items:
-                kept[r] = item_parser(item)
-    return kept
-
-
-def compose(f, g):
-    return lambda x: f(g(x))
-
-def dictapply(d, fn):
-    """
-    apply a function to all non-dict values in a dictionary
-    """
-    for k, v in d.items():
-        if isinstance(v, dict):
-            v = dictapply(v, fn)
-        else:
-            d[k] = fn(v)
-    return d
-
-
-def verify_module(name):
-    try:
-        __import__(name)
-        return True
-    except:
-        return False
 
 
 def adjust_path(path):
@@ -580,6 +253,7 @@ def _log(msg, silent, is_critical):
     if not silent:
         warn(msg)
 
+
 def verify_obj_by_path(path, description='', silent=False, is_critical=False, verify_size=True):
     if path is None:
         msg = (description + ': i' if description else 'I') + 's not specified (None).'
@@ -606,7 +280,10 @@ def verify_obj_by_path(path, description='', silent=False, is_critical=False, ve
         _log(msg, silent, is_critical)
         return None
 
+
 def can_reuse(fpath, cmp_f, silent=False):
+    """Check if a file `fpath` exists, is non-empty and is more recent than `cmp_f`
+    """
     do_reuse = os.environ.get('REUSE', '1')
     if do_reuse == '0':
         return False
@@ -618,6 +295,7 @@ def can_reuse(fpath, cmp_f, silent=False):
         return True
     else:
         return False
+
 
 def verify_file(fpath, description='', silent=False, is_critical=False, verify_size=True, cmp_f=None):
     if fpath is None:
@@ -647,7 +325,7 @@ def verify_file(fpath, description='', silent=False, is_critical=False, verify_s
         return None
 
     if cmp_f:
-        if isinstance(cmp_f, six.string_types):
+        if isinstance(cmp_f, str):
             cmp_f = [cmp_f]
         try:
             for cmp_f in cmp_f:
@@ -659,6 +337,7 @@ def verify_file(fpath, description='', silent=False, is_critical=False, verify_s
             _log(str(e), silent, is_critical)
 
     return fpath
+
 
 def verify_dir(dirpath, description='', silent=False, is_critical=False):
     if dirpath is None:
@@ -687,7 +366,7 @@ def verify_dir(dirpath, description='', silent=False, is_critical=False):
 
 def num_lines(fpath):
     with open(fpath) as f:
-        return sum(1 for l in f)
+        return sum(1 for _ in f)
 
 
 def make_tmpdir():
@@ -850,33 +529,37 @@ def dots_to_empty_cells(config, tsv_fpath):
     return iterate_file(config, tsv_fpath, proc_line, suffix='dots')
 
 
-def __remove_tmpdirs(fnames):
-    if isinstance(fnames, six.string_types):
-        fnames = [fnames]
-    for x in fnames:
-        xdir = os.path.dirname(os.path.abspath(x))
-        if xdir and os.path.exists(xdir):
-            shutil.rmtree(xdir, ignore_errors=True)
-
-
-def __remove_files(fnames):
-    if isinstance(fnames, six.string_types):
-        fnames = [fnames]
-
-    for x in fnames:
-        if x and os.path.exists(x):
-            if os.path.isfile(x):
-                os.remove(x)
-            elif os.path.isdir(x):
-                shutil.rmtree(x, ignore_errors=True)
-
-
 #################################################
 ######## Transaction ############################
 @contextlib.contextmanager
 def file_transaction(work_dir, *rollback_files):
     """Wrap file generation in a transaction, moving to output if finishes.
     """
+    def __remove_files(fnames):
+        if isinstance(fnames, str):
+            fnames = [fnames]
+
+        for x in fnames:
+            if x and os.path.exists(x):
+                if os.path.isfile(x):
+                    os.remove(x)
+                elif os.path.isdir(x):
+                    shutil.rmtree(x, ignore_errors=True)
+
+    def _flatten_plus_safe(tmp_dir, rollback_files):
+        """Flatten names of files and create temporary file names.
+        """
+        tx_fpaths, orig_files = [], []
+        for fnames in rollback_files:
+            if isinstance(fnames, str):
+                fnames = [fnames]
+            for fname in fnames:
+                tx_file = fname + '.tx'
+                tx_fpath = join(tmp_dir, tx_file) if tmp_dir else tx_file
+                tx_fpaths.append(tx_fpath)
+                orig_files.append(fname)
+        return tx_fpaths, orig_files
+
     exts = {".vcf": ".idx", ".bam": ".bai", "vcf.gz": ".tbi"}
     safe_fpaths, orig_names = _flatten_plus_safe(work_dir, rollback_files)
     __remove_files(safe_fpaths)  # remove any half-finished transactions
@@ -926,35 +609,6 @@ def tx_tmpdir(base_dir, rollback_dirpath):
     finally:
         if tmp_dir and exists(tmp_dir):
             os.rename(tmp_dir, rollback_dirpath)
-
-
-def _flatten_plus_safe(tmp_dir, rollback_files):
-    """Flatten names of files and create temporary file names.
-    """
-    tx_fpaths, orig_files = [], []
-    for fnames in rollback_files:
-        if isinstance(fnames, six.string_types):
-            fnames = [fnames]
-        for fname in fnames:
-            tx_file = fname + '.tx'
-            tx_fpath = join(tmp_dir, tx_file) if tmp_dir else tx_file
-            tx_fpaths.append(tx_fpath)
-            orig_files.append(fname)
-    return tx_fpaths, orig_files
-
-
-@contextlib.contextmanager
-def chdir(new_dir):
-    """Context manager to temporarily change to a new directory.
-    http://lucentbeing.com/blog/context-managers-and-the-with-statement-in-python/
-    """
-    cur_dir = os.getcwd()
-    safe_mkdir(new_dir)
-    os.chdir(new_dir)
-    try:
-        yield
-    finally:
-        os.chdir(cur_dir)
 
 
 def safe_symlink_to(fpath, dst_dirpath):
