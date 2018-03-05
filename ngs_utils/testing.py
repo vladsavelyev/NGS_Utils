@@ -96,7 +96,7 @@ class BaseTestCase(unittest.TestCase):
         if check_diff:
             cmdl = 'diff'
             if ignore_matching_lines:
-                if isinstance(ignore_matching_lines, six.string_types):
+                if isinstance(ignore_matching_lines, str):
                     ignore_matching_lines = [ignore_matching_lines]
                 for r in ignore_matching_lines:
                     cmdl += ' -I ' + subprocess.list2cmdline([r])
