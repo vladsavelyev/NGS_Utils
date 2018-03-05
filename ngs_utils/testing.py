@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 from glob import glob
 
-from ngs_utils.file_utils import verify_dir, verify_file
+from ngs_utils.file_utils import verify_dir, verify_file, safe_mkdir
 from ngs_utils.utils import is_travis
 
 
@@ -59,6 +59,11 @@ def get_prev(fpath):
 
 
 class BaseTestCase(unittest.TestCase):
+    # Run on top of existing latest results
+    reuse = False
+    # Do not run, just diff the latest results against the gold standard
+    only_diff = False
+
     script = None
 
     data_dir = 'data'
@@ -72,6 +77,21 @@ class BaseTestCase(unittest.TestCase):
             os.makedirs(self.data_dir)
         if not exists(self.results_dir):
             os.makedirs(self.results_dir)
+
+    def _run_cmd(self, cmdl, input_paths, output_path):
+        if not BaseTestCase.only_diff:
+            input_paths = [input_paths] if isinstance(input_paths, str) else input_paths
+            for ip in input_paths:
+                assert exists(ip), f'Data {ip} does not exist.'
+
+            if not BaseTestCase.reuse:
+                swap_output(output_path)
+            safe_mkdir(dirname(output_path))
+
+            info('-' * 100)
+            check_call(cmdl)
+            info('-' * 100)
+            info('')
 
     def _check_file_throws(self, wc_fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True,
                            check_diff=True):
@@ -124,3 +144,10 @@ class BaseTestCase(unittest.TestCase):
         assert all(verify_file(realpath(fpath), is_critical=True)
                    for fpath in contents
                    if isfile(realpath(fpath))), dirpath + ': ' + str(contents)
+
+vcf_ignore_lines = [
+    '^##bcftools_',
+    '^##INFO=',
+    '^##FILTER=',
+    '^##contig=',
+]
