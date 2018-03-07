@@ -10,6 +10,15 @@ from ngs_utils.file_utils import file_transaction, verify_file
 from ngs_utils.logger import info, err
 
 
+def run_simple(cmd, env_vars=None):
+    """Run the provided command, logging details and checking for errors.
+    """
+    env = _get_env(env_vars)
+    cmd, shell_arg, executable_arg = _normalize_cmd_args(cmd)
+    info(' '.join(str(x) for x in cmd) if not isinstance(cmd, str) else cmd)
+    subprocess.check_call(cmd, shell=shell_arg, executable=executable_arg, env=env)
+
+
 def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputfile=True,
         stdout_tx=True, reuse=False, env_vars=None):
     """Run the provided command, logging details and checking for errors.
@@ -22,14 +31,7 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
             info(output_fpath + '.gz exists, reusing')
             return output_fpath
 
-    env = os.environ.copy()
-    if env_vars:
-        for k, v in env_vars.items():
-            if v is None:
-                if k in env:
-                    del env[k]
-            else:
-                env[k] = v
+    env = _get_env(env_vars)
 
     if checks is None:
         checks = [file_nonempty_check]
@@ -78,6 +80,18 @@ def find_cmd(cmd):
         return subprocess.check_output(["which", cmd]).strip()
     except subprocess.CalledProcessError:
         return None
+
+
+def _get_env(env_vars):
+    env = os.environ.copy()
+    if env_vars:
+        for k, v in env_vars.items():
+            if v is None:
+                if k in env:
+                    del env[k]
+            else:
+                env[k] = v
+    return env
 
 
 def _normalize_cmd_args(cmd):
