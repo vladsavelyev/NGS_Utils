@@ -1,0 +1,59 @@
+{% set version = "4.8.0a" %}
+
+package:
+  name: snakemake
+  version: {{ version }}
+
+source:
+  git_url: https://bitbucket.org/vladsaveliev/snakemake
+  git_rev: master
+
+build:
+  number: 0
+  skip: True # [py27]
+  script: python setup.py install --single-version-externally-managed --record record.txt
+  entry_points:
+    - snakemake = snakemake:main
+    - snakemake-bash-completion = snakemake:bash_completion
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - wrapt
+    - requests
+    - ratelimiter
+    - configargparse
+    - appdirs
+  run:
+    - python
+    - wrapt
+    - requests
+    - docutils
+    - pyyaml
+    - requests >=2.8.1
+    # require this dropbox version to ensure that a conda doesn't pick up the
+    # outdated version available
+    - dropbox >=7.2.1
+    - ftputil >=3.2
+    - filechunkio >=1.6
+    - pysftp >=0.2.8
+    - psutil
+    - aioeasywebdav
+    # pandas is optional, but required for many workflows
+    - pandas
+    - ratelimiter
+    - configargparse
+    - appdirs
+    - datrie
+
+test:
+    imports:
+      - snakemake
+    commands:
+      - snakemake --version
+
+about:
+  home: https://snakemake.readthedocs.io
+  license: MIT
+  summary: Snakemake is a workflow management system that aims to reduce the complexity of creating workflows by providing a fast and comfortable execution environment, together with a clean and modern specification language in python style. Snakemake workflows are essentially Python scripts extended by declarative code to define rules. Rules describe how to create output files from input files.
