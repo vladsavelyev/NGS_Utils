@@ -45,6 +45,10 @@ def swap_output(output_path):
     last_changed = datetime.fromtimestamp(getctime(output_path))
     prev_output_path = output_path + '_' + last_changed.strftime('%Y_%m_%d__%H_%M_%S')
     os.rename(output_path, prev_output_path)
+
+    # Adding _prev symlink
+    swap_prev_symlink(output_path, prev_output_path)
+
     return prev_output_path
 
 def swap_prev_symlink(output_path, prev_output_path):
