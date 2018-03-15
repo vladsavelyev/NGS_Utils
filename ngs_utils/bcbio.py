@@ -86,6 +86,7 @@ class BcbioSample(BaseSample):
         batch_names = sample_info.get('metadata', dict()).get('batch')
         if isinstance(batch_names, str):
             batch_names = [batch_names]
+        batch_names = [b.replace('.', '_') for b in batch_names]
         self._set_name_and_paths(
             name=str(sample_info['description']),
             phenotype=sample_info.get('metadata', dict()).get('phenotype'),
@@ -188,7 +189,7 @@ class BcbioSample(BaseSample):
 
     def find_filt_vcf(self, passed=False, caller=MAIN_CALLER):
         path = join(self.dirpath, BcbioProject.varfilter_dir, self.name + '-' + caller +
-                    ((BcbioProject.filt_vcf_ending + '.gz') if not passed else BcbioProject.pass_filt_vcf_ending))
+                    ((BcbioProject.filt_vcf_ending + '.gz') if not passed else (BcbioProject.pass_filt_vcf_ending + '.gz')))
         return verify_file(path, silent=True)
 
     def find_mutation_file(self, passed=True, caller=MAIN_CALLER):
@@ -203,7 +204,8 @@ class BcbioSample(BaseSample):
                self.find_cnv_file(self.name + '-lumpy.vcf.gz')
 
     def find_sv_tsv(self):
-        return self.find_cnv_file(self.name + '-sv-prioritize.tsv')
+        return self.find_cnv_file(self.name + '-sv-prioritize.tsv') or \
+              (self.find_cnv_file(self.batch.name + '-sv-prioritize.tsv') if self.batch else None)
 
     def find_seq2c_calls(self):
         return self.find_cnv_file(self.name + '-seq2c.tsv') or \
