@@ -364,6 +364,14 @@ def verify_dir(dirpath, description='', silent=False, is_critical=False):
     return dirpath
 
 
+def verify_module(name):
+    try:
+        __import__(name)
+        return True
+    except:
+        return False
+
+
 def num_lines(fpath):
     with open(fpath) as f:
         return sum(1 for _ in f)
