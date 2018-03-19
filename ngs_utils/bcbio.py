@@ -502,7 +502,7 @@ class BcbioProject:
                 elif len(date_dirs) > 1:
                     critical('Error: more than one datestamp directory found!')
                 date_dir = date_dirs[0]
-                info('fc_date not in bcbio config, found the datestamp dir ' + date_dir)
+                info('Using the datestamp dir: ' + date_dir)
         if create_dir:
             safe_mkdir(date_dir)
         return date_dir
@@ -848,7 +848,7 @@ def load_bcbio_cnf(config_dir):
         critical('More than one bcbio YAML file found in the config directory ' +
                  config_dir + ': ' + ' '.join(bcbio_yamls))
     yaml_fpath = bcbio_yamls[0]
-    info('Using bcbio YAML config ' + yaml_fpath)
+    info('Using bcbio YAML config: ' + yaml_fpath)
     return load_yaml_config(yaml_fpath), yaml_fpath
 
 

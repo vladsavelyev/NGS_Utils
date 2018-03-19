@@ -1,4 +1,4 @@
-{% set version = "4.8.0a" %}
+{% set version = "4.8.1a" %}
 
 package:
   name: snakemake
