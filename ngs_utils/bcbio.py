@@ -86,7 +86,8 @@ class BcbioSample(BaseSample):
         batch_names = sample_info.get('metadata', dict()).get('batch')
         if isinstance(batch_names, str):
             batch_names = [batch_names]
-        batch_names = [b.replace('.', '_') for b in batch_names]
+        if batch_names:
+            batch_names = [b.replace('.', '_') for b in batch_names if b]
         self._set_name_and_paths(
             name=str(sample_info['description']),
             phenotype=sample_info.get('metadata', dict()).get('phenotype'),
