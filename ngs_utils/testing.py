@@ -63,9 +63,9 @@ def get_prev(fpath):
 
 
 class BaseTestCase(unittest.TestCase):
-    # Run on top of existing latest results
+    # Run on top of existing latest results. Also controlled with TEST_REUSE
     reuse = False
-    # Do not run, just diff the latest results against the gold standard
+    # Do not run, just diff the latest results against the gold standard. Also controlled with TEST_ONLY_DIFF
     only_diff = False
 
     script = None
@@ -83,12 +83,15 @@ class BaseTestCase(unittest.TestCase):
             os.makedirs(self.results_dir)
 
     def _run_cmd(self, cmdl, input_paths, output_path):
-        if not BaseTestCase.only_diff:
+        only_diff = BaseTestCase.only_diff or os.environ.get('TEST_ONLY_DIFF')
+        reuse = BaseTestCase.reuse or os.environ.get('TEST_REUSE')
+
+        if not only_diff:
             input_paths = [input_paths] if isinstance(input_paths, str) else input_paths
             for ip in input_paths:
                 assert exists(ip), f'Data {ip} does not exist.'
 
-            if not BaseTestCase.reuse:
+            if not reuse:
                 swap_output(output_path)
             safe_mkdir(dirname(output_path))
 
