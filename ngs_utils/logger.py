@@ -262,4 +262,10 @@ def swap_file(fpath):
     if exists(fpath):
         last_changed = datetime.fromtimestamp(getctime(fpath))
         prev_fpath = fpath + '_' + last_changed.strftime('%Y_%m_%d_%H_%M_%S')
-        os.rename(fpath, prev_fpath)
+        try:
+            if os.path.isfile(prev_fpath):
+                os.remove(prev_fpath)
+            if not os.path.isfile(prev_fpath):
+                os.rename(fpath, prev_fpath)
+        except OSError:
+            pass

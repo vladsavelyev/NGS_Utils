@@ -125,23 +125,10 @@ def set_up_dirs(proc_name, output_dir=None, work_dir=None, log_dir=None):
 
 
 def set_up_log(log_dir, log_fname):
-    log_fname = log_fname
     log_fpath = join(log_dir, log_fname)
+    logger.set_log_path(log_fpath, save_previous=True)
 
-    if file_exists(log_fpath):
-        timestamp = datetime.datetime.fromtimestamp(os.stat(log_fpath).st_mtime)
-        mv_log_fpath = log_fpath + '.' + timestamp.strftime('%Y-%m-%d_%H-%M-%S_' + str(random() * 1000))
-        try:
-            if isfile(mv_log_fpath):
-                os.remove(mv_log_fpath)
-            if not isfile(mv_log_fpath):
-                os.rename(log_fpath, mv_log_fpath)
-        except OSError:
-            pass
-
-    logger.set_log_path(log_fpath)
     debug('Logging to ' + log_fpath)
     debug()
     return log_fpath
-
 
