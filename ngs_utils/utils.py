@@ -126,6 +126,12 @@ def is_chihua():
 def is_local():
     return 'Vlads' in hostname or 'Vladislavs' in hostname or 'local' in hostname or 'Home' in hostname
 
+def is_spartan():
+    return re.match(r'spartan.*\.hpc\.unimelb\.edu\.au', hostname)
+
+def is_raijin():
+    return re.match(r'^raijin|(r\d\d\d\d$)', hostname)
+
 
 def md5(fpath):
     hash = hashlib.md5()
