@@ -1,4 +1,4 @@
-{% set version = "4.3.1vlad" %}
+{% set version = "5.0.0vlad" %}
 
 package:
   name: snakemake
@@ -25,6 +25,7 @@ requirements:
     - ratelimiter
     - configargparse
     - appdirs
+    - datrie
   run:
     - python
     - wrapt
@@ -46,6 +47,10 @@ requirements:
     - configargparse
     - appdirs
     - datrie
+    - python-irodsclient
+    - google-cloud-storage
+    - boto3
+    - aioeasywebdav
 
 test:
     imports:

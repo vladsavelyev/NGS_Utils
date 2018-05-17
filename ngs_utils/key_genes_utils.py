@@ -4,11 +4,15 @@ from ngs_utils.bed_utils import get_genes_from_bed, get_total_bed_size
 
 
 def get_bed_genes(bed_fpath):
+    """ Returns a list from the 4th column of a bed file
+    """
     gene_set, gene_list = get_genes_from_bed(bed_fpath)
     return [gn for gn in gene_list if (gn and gn != '.')]
 
 
 def get_genes_from_file(genes_fpath):
+    """ Read a list from 1-column file
+    """
     with open(genes_fpath) as f:
         gene_names = set([l.strip() for l in f.readlines() if l.strip() != ''])
     return gene_names
