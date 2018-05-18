@@ -52,7 +52,11 @@ def clean_package(package_name, dirpath='.'):
 
 
 def get_reqs():
-    from pip.req import parse_requirements
+    try: # for pip >= 10
+        from pip._internal.req import parse_requirements
+    except ImportError: # for pip <= 9.0.3
+        from pip.req import parse_requirements
+    
     try:
         install_reqs = parse_requirements('requirements.txt', session=False)
     except TypeError:
