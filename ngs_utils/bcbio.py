@@ -141,25 +141,25 @@ class BcbioSample(BaseSample):
 
         if isinstance(variantcallers, dict):
             if 'germline' in variantcallers and self.phenotype == 'normal':
-                if isdir(join(self.bcbio_project.final_dir, self.name)):
-                    s = BcbioSample(self.bcbio_project)
-                    germline_sample_info = copy.deepcopy(self.sample_info)
-                    germline_sample_info['description'] = self.name
-                    germline_sample_info['metadata'] = {
-                        'phenotype': 'germline',
-                        'batch': self.name}
-                    germline_sample_info['algorithm']['variantcaller'] = variantcallers['germline']
-                    s.load_from_sample_info(germline_sample_info)
-                    s.bcbio_project.samples.append(s)
-                else:
-                    variantcallers = variantcallers.get('germline')
+                self.variantcallers = variantcallers.get('germline')
+                # if isdir(join(self.bcbio_project.final_dir, self.name)):
+                    # s = BcbioSample(self.bcbio_project)
+                    # germline_sample_info = copy.deepcopy(self.sample_info)
+                    # germline_sample_info['description'] = self.name
+                    # germline_sample_info['metadata'] = {
+                    #     'phenotype': 'germline',
+                    #     'batch': self.name}
+                    # germline_sample_info['algorithm']['variantcaller'] = variantcallers['germline']
+                    # s.load_from_sample_info(germline_sample_info)
+                    # s.bcbio_project.samples.append(s)
+                # else:
             else:
-                variantcallers = variantcallers.get('somatic')
+                self.variantcallers = variantcallers.get('somatic')
 
         if isinstance(variantcallers, str):
-            variantcallers = [variantcallers]
-
-        self.variantcallers = variantcallers or []
+            self.variantcallers = [variantcallers]
+        elif isinstance(variantcallers, list):
+            self.variantcallers = variantcallers
 
         if self.phenotype != 'germline' and self.phenotype != 'normal':
             global MAIN_CALLER
@@ -404,6 +404,7 @@ class BcbioProject:
             self.samples.append(s)
         if any(not s.bam for s in self.samples):
             warn('ERROR: for some samples, BAM files not found in the final dir')
+        print(self.samples)
 
         self.samples.sort(key=lambda _s: _s.key_to_sort())
         self.batch_by_name = self.update_batches(self.samples)
