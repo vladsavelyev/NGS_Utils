@@ -82,7 +82,7 @@ class BaseTestCase(unittest.TestCase):
         if not exists(self.results_dir):
             os.makedirs(self.results_dir)
 
-    def _run_cmd(self, cmdl, input_paths, output_path):
+    def _run_cmd(self, cmdl, input_paths, output_path, before_run_fn=None):
         only_diff = BaseTestCase.only_diff or os.environ.get('TEST_ONLY_DIFF')
         reuse = BaseTestCase.reuse or os.environ.get('TEST_REUSE')
 
@@ -94,6 +94,9 @@ class BaseTestCase(unittest.TestCase):
             if not reuse:
                 swap_output(output_path)
             safe_mkdir(dirname(output_path))
+
+            if before_run_fn:
+                before_run_fn()
 
             info('-' * 100)
             check_call(cmdl)
@@ -157,4 +160,14 @@ vcf_ignore_lines = [
     '^##INFO=',
     '^##FILTER=',
     '^##contig=',
+]
+
+# Find and parse all elements containing json data, put data into a list and dumps the result.
+# The resulting text is unique per json data, so we can run simple `diff` on them.
+html_wrapper = [
+    'grep', '-A1', '<div id=".*_json">', '|', 'grep', '-v', '<div id=".*_json">', '|',
+    'python', '-c',
+        'import sys, json; '
+        'sys.stdout.write(json.dumps([json.loads(el) for el in sys.stdin.read().split(\'--\')], '
+                                     'indent=2, sort_keys=True))'
 ]
