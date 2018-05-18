@@ -319,7 +319,7 @@ class BcbioProject:
     oncoprints_dir = 'oncoprints'
 
     ## RNAseq
-    counts_names = ['combined.counts', 'combined.dexseq', 'combined.gene.sf.tpm', 'combined.isoform.sf.tpm']
+    counts_names = []
     expression_dir = 'expression'
 
     multiqc_report_name = 'report.html'
@@ -355,6 +355,7 @@ class BcbioProject:
         self.min_allele_fraction = None
         self.is_wgs = None
         self.is_rnaseq = None
+        self.postproc_mqc_files = []
 
         if input_dir:
             self.load_from_bcbio_dir(input_dir, project_name, proc_name)
