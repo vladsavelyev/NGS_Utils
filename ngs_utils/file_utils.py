@@ -22,7 +22,7 @@ def safe_mkdir(dirpath, descriptive_name=''):
     """ Multiprocessing-safely and recursively creates a directory
     """
     if not dirpath:
-        critical(f'Path is empty' + ((': ' + descriptive_name) if descriptive_name else ''))
+        critical(f'Path is empty: {descriptive_name if descriptive_name else ""}')
 
     if isdir(dirpath):
         return dirpath
