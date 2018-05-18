@@ -17,8 +17,8 @@ requirements:
     - python
     - numpy
   run:
-    - python
-    - bedtools >=2.25
+    - python>=3.6
+    - bedtools>=2.25
     - sambamba
     - htslib
     # pip packages:
