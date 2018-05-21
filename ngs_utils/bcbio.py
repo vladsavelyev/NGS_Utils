@@ -320,7 +320,7 @@ class BcbioProject:
 
     ## RNAseq
     counts_names = []
-    expression_dir = ''
+    expression_dir = 'expression'
 
     multiqc_report_name = 'report.html'
     call_vis_name = 'call_vis.html'
@@ -338,7 +338,6 @@ class BcbioProject:
         self.var_dir = None
         self.raw_var_dir = None
         self.expression_dir = None
-        self.raw_expression_dir = None
 
         self.samples = []
         self.batch_by_name = dict()
@@ -380,7 +379,6 @@ class BcbioProject:
         self.var_dir = join(self.date_dir, BcbioProject.var_dir)
         self.raw_var_dir = join(self.var_dir, 'raw')
         self.expression_dir = join(self.date_dir, BcbioProject.expression_dir)
-        self.raw_expression_dir = join(self.expression_dir, 'raw')
 
     def load_from_bcbio_dir(self, input_dir, project_name=None, proc_name='postproc'):
         """
