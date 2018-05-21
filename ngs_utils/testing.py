@@ -131,9 +131,8 @@ class BaseTestCase(unittest.TestCase):
                 for r in ignore_matching_lines:
                     cmdl += ' -I ' + subprocess.list2cmdline([r])
             if wrapper:
-                if isinstance(wrapper, str):
-                    wrapper = wrapper.split()
-                wrapper = subprocess.list2cmdline(wrapper)
+                if isinstance(wrapper, list):
+                    wrapper = subprocess.list2cmdline(wrapper)
                 if not fpath.endswith('.gz'):
                     fpath = '<(cat ' + fpath + ' | ' + wrapper + ')'
                     cmp_fpath = '<(cat ' + cmp_fpath + ' | ' + wrapper + ')'
