@@ -320,7 +320,7 @@ class BcbioProject:
 
     ## RNAseq
     counts_names = []
-    expression_dir = 'expression'
+    expression_dir = ''
 
     multiqc_report_name = 'report.html'
     call_vis_name = 'call_vis.html'

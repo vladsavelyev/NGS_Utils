@@ -1,4 +1,4 @@
-{% set version = "5.0.0vlad" %}
+{% set version = "5.1.2vlad" %}
 
 package:
   name: snakemake
@@ -32,6 +32,7 @@ requirements:
     - requests
     - docutils
     - pyyaml
+    - datrie
     - requests >=2.8.1
     # require this dropbox version to ensure that a conda doesn't pick up the
     # outdated version available
@@ -46,11 +47,12 @@ requirements:
     - ratelimiter
     - configargparse
     - appdirs
-    - datrie
     - python-irodsclient
     - google-cloud-storage
     - boto3
     - aioeasywebdav
+    - jsonschema
+    - jinja2
 
 test:
     imports:
