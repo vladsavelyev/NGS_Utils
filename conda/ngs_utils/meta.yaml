@@ -26,18 +26,18 @@ requirements:
     - six
     - pyyaml
     - simplejson
-    - joblib
-    - ipython-cluster-helper
     - pysam
     - pybedtools
     - gffutils
-    - jinja2
-    - beautifulsoup4
-    - lxml
     - nose
     - natsort
     - more-itertools
     - toolz
+    # - joblib                  # for parallelization
+    # - ipython-cluster-helper  # for parallelization
+    - lxml                    # for reporting
+    - jinja2                  # for reporting
+    - beautifulsoup4          # for reporting
 
 test:
   imports:

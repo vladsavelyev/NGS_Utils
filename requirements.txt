@@ -4,13 +4,13 @@ cython
 numpy
 pyyaml
 simplejson
-joblib
-ipython-cluster-helper
 pysam
 pybedtools
-jinja2
-beautifulsoup4
-lxml
 nose
 natsort
 pandas
+jinja2                  # for reporting
+beautifulsoup4          # for reporting
+lxml                    # for reporting
+# joblib                  # for parallelization
+# ipython-cluster-helper  # for parallelization
