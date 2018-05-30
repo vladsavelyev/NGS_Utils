@@ -265,3 +265,19 @@ def dictapply(d, fn):
         else:
             d[k] = fn(v)
     return d
+
+
+def set_locale():
+    import locale
+    try:
+        if 'UTF-8' not in locale.getlocale(locale.LC_ALL):
+            try:
+                locale.setlocale(locale.LC_ALL, 'en_AU.UTF-8')
+            except locale.Error:
+                locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+            var = '.'.join(locale.getlocale(locale.LC_ALL))
+            environ['LC_ALL'] = environ['LANG'] = var
+    except TypeError:
+        pass
+
+
