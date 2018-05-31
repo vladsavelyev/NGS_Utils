@@ -493,8 +493,7 @@ class BcbioProject:
                     critical('Error: no project directory of format {fc_date}_{fc_name} or {fc_name}_{fc_date}')
             else:
                 # bcbio since 1.0.6
-                regexs = [fr'^201\d-[01][0-9]-[0-3][0-9]_{fc_name}',
-                          fr'^{fc_name}_201\d-[01][0-9]-[0-3][0-9]']
+                regexs = [fr'^\d\d\d\d-[01][0-9]-[0-3][0-9]_{fc_name}']
                 date_dirs = [join(final_dir, dirpath)
                                 for dirpath in listdir(final_dir)
                                 if any(re.match(regex, dirpath) for regex in regexs)]
