@@ -814,9 +814,8 @@ def detect_bcbio_dir(input_dir, silent=False):
             critical(
                 'Are you running on a bcbio directory?\n'
                 'Can\'t find `config` directory at ' + join(input_dir, 'config') + ' or ' + abspath(join(input_dir, pardir, 'config')) + '. '
-                'Make sure that you changed to a bcbio root or final directory, or provided it as a first argument.\n'
-                'Type `' + basename(__file__) + ' --help` for more help.')
-    
+                'Make sure that you changed to a bcbio root or final directory, or provided it as a first argument.')
+
     if not silent:
         info('Bcbio project directory: ' + root_dir)
         if final_dir:
