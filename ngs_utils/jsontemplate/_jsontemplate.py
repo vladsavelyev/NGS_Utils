@@ -51,8 +51,6 @@ u'Hello {name}' +  {name: '\xb5'}     ->  ERROR: \xb5 is not decodable as ASCII
 
 Mixing types may incur a performance penalty.
 """
-import six
-
 __author__ = 'Andy Chu'
 
 __all__ = [
@@ -708,7 +706,7 @@ def _ToString(x):
     # jsontemplate_test.py.
     if x is None:
         return 'null'
-    if isinstance(x, six.string_types):
+    if isinstance(x, str):
         return x
     return pprint.pformat(x)
 
@@ -718,14 +716,14 @@ def _ToString(x):
 # like {number|increment-by 1}, where formatters take and return integers.
 def _Html(x):
     # If it's not string or unicode, make it a string
-    if not isinstance(x, six.string_types):
+    if not isinstance(x, str):
         x = str(x)
     return cgi.escape(x)
 
 
 def _HtmlAttrValue(x):
     # If it's not string or unicode, make it a string
-    if not isinstance(x, six.string_types):
+    if not isinstance(x, str):
         x = str(x)
     return cgi.escape(x, quote=True)
 
@@ -1533,7 +1531,7 @@ def _MakeGroupFromRootSection(root_section, undefined_str):
   """
     group = {}
     for statement in root_section.Statements():
-        if isinstance(statement, six.string_types):
+        if isinstance(statement, str):
             continue
         func, args = statement
         # here the function acts as ID for the block type
@@ -1735,7 +1733,7 @@ def _Execute(statements, context, callback, trace):
     if trace:
         trace.exec_depth += 1
     for i, statement in enumerate(statements):
-        if isinstance(statement, six.string_types):
+        if isinstance(statement, str):
             callback(statement)
         else:
             # In the case of a substitution, args is a pair (name, formatters).
@@ -1771,7 +1769,7 @@ def _FlattenToCallback(tokens, callback):
   ['a', ['b', 'c']] -> callback('a'); callback('b'); callback('c');
   """
     for t in tokens:
-        if isinstance(t, six.string_types):
+        if isinstance(t, str):
             callback(t)
         else:
             _FlattenToCallback(t, callback)

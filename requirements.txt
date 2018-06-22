@@ -1,16 +1,14 @@
 pip
-setuptools>=18.5
-cython
-numpy
-pyyaml
-simplejson
-pysam
-pybedtools
-nose
-natsort
-pandas
-jinja2                  # for reporting
-beautifulsoup4          # for reporting
-lxml                    # for reporting
+setuptools
+# cython
+# numpy
+# pyyaml
+# pysam
+# pybedtools
+# natsort
+# pandas
+# jinja2                  # for reporting
+# beautifulsoup4          # for html2base64
+# lxml                    # for html2base64
 # joblib                  # for parallelization
 # ipython-cluster-helper  # for parallelization

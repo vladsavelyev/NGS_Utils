@@ -8,8 +8,8 @@ from math import floor
 import traceback
 import datetime
 import itertools
-import six
 import io
+import base64
 
 from ngs_utils import jsontemplate
 from ngs_utils.file_utils import file_transaction, verify_file, safe_mkdir
@@ -100,7 +100,7 @@ class Record:
         if value is None:
             pass
         elif self.metric.parse:
-            if isinstance(value, six.string_types):
+            if isinstance(value, str):
                 try:
                     value = int(value)
                 except ValueError:
@@ -256,7 +256,7 @@ class Metric:
         if unit and is_html:
             unit_str = '<span class=\'rhs\'>&nbsp;</span>' + unit
 
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             if human_readable:
                 return '{value}{unit_str}'.format(**locals())
             else:
@@ -322,7 +322,7 @@ class BaseReport:
         self.display_name = display_name
         if not display_name:
             if sample:
-                if isinstance(sample, six.string_types):
+                if isinstance(sample, str):
                     self.display_name = sample
                 else:
                     self.display_name = sample.name
@@ -1215,7 +1215,7 @@ def make_cell_td(rec, class_=''):
         padding_style = ''
 
     if rec.url:
-        if isinstance(rec.url, six.string_types):
+        if isinstance(rec.url, str):
             html += '<a href="' + rec.url + '">' + rec.cell_contents + '</a>'
         else:  # varQC -- several variant callers for one sample are possible
             if len(rec.url) == 0:
@@ -1545,7 +1545,7 @@ def calc_cell_contents(report, rows):
             metric = rec.metric
 
             if metric.ok_threshold is not None:
-                if isinstance(metric.ok_threshold, six.string_types):
+                if isinstance(metric.ok_threshold, str):
                     rec_to_align_with = BaseReport.find_record(row.records, metric.ok_threshold)
                     if rec_to_align_with:
                         rec.text_color = rec_to_align_with.text_color
@@ -1579,8 +1579,6 @@ def write_html_report(report, html_fpath, caption='',
                     if data_dict:
                         for keyword, text in data_dict.items():
                             l = _insert_into_html(l, text, keyword)
-                    if six.PY2:
-                        l = l.decode('utf-8')
                     out_f.write(l)
     return html_fpath
 
@@ -1646,8 +1644,6 @@ def calc_heatmap_stats(metric):
 #         else:
 #             copy_aux_file(aux_f_relpath)
 
-
-import base64
 
 def _embed_images(html, report_dirpath, image_by_key):
     ptrn = '<img src="{key}"'

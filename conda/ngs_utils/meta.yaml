@@ -13,31 +13,25 @@ build:
 
 requirements:
   build:
-    - python
+    - python>=3.6
     - numpy
   run:
     - python>=3.6
-    - bedtools>=2.25
-    - sambamba
-    - htslib
-    # pip packages:
-    - cython
-    - numpy
-    - six
-    - pyyaml
-    - simplejson
-    - pysam
-    - pybedtools
-    - gffutils
-    - nose
-    - natsort
-    - more-itertools
-    - toolz
+    # All dependencies are optional, depending on functionality you'd want:
+    # - bedtools>=2.25
+    # - sambamba
+    # - htslib
+    # - cython
+    # - numpy
+    # - pyyaml
+    # - pysam
+    # - pybedtools
+    # - gffutils                # for generating regions through GFF file
+    # - natsort                 # for Sample calss
     # - joblib                  # for parallelization
     # - ipython-cluster-helper  # for parallelization
-    - lxml                    # for reporting
-    - jinja2                  # for reporting
-    - beautifulsoup4          # for reporting
+    # - lxml                    # for html2base64
+    # - beautifulsoup4          # for html2base64
 
 test:
   imports:
