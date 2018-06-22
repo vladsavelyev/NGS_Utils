@@ -5,11 +5,11 @@ set -e
 
 # Builds and uploads packages for linux-32, linux-64, and macos, for py2 and py3
 
-if [ ! -x "$(command -v conda)" ]; then
+if command -v conda; then
     echo "conda executble not in PATH: $PATH"
     exit
 fi
-if [ ! -x "$(command -v anaconda)" ]; then
+if command -v anaconda; then
     echo "anaconda executble not in PATH: $PATH"
     exit
 fi
