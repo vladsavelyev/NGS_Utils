@@ -1,10 +1,6 @@
 import re
-
-import copy
 from collections import defaultdict
-
 import yaml
-import sys
 from os import listdir
 from os.path import join, abspath, pardir, splitext, basename, dirname, realpath, isdir, isfile, exists
 
