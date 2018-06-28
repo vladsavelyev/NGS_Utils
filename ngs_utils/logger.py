@@ -215,19 +215,7 @@ class CriticalError(Exception):
 
 
 def _log(out, msg='', ending='\n', print_date=True, severity=None):
-    msg_debug = str(msg)
-    msg = str(msg)
-
-    if print_date:
-        msg_debug = timestamp() + '  ' + msg
-        # if is_debug:
-        #     msg_debug = severity + ' ' * (12 - len(severity)) + msg_debug
-
-    if is_debug:
-        out.write(msg_debug + ending)
-    elif severity != 'debug':
-        out.write(msg + ending)
-
+    # Keeping track of all severe log messages
     if severity == 'critical':
         critical_msgs.append(msg)
     if severity == 'error':
@@ -235,15 +223,30 @@ def _log(out, msg='', ending='\n', print_date=True, severity=None):
     if severity == 'warning':
         warning_msgs.append(msg)
 
+    msg_e = msg + ending
+    t_msg_e = timestamp() + '  ' + msg_e
+
+    # Writing logs to log file
+    if log_fpath:
+        _write_to_file(t_msg_e)
+    else:
+        past_msgs.append(t_msg_e)
+
+    # Writing to stdout will error out of it can't encode messages properly into ascii, so re-converting
+    msg_e_b = msg_e.encode(encoding='ascii', errors='replace').decode(encoding='ascii')
+    t_msg_e_b = t_msg_e.encode(encoding='ascii', errors='replace').decode(encoding='ascii')
+
+    # Finally, logging to stdout
+    if is_debug:
+        out.write(t_msg_e_b if print_date else msg_e_b)
+    elif severity != 'debug':
+        out.write(msg_e_b)
+
+    # For messages to appear in a correct order in output
     sys.stdout.flush()
     sys.stderr.flush()
     if is_debug and is_local():
         sleep(0.01)
-
-    if log_fpath:
-        _write_to_file(msg_debug + ending)
-    else:
-        past_msgs.append(msg_debug + ending)
 
 
 def _write_to_file(text):
