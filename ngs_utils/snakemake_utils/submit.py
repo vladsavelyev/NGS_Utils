@@ -24,7 +24,13 @@ submit_cmd = submit_cmd\
 
 job_name = job_properties.get('rule') or job_properties.get('groupid') or application_name
 if 'wildcards' in job_properties:
-    job_name += '.' + '__'.join(job_properties['wildcards'].values())
+    wcs = job_properties['wildcards']
+    if isinstance(wcs, list):
+        values = wcs
+    else:
+        values = wcs.values()
+    if values:
+        job_name += '.' + '__'.join(values)
 
 submit_cmd = submit_cmd\
     .replace('{job_name}', job_name)\
