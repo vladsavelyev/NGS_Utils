@@ -103,13 +103,16 @@ error = err
 
 def critical(msg=''):
     if isinstance(msg, str):
-        err(msg, severity='critical')
+        err(f'ERROR: {msg}', severity='critical')
     else:
         if not msg:
             return
         for m in msg:
-            err(m, severity='critical')
-    raise CriticalError(msg)
+            err(f'ERROR: {m}', severity='critical')
+    if is_debug:
+        raise CriticalError(msg)
+    else:
+        sys.exit(1)
 
 
 def send_email(msg_other='', subj='', only_me=False, addr_by_username=None, addr=None):

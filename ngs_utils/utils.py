@@ -124,7 +124,7 @@ def is_chihua():
     return hostname == 'chihua'
 
 def is_local():
-    return 'Vlads' in hostname or 'Vladislavs' in hostname or 'local' in hostname or 'Home' in hostname
+    return 'Vlads' in hostname or 'Vladislavs' in hostname or 'local' in hostname or 'Home' in hostname or '5180L-135800-M.local' in hostname
 
 def is_spartan():
     return re.match(r'spartan.*\.hpc\.unimelb\.edu\.au', hostname)
