@@ -20,7 +20,8 @@ job_properties = read_job_properties(job_cmd)
 
 submit_cmd = submit_cmd\
     .replace('{threads}', str(job_properties.get('threads', 1)))\
-    .replace('{resources.mem_mb}', str(job_properties.get('resources', {}).get('mem_mb', 2000)))
+    .replace('{resources.mem_mb}', str(job_properties.get('resources', {}).get('mem_mb', 2000)))\
+    .replace('{resources.disk_mb}', str(job_properties.get('resources', {}).get('disk_mb', 2000)))
 
 job_name = job_properties.get('rule') or job_properties.get('groupid') or application_name
 if 'wildcards' in job_properties:
