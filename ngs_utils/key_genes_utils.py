@@ -26,6 +26,7 @@ def get_genes_from_file(genes_fpath):
 
 
 def get_key_genes(genome, genes_file=None, get_key_genes_file=None):
+    assert genes_file or get_key_genes_file, 'Provide genes_file or get_key_genes_file function'
     key_gene_names = get_genes_from_file(genes_file or get_key_genes_file())
     if genome in ['mm10', 'rn6']:
         return [gn[0] + gn[1:].lower() for gn in key_gene_names]

@@ -28,8 +28,7 @@ def get_fai(genome):
     return _get(join('fai', '{genome}.fa.fai'), genome)
 
 def get_chrom_lengths(genome=None, fai_fpath=None):
-    assert genome or fai_fpath, 'One of genome or fai_fpath should be not None: ' \
-                                'genome=' + str(genome) + ' fai_fpath=' + str(fai_fpath)
+    assert genome or fai_fpath, f'One of genome or fai_fpath should be not None: genome={genome}, fai_fpath={fai_fpath}'
 
     if not fai_fpath:
         check_genome(genome)

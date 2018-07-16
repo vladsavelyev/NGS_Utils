@@ -176,6 +176,7 @@ def get_canonical_transcripts_ids(genome):
     if short_genome.startswith('GRCh38'):
         short_genome = 'hg38'
     check_genome(short_genome)
+    genome = short_genome
 
     canon_fpath = _get(join('{genome}', 'canon_transcripts_{genome}_ensembl.txt'), genome)
     replacement_fpath = _get('canon_cancer_replacement.txt')
