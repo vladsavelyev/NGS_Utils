@@ -23,9 +23,6 @@ except ImportError:
     pass
 
 
-EMBED_ASSETS = True
-
-
 def get_int_val(v):
     v = _get_num(v)
     return int(v) if v else None
@@ -374,7 +371,7 @@ class BaseReport:
 
     def save_html(self, output_fpath, caption='',  #type_=None,
                   extra_js_fpaths=list(), extra_css_fpaths=list(),
-                  tmpl_fpath=None, data_dict=None):
+                  tmpl_fpath=None, data_dict=None, embed_assets=True):
         # class Encoder(JSONEncoder):
         #     def default(self, o):
         #         if isinstance(o, (VariantCaller, BCBioSample)):
@@ -389,7 +386,7 @@ class BaseReport:
         safe_mkdir(dirname(output_fpath))
         fpath = write_html_report(self, output_fpath, caption=caption,
                                   extra_js_fpaths=extra_js_fpaths, extra_css_fpaths=extra_css_fpaths,
-                                  tmpl_fpath=tmpl_fpath, data_dict=data_dict)
+                                  tmpl_fpath=tmpl_fpath, data_dict=data_dict, embed_assets=embed_assets)
         self.html_fpath = fpath
         return fpath
 
@@ -496,10 +493,10 @@ class SampleReport(BaseReport):
 
     def save_html(self, output_fpath, caption='', #type_=None,
             extra_js_fpaths=list(), extra_css_fpaths=list(),
-            tmpl_fpath=None, data_dict=None):
+            tmpl_fpath=None, data_dict=None, embed_assets=True):
         return BaseReport.save_html(self, output_fpath, caption=caption, #type_='SampleReport',
                     extra_js_fpaths=extra_js_fpaths, extra_css_fpaths=extra_css_fpaths,
-                    tmpl_fpath=tmpl_fpath, data_dict=data_dict)
+                    tmpl_fpath=tmpl_fpath, data_dict=data_dict, embed_assets=embed_assets)
 
     def __repr__(self):
         return self.display_name + (', ' + self.report_name if self.report_name else '')
@@ -740,16 +737,16 @@ class FullReport(BaseReport):
 
         return fr
 
-    def save_into_files(self, base_path, caption, sections=None):
+    def save_into_files(self, base_path, caption, sections=None, embed_assets=True):
         safe_mkdir(dirname(base_path))
         return \
             self.save_txt(base_path + '.txt', sections), \
             self.save_tsv(base_path + '.tsv', sections), \
-            self.save_html(base_path + '.html', caption)
+            self.save_html(base_path + '.html', caption, embed_assets=embed_assets)
 
     def save_html(self, output_fpath, caption='',  #type_=None,
                   display_name=None, extra_js_fpaths=None, extra_css_fpaths=None,
-                  tmpl_fpath=None, data_dict=None):
+                  tmpl_fpath=None, data_dict=None, embed_assets=True):
         safe_mkdir(dirname(output_fpath))
         if len(self.sample_reports) == 0:
             err('No sample reports found: HTML summary will not be made.')
@@ -757,7 +754,7 @@ class FullReport(BaseReport):
 
         return BaseReport.save_html(self, output_fpath, caption=caption,  #type_='FullReport',
             extra_js_fpaths=extra_js_fpaths, extra_css_fpaths=extra_css_fpaths,
-            tmpl_fpath=tmpl_fpath, data_dict=data_dict)
+            tmpl_fpath=tmpl_fpath, data_dict=data_dict, embed_assets=embed_assets)
 
     def __repr__(self):
         return self.name
@@ -1555,7 +1552,7 @@ def calc_cell_contents(report, rows):
 
 def write_html_report(report, html_fpath, caption='',
                       extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None,
-                      tmpl_fpath=None, data_dict=None):
+                      tmpl_fpath=None, data_dict=None, embed_assets=True):
 
     report_html = build_report_html(report)
     plots_html = ''.join('<img src="' + plot + '"/>' for plot in report.plots)
@@ -1570,8 +1567,8 @@ def write_html_report(report, html_fpath, caption='',
             
             with io.open(tx, 'w', encoding='utf-8') as out_f:
                 for l in in_f:
-                    l = _embed_css_and_scripts(l, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths)
-                    l = _embed_images(l, dirname(html_fpath), image_by_key)
+                    l = _embed_css_and_scripts(l, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths, embed_assets=embed_assets)
+                    l = _embed_images(l, dirname(html_fpath), image_by_key, embed_assets=embed_assets)
                     l = _insert_into_html(l, caption, 'caption')
                     l = _insert_into_html(l, datetime.datetime.now().strftime('%d %B %Y, %A, %H:%M:%S'), 'report_date')
                     l = _insert_into_html(l, report_html, 'report')
@@ -1645,7 +1642,7 @@ def calc_heatmap_stats(metric):
 #             copy_aux_file(aux_f_relpath)
 
 
-def _embed_images(html, report_dirpath, image_by_key):
+def _embed_images(html, report_dirpath, image_by_key, embed_assets=True):
     ptrn = '<img src="{key}"'
 
     if not image_by_key:
@@ -1659,7 +1656,7 @@ def _embed_images(html, report_dirpath, image_by_key):
                 continue
 
         old_piece = ptrn.format(key=key)
-        if not EMBED_ASSETS:  # Not embedding, just adding links
+        if not embed_assets:  # Not embedding, just adding links
             new_piece = old_piece.replace(key, relpath(fpath, report_dirpath))
         else:
             with open(fpath, 'rb') as f:
@@ -1681,7 +1678,7 @@ css_line_tmpl = '<link rel="stylesheet" type="text/css" href="{file_rel_path}" /
 css_l_tag = '<style type="text/css" rel="stylesheet" name="{name}">'
 css_r_tag = '    </style>'
 
-def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css_fpaths=None):
+def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css_fpaths=None, embed_assets=True):
     extra_js_fpaths = extra_js_fpaths or []
     extra_css_fpaths = extra_css_fpaths or []
 
@@ -1704,7 +1701,7 @@ def _embed_css_and_scripts(html, report_dirpath, extra_js_fpaths=None, extra_css
             line = line_tmpl.format(file_rel_path=rel_fpath)
             l_tag_formatted = l_tag.format(name=rel_fpath)
 
-            if not EMBED_ASSETS:  # not embedding, just adding links
+            if not embed_assets:  # not embedding, just adding links
                 aux_dirpath = safe_mkdir(join(report_dirpath, aux_dirname))
                 fpath_in_aux = join(aux_dirpath, rel_fpath)
                 safe_mkdir(dirname(fpath_in_aux))
@@ -1752,8 +1749,8 @@ def _insert_into_html(html, text, keyword):
 
 
 def write_static_html_report(data_dict, html_fpath, tmpl_fpath=None,
-                             extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None, tmpl_str=None):
-
+                             extra_js_fpaths=None, extra_css_fpaths=None, image_by_key=None,
+                             tmpl_str=None, embed_assets=True):
     if tmpl_str:
         html = tmpl_str
     else:
@@ -1763,8 +1760,8 @@ def write_static_html_report(data_dict, html_fpath, tmpl_fpath=None,
 
     html = jsontemplate.expand(html, data_dict)
 
-    html = _embed_css_and_scripts(html, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths)
-    html = _embed_images(html, dirname(html_fpath), image_by_key)
+    html = _embed_css_and_scripts(html, dirname(html_fpath), extra_js_fpaths, extra_css_fpaths, embed_assets=embed_assets)
+    html = _embed_images(html, dirname(html_fpath), image_by_key, embed_assets=embed_assets)
 
     return __write_html(html, html_fpath, extra_js_fpaths, extra_css_fpaths, image_by_key)
 
