@@ -1,9 +1,8 @@
 import subprocess
 import unittest
 import os
-from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, getctime, getsize, abspath, expanduser, \
-    realpath
-import shutil
+from os.path import dirname, join, exists, isfile, splitext, basename, isdir, relpath, getctime, getsize, realpath, \
+    islink
 import sys
 from datetime import datetime
 from glob import glob
@@ -51,10 +50,15 @@ def swap_output(output_path):
 
     return prev_output_path
 
-def swap_prev_symlink(output_path, prev_output_path):
+def swap_prev_symlink(output_path, prev_output_path=None):
+    """
+    :param output_path:
+    :param prev_output_path: the older "previous" path that will be symlinked to <output_path>_prev
+    """
     prev_output_link = get_prev(output_path)
-    if exists(prev_output_link):
+    if exists(prev_output_link) or islink(prev_output_link):
         os.remove(prev_output_link)
+    assert not exists(prev_output_link), f'{prev_output_link} still exists and cannot be removed'
     if prev_output_path:
         os.symlink(prev_output_path, prev_output_link)
 
