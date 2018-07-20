@@ -80,6 +80,8 @@ class BcbioSample(BaseSample):
         self.is_wgs = self.coverage_interval == 'genome'
 
         batch_names = sample_info.get('metadata', dict()).get('batch')
+        if isinstance(batch_names, int) or isinstance(batch_names, float):
+            batch_names = str(batch_names)
         if isinstance(batch_names, str):
             batch_names = [batch_names]
         if batch_names:
