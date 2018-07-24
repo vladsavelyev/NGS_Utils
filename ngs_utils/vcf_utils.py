@@ -3,7 +3,7 @@ from ngs_utils.file_utils import open_gzipsafe
 
 
 def get_sample_names(vcf_path):
-    return get_sample_ids(vcf_path)
+    return get_sample_ids(vcf_path, return_names=True)
 
 
 def get_tumor_sample_name(vcf_path):
