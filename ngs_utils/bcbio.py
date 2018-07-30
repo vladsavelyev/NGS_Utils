@@ -49,35 +49,11 @@ class BcbioSample(BaseSample):
     def get_name_for_files(self):  # In case if the sample if symlink from another project, and the name was changed in this one
         return self.old_name or self.name
 
-    def load_from_sample_info(self, sample_info):
-        self.sample_info = sample_info
+    @staticmethod
+    def load_from_sample_info(sample_info, bcbio_project, exclude_samples=None, include_samples=None):
 
-        if 'description_original' in sample_info:
-            self.old_name = str(sample_info['description_original']).replace('.', '_')
-        self.genome_build = sample_info['genome_build']
-        self.variant_regions_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('variant_regions'))
-        self.sv_regions_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('sv_regions')) or self.variant_regions_bed
-        self.coverage_bed = self.bcbio_project.config_path(val=sample_info['algorithm'].get('coverage')) or self.sv_regions_bed
-        if self.coverage_bed and not isfile(self.coverage_bed):
-            debug('coverage bed ' + str(self.coverage_bed) + ' not found. Looking relatively to genomes "basedir"')
-            try:
-                import az
-            except ImportError:
-                pass
-            else:
-                genome_cfg = az.get_refdata(self.genome_build)
-                ref_basedir = genome_cfg.get('basedir')
-                if not ref_basedir:
-                    critical('coverage bed ' + str(self.coverage_bed) + ' not found and "basedir" not provided in system config')
-                self.coverage_bed = join(ref_basedir, 'coverage', 'prioritize', self.coverage_bed) + '.bed'
-
-        self.is_rnaseq = 'rna' in sample_info['analysis'].lower()
-        self.min_allele_fraction = (1.0/100) * float(sample_info['algorithm'].get('min_allele_fraction', 1.0))
-        if self.variant_regions_bed is None:
-            self.coverage_interval = 'genome'
-        else:
-            self.coverage_interval = 'regional'
-        self.is_wgs = self.coverage_interval == 'genome'
+        # Get sample and batch names and exclude/include based on exclude_samples and include_samples
+        description = str(sample_info['description'])
 
         batch_names = sample_info.get('metadata', dict()).get('batch')
         if isinstance(batch_names, int) or isinstance(batch_names, float):
@@ -86,11 +62,70 @@ class BcbioSample(BaseSample):
             batch_names = [batch_names]
         if batch_names:
             batch_names = [b.replace('.', '_') for b in batch_names if b]
-        self._set_name_and_paths(
-            name=str(sample_info['description']),
+
+        if exclude_samples:
+            # Sample name
+            if description in exclude_samples:
+                debug(f'Skipping sample {description}')
+                return None
+            # Batch names
+            if batch_names:
+                filtered_batch_names = [b for b in batch_names if b not in exclude_samples]
+                if not filtered_batch_names:
+                    debug(f'Skipping sample {description} with batch info {", ".join(batch_names)}')
+                    return None
+                batch_names = filtered_batch_names
+
+        if include_samples:
+            # Sample name
+            if description not in include_samples:
+                return None
+            debug(f'Using sample {description}')
+            # Batch names
+            if batch_names:
+                filtered_batch_names = [b for b in batch_names if b in include_samples]
+                if not filtered_batch_names:
+                    return None
+                batch_names = filtered_batch_names
+                debug(f'Using sample {description} with batch info {", ".join(batch_names)}')
+
+        s = BcbioSample(bcbio_project)
+        s.sample_info = sample_info
+
+        if 'description_original' in sample_info:
+            s.old_name = str(sample_info['description_original']).replace('.', '_')
+
+        s.genome_build = sample_info['genome_build']
+        s.variant_regions_bed = s.bcbio_project.config_path(val=sample_info['algorithm'].get('variant_regions'))
+        s.sv_regions_bed = s.bcbio_project.config_path(val=sample_info['algorithm'].get('sv_regions')) or s.variant_regions_bed
+        s.coverage_bed = s.bcbio_project.config_path(val=sample_info['algorithm'].get('coverage')) or s.sv_regions_bed
+        if s.coverage_bed and not isfile(s.coverage_bed):
+            debug('coverage bed ' + str(s.coverage_bed) + ' not found. Looking relatively to genomes "basedir"')
+            try:
+                import az
+            except ImportError:
+                pass
+            else:
+                genome_cfg = az.get_refdata(s.genome_build)
+                ref_basedir = genome_cfg.get('basedir')
+                if not ref_basedir:
+                    critical('coverage bed ' + str(s.coverage_bed) + ' not found and "basedir" not provided in system config')
+                s.coverage_bed = join(ref_basedir, 'coverage', 'prioritize', s.coverage_bed) + '.bed'
+
+        s.is_rnaseq = 'rna' in sample_info['analysis'].lower()
+        s.min_allele_fraction = (1.0/100) * float(sample_info['algorithm'].get('min_allele_fraction', 1.0))
+        if s.variant_regions_bed is None:
+            s.coverage_interval = 'genome'
+        else:
+            s.coverage_interval = 'regional'
+        s.is_wgs = s.coverage_interval == 'genome'
+
+        s._set_name_and_paths(
+            name=description,
             phenotype=sample_info.get('metadata', dict()).get('phenotype'),
             batch_names=batch_names,
             variantcallers=sample_info['algorithm'].get('variantcaller'))
+        return s
 
     def _set_name_and_paths(self, name, phenotype, batch_names, variantcallers):
         self.raw_name = name
@@ -323,7 +358,7 @@ class BcbioProject:
     multiqc_report_name = 'report.html'
     call_vis_name = 'call_vis.html'
 
-    def __init__(self, input_dir=None, project_name=None, proc_name='postproc'):
+    def __init__(self, input_dir=None, project_name=None, proc_name='postproc', exclude_samples=None, include_samples=None):
         self.dir = None
         self.config_dir = None
         self.final_dir = None
@@ -355,7 +390,8 @@ class BcbioProject:
         self.postproc_mqc_files = []
 
         if input_dir:
-            self.load_from_bcbio_dir(input_dir, project_name, proc_name)
+            self.load_from_bcbio_dir(input_dir, project_name, proc_name,
+                                     exclude_samples=exclude_samples, include_samples=include_samples)
 
     def set_project_level_dirs(self, bcbio_cnf, project_name=None, final_dir=None, date_dir=None,
                                create_dirs=False, proc_name='postproc'):
@@ -378,29 +414,30 @@ class BcbioProject:
         self.raw_var_dir = join(self.var_dir, 'raw')
         self.expression_dir = join(self.date_dir, BcbioProject.expression_dir)
 
-    def load_from_bcbio_dir(self, input_dir, project_name=None, proc_name='postproc'):
+    def load_from_bcbio_dir(self, input_dir, project_name=None, proc_name='postproc',
+                            exclude_samples=None, include_samples=None):
         """
         Analyses existing bcbio folder.
-        :param input_dir: root bcbio folder, or any other directory inside it
+        input_dir: root bcbio folder, or any other directory inside it
         """
         self.dir, detected_final_dir, detected_date_dir = detect_bcbio_dir(input_dir)
         self.config_dir = abspath(join(self.dir, 'config'))
         bcbio_cnf, self.bcbio_yaml_fpath = load_bcbio_cnf(self.config_dir)
         self.set_project_level_dirs(bcbio_cnf, project_name=project_name, final_dir=detected_final_dir,
                                     date_dir=detected_date_dir, proc_name=proc_name)
-        self.set_samples(bcbio_cnf)
+        self.set_samples(bcbio_cnf, exclude_samples=exclude_samples, include_samples=include_samples)
         self._load_bcbio_summary()
         # self._load_target_info()
 
-    def set_samples(self, bcbio_cnf):
+    def set_samples(self, bcbio_cnf, exclude_samples=None, include_samples=None):
         debug('Reading sample details...')
         for sample_info in bcbio_cnf['details']:
-            s = BcbioSample(self)
-            s.load_from_sample_info(sample_info)
-            self.samples.append(s)
+            s = BcbioSample.load_from_sample_info(
+                sample_info, bcbio_project=self, exclude_samples=exclude_samples, include_samples=include_samples)
+            if s:
+                self.samples.append(s)
         if any(not s.bam for s in self.samples):
             warn('ERROR: for some samples, BAM files not found in the final dir')
-        print(self.samples)
 
         self.samples.sort(key=lambda _s: _s.key_to_sort())
         self.batch_by_name = self.update_batches(self.samples)
