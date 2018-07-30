@@ -66,13 +66,13 @@ class BcbioSample(BaseSample):
         if exclude_samples:
             # Sample name
             if description in exclude_samples:
-                debug(f'Skipping sample {description}')
+                info(f'Skipping sample {description}')
                 return None
             # Batch names
             if batch_names:
                 filtered_batch_names = [b for b in batch_names if b not in exclude_samples]
                 if not filtered_batch_names:
-                    debug(f'Skipping sample {description} with batch info {", ".join(batch_names)}')
+                    info(f'Skipping sample {description} with batch info {", ".join(batch_names)}')
                     return None
                 batch_names = filtered_batch_names
 
@@ -80,14 +80,14 @@ class BcbioSample(BaseSample):
             # Sample name
             if description not in include_samples:
                 return None
-            debug(f'Using sample {description}')
+            info(f'Using sample {description}')
             # Batch names
             if batch_names:
                 filtered_batch_names = [b for b in batch_names if b in include_samples]
                 if not filtered_batch_names:
                     return None
                 batch_names = filtered_batch_names
-                debug(f'Using sample {description} with batch info {", ".join(batch_names)}')
+                info(f'Using sample {description} with batch info {", ".join(batch_names)}')
 
         s = BcbioSample(bcbio_project)
         s.sample_info = sample_info
