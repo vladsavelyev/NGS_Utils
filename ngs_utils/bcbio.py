@@ -78,16 +78,16 @@ class BcbioSample(BaseSample):
 
         if include_samples:
             # Sample name
-            if description not in include_samples:
-                return None
-            info(f'Using sample {description}')
-            # Batch names
-            if batch_names:
-                filtered_batch_names = [b for b in batch_names if b in include_samples]
-                if not filtered_batch_names:
-                    return None
-                batch_names = filtered_batch_names
-                info(f'Using sample {description} with batch info {", ".join(batch_names)}')
+            if description in include_samples:
+                info(f'Using sample {description}')
+            else:
+                # Batch names
+                if batch_names:
+                    filtered_batch_names = [b for b in batch_names if b in include_samples]
+                    if not filtered_batch_names:
+                        return None
+                    batch_names = filtered_batch_names
+                    info(f'Using sample {description} with batch info {", ".join(batch_names)}')
 
         s = BcbioSample(bcbio_project)
         s.sample_info = sample_info
@@ -425,6 +425,18 @@ class BcbioProject:
                 sample_info, bcbio_project=self, exclude_samples=exclude_samples, include_samples=include_samples)
             if s:
                 self.samples.append(s)
+
+        if not self.samples:
+            if exclude_samples:
+                critical(f'Error: no samples left with the exclusion of batch/sample name(s): {", ".join(exclude_samples)}.'
+                         f'Check the YAML file for available options: {self.bcbio_yaml_fpath}.')
+            if include_samples:
+                print(list(include_samples))
+                critical(f'Error: could not find a batch or a sample with the name(s): {", ".join(include_samples)}. '
+                         f'Check the YAML file for available options: {self.bcbio_yaml_fpath}')
+            critical(f'Error: could not parse any batch or samples in the bcbio project. '
+                     f'Please check the bcbio YAML file: {self.bcbio_yaml_fpath}.')
+
         if any(not s.bam for s in self.samples):
             warn('ERROR: for some samples, BAM files not found in the final dir')
 

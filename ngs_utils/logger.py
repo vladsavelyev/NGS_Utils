@@ -109,10 +109,7 @@ def critical(msg=''):
             return
         for m in msg:
             err(f'ERROR: {m}', severity='critical')
-    if is_debug:
-        raise CriticalError(msg)
-    else:
-        sys.exit(1)
+    raise CriticalError(msg)
 
 
 def send_email(msg_other='', subj='', only_me=False, addr_by_username=None, addr=None):
