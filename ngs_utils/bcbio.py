@@ -175,17 +175,6 @@ class BcbioSample(BaseSample):
         if isinstance(variantcallers, dict):
             if 'germline' in variantcallers and self.phenotype == 'normal':
                 self.variantcallers = variantcallers.get('germline')
-                # if isdir(join(self.bcbio_project.final_dir, self.name)):
-                    # s = BcbioSample(self.bcbio_project)
-                    # germline_sample_info = copy.deepcopy(self.sample_info)
-                    # germline_sample_info['description'] = self.name
-                    # germline_sample_info['metadata'] = {
-                    #     'phenotype': 'germline',
-                    #     'batch': self.name}
-                    # germline_sample_info['algorithm']['variantcaller'] = variantcallers['germline']
-                    # s.load_from_sample_info(germline_sample_info)
-                    # s.bcbio_project.samples.append(s)
-                # else:
             else:
                 self.variantcallers = variantcallers.get('somatic')
 
