@@ -11,7 +11,7 @@ def package_path():
 
 
 def get_submit_script():
-    return join(package_path(), 'submit')
+    return 'python ' + join(package_path(), 'submit')
 
 
 def make_cluster_cmdl(log_dir, app_name=''):
