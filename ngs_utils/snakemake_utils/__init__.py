@@ -11,18 +11,18 @@ def package_path():
 
 
 def get_submit_script():
-    return join(package_path(), 'submit.py')
+    return join(package_path(), 'submit')
 
 
-def make_cluster_cmdl(log_dir):
-    from python_utils.hpc import get_loc
+def make_cluster_cmdl(log_dir, app_name=''):
+    from hpc_utils.hpc import get_loc
     loc = get_loc()
     if not loc.cluster:
         logger.critical(f'Automatic cluster submission is not supported for the machine "{loc.name}"')
 
     cluster_submitter = get_submit_script()
     timestamp = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
-    cluster_cmdl = f' --cluster "python {cluster_submitter} {timestamp} {log_dir} umccrise"'
+    cluster_cmdl = f' --cluster "{cluster_submitter} {timestamp} {log_dir} {app_name}"'
 
     # Also overriding jobscript?
     jobscript = loc.cluster.get('jobscript')
