@@ -16,6 +16,7 @@ project_name = None
 project_fpath = None
 proc_name = None
 is_debug = False
+is_silent = False
 
 smtp_host = None  # set up in source/config.py and system_info.yaml
 my_address = 'Vlad.Saveliev@astrazeneca.com'
@@ -215,6 +216,9 @@ class CriticalError(Exception):
 
 
 def _log(out, msg='', ending='\n', print_date=True, severity=None):
+    if is_silent:
+        return
+
     # Keeping track of all severe log messages
     if severity == 'critical':
         critical_msgs.append(msg)
