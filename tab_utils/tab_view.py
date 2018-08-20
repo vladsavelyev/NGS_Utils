@@ -71,7 +71,7 @@ def tab_view(fname, preview_lines, delim, max_size, min_size):
     try:
         f = gzip_opener(fname).open()
         for line in f:
-            if inpreview and line[0] == '#':
+            if inpreview and line[0] == '##':
                 preview_buf.append(line)
             else:
                 if inpreview:
