@@ -1,9 +1,11 @@
 import os
 from datetime import datetime
 from os.path import dirname, abspath, join
-
 from ngs_utils import logger
 from ngs_utils.file_utils import safe_mkdir
+import tempfile
+import yaml
+from ngs_utils.call_process import run_simple
 
 
 def package_path():
@@ -15,6 +17,8 @@ def get_submit_script():
 
 
 def make_cluster_cmdl(log_dir, app_name=''):
+    """ Generates cluster command line parameters for snakemake
+    """
     from hpc_utils.hpc import get_loc
     loc = get_loc()
     if not loc.cluster:
@@ -33,3 +37,27 @@ def make_cluster_cmdl(log_dir, app_name=''):
         cluster_cmdl += f' --jobscript "{fixed_jobscript}"'
 
     return cluster_cmdl
+
+
+def run_snakemake(smk_file, conf, jobs, output_dir, force_rerun=None, unlock=False):
+    """ Runs snakemake
+    """
+    f = tempfile.NamedTemporaryFile(mode='wt', delete=False)
+    yaml.dump(conf, f)
+    f.close()
+
+    cmd = (f'snakemake ' +
+           f'--snakefile {smk_file} ' +
+           f'--printshellcmds ' +
+          (f'--directory {output_dir} ' if output_dir else '') +
+           f'--configfile {f.name} ' +
+           f'--jobs {jobs} ' +
+          (f'--forcerun {force_rerun}' if force_rerun else '')
+           )
+
+    if unlock:
+        print('* Unlocking previous run... *')
+        run_simple(cmd + ' --unlock')
+        print('* Now rerunning *')
+    run_simple(cmd)
+
