@@ -264,11 +264,12 @@ def annotate_target(work_dir, target_bed, genome_build):
         info(output_fpath + ' exists, reusing')
         return output_fpath
 
-    annotate_bed_py = which('annotate_bed.py')
-    if not annotate_bed_py:
-        critical('Error: annotate_bed.py not found in PATH, please install TargQC.')
+    bed_annotation = which('annotate_bed.py')
+    if not bed_annotation:
+        bed_annotation = which('bed_annotation')
+        critical('Error: bed_annotation not found in PATH, please install `conda install -c vladsaveliev bed_annotation`.')
 
-    cmdline = '{annotate_bed_py} {target_bed} -g {genome_build} -o {output_fpath}'.format(**locals())
+    cmdline = '{bed_annotation} {target_bed} -g {genome_build} -o {output_fpath}'.format(**locals())
     run(cmdline, output_fpath, stdout_to_outputfile=False)
     output_fpath = clean_bed(output_fpath, work_dir)
     return output_fpath
