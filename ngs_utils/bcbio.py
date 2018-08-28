@@ -139,18 +139,22 @@ class BcbioSample(BaseSample):
         if isfile(bam) and verify_bam(bam):
             self.bam = bam
         else:
-            input_file = self.sample_info['files']
-            if isinstance(input_file, list):
-                input_file = input_file[0]
-            if isinstance(input_file, str) and input_file.endswith('.bam'):
-                debug('Not found BAM file in final, but bcbio was run from BAMs')
-                if not input_file.startswith('/'):
-                    input_file = abspath(join(self.bcbio_project.work_dir, pardir, input_file))
-                if verify_file(input_file):
-                    debug('Using BAM file from input YAML ' + input_file)
-                    self.bam = input_file
-                else:
-                    debug('Input BAM file for sample ' + self.name + ' in YAML ' + input_file + ' does not exist')
+            bam = adjust_path(join(self.dirpath, self.get_name_for_files() + '-sort.bam'))
+            if isfile(bam) and verify_bam(bam):
+                self.bam = bam
+            else:
+                input_file = self.sample_info['files']
+                if isinstance(input_file, list):
+                    input_file = input_file[0]
+                if isinstance(input_file, str) and input_file.endswith('.bam'):
+                    debug('Not found BAM file in final, but bcbio was run from BAMs')
+                    if not input_file.startswith('/'):
+                        input_file = abspath(join(self.bcbio_project.work_dir, pardir, input_file))
+                    if verify_file(input_file):
+                        debug('Using BAM file from input YAML ' + input_file)
+                        self.bam = input_file
+                    else:
+                        debug('Input BAM file for sample ' + self.name + ' in YAML ' + input_file + ' does not exist')
         if not self.bam:
             warn('No BAM file found for ' + self.name)
 
@@ -528,17 +532,22 @@ class BcbioProject:
                 if not create_dir and not verify_dir(date_dir, silent=True):
                     critical('Error: no project directory of format {fc_date}_{fc_name} or {fc_name}_{fc_date}')
             else:
-                # bcbio since 1.0.6
-                regexs = [fr'^\d\d\d\d-[01][0-9]-[0-3][0-9]_{fc_name}']
-                date_dirs = [join(final_dir, dirpath)
-                                for dirpath in listdir(final_dir)
-                                if any(re.match(regex, dirpath) for regex in regexs)]
-                if len(date_dirs) == 0:
-                    critical('Error: no datestamp directory!')
-                elif len(date_dirs) > 1:
-                    critical('Error: more than one datestamp directory found!')
-                date_dir = date_dirs[0]
-                info('Using the datestamp dir: ' + date_dir)
+                # bcbio-CWL
+                date_dir = join(final_dir, 'project')
+                if isdir(date_dir):
+                    info('Using the datestamp dir from bcbio-CWL: ' + date_dir)
+                else:
+                    # bcbio since 1.0.6
+                    regexs = [fr'^\d\d\d\d-[01][0-9]-[0-3][0-9]_{fc_name}']
+                    date_dirs = [join(final_dir, dirpath)
+                                 for dirpath in listdir(final_dir)
+                                 if any(re.match(regex, dirpath) for regex in regexs)]
+                    if len(date_dirs) == 0:
+                        critical('Error: no datestamp directory!')
+                    elif len(date_dirs) > 1:
+                        critical('Error: more than one datestamp directory found!')
+                    date_dir = date_dirs[0]
+                    info('Using the datestamp dir: ' + date_dir)
         if create_dir:
             safe_mkdir(date_dir)
         return date_dir
