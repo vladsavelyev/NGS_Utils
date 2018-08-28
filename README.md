@@ -14,7 +14,7 @@ a dependency in other projects.
 From source:
 
 ```
-python setup.py instasll
+python setup.py install
 ```
 
 For development:
