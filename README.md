@@ -1,6 +1,8 @@
-[![Anaconda-Server Badge](https://anaconda.org/vladsaveliev/ngs_utils/badges/installer/conda.svg)](https://conda.anaconda.org/vladsaveliev)
-
 ## NGS Utils
+
+[![Build Status](https://travis-ci.org/vladsaveliev/NGS_Utils.svg?branch=master)](https://travis-ci.org/vladsaveliev/NGS_Utils)
+
+[![Anaconda-Server Badge](https://anaconda.org/vladsaveliev/ngs_utils/badges/installer/conda.svg)](https://conda.anaconda.org/vladsaveliev)
 
 Helper code for [AstraZeneca](https://github.com/AstraZeneca-NGS) and [UMCCR](https://github.com/umccr) bioinfomatics projects 
 (e.g. [NGS_Reporting](https://github.com/AstraZeneca-NGS/NGS_Reporting), [umccrise](https://github.com/umccr/umccrise)).
