@@ -5,8 +5,7 @@ package:
   version: "{{ version }}"
 
 source:
-  git_url: https://github.com/vladsaveliev/NGS_Utils
-  git_rev: master
+  path: ../../../
 
 build:
   number: 0
