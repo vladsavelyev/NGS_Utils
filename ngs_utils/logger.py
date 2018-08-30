@@ -9,7 +9,8 @@ import traceback
 from subprocess import check_output
 from os.path import exists, getctime
 
-from ngs_utils.utils import is_cluster, is_local
+from ngs_utils.utils import is_local, get_hostname
+
 
 log_fpath = None
 project_name = None
@@ -36,8 +37,7 @@ def init(is_debug_=None, log_fpath_=None, save_previous=False, address_=None):
         address = address_
     if log_fpath_:
         set_log_path(log_fpath_, save_previous=save_previous)
-    txt = check_output('hostname', shell=True).decode('utf-8')
-    info(txt.strip())
+    info(get_hostname())
     with open(os.devnull, 'w') as devnull:
         username = check_output('finger $(whoami) | head -n1', shell=True, stderr=devnull
                                 ).decode("utf-8")

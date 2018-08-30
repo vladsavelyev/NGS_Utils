@@ -1,5 +1,6 @@
 import collections
 import hashlib
+import os
 import random
 from functools import reduce
 from os import environ
@@ -91,7 +92,10 @@ def get_numeric_value(string_value):
     return number
 
 
-hostname = socket.gethostname()
+def get_hostname():
+    return os.environ.get('HOST') or os.environ.get('HOSTNAME') or socket.gethostname()
+
+hostname = get_hostname()
 
 def is_scp():
     return 'scp' in hostname
@@ -125,12 +129,6 @@ def is_chihua():
 
 def is_local():
     return 'Vlads' in hostname or 'Vladislavs' in hostname or 'local' in hostname or 'Home' in hostname or '5180L-135800-M.local' in hostname
-
-def is_spartan():
-    return re.match(r'spartan.*\.hpc\.unimelb\.edu\.au', hostname)
-
-def is_raijin():
-    return re.match(r'^raijin|(r\d\d\d\d$)', hostname)
 
 
 def md5(fpath):
