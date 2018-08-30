@@ -447,12 +447,13 @@ class BcbioProject:
 
         # First pass - just to get extra batch IDs that we need to include to have batches consistent
         extra_batches = set()
-        for sample_info in bcbio_cnf['details']:
-            sname, batch_names = BcbioSample.parse_sample_ids(sample_info)
-            if sname in include_samples:
-                for b in batch_names:
-                    if b not in (include_samples or []) and b not in (exclude_samples or []):
-                        extra_batches.add(b)
+        if include_samples:
+            for sample_info in bcbio_cnf['details']:
+                sname, batch_names = BcbioSample.parse_sample_ids(sample_info)
+                if sname in include_samples:
+                    for b in batch_names:
+                        if b not in (include_samples or []) and b not in (exclude_samples or []):
+                            extra_batches.add(b)
 
         # Second pass - including/excluding, and creating BcbioSample objects
         for sample_info in bcbio_cnf['details']:
