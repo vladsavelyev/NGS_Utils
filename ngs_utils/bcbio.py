@@ -50,8 +50,21 @@ class BcbioSample(BaseSample):
         return self.old_name or self.name
 
     @staticmethod
-    def load_from_sample_info(sample_info, bcbio_project, exclude_samples=None, include_samples=None):
+    def parse_sample_ids(sample_info):
+        description = str(sample_info['description'])
 
+        batch_names = sample_info.get('metadata', dict()).get('batch')
+        if isinstance(batch_names, int) or isinstance(batch_names, float):
+            batch_names = str(batch_names)
+        if isinstance(batch_names, str):
+            batch_names = [batch_names]
+        if batch_names:
+            batch_names = [b.replace('.', '_') for b in batch_names if b]
+
+        return description, batch_names
+
+    @staticmethod
+    def load_from_sample_info(sample_info, bcbio_project, exclude_samples=None, include_samples=None, extra_batches=None):
         # Get sample and batch names and exclude/include based on exclude_samples and include_samples
         description = str(sample_info['description'])
 
@@ -79,15 +92,22 @@ class BcbioSample(BaseSample):
         if include_samples:
             # Sample name
             if description in include_samples:
-                info(f'Using sample {description}')
+                info(f'Using sample {description} and all samples sharing batches {batch_names}')
             else:
                 # Batch names
                 if batch_names:
-                    filtered_batch_names = [b for b in batch_names if b in include_samples]
-                    if not filtered_batch_names:
+                    incl_batch_names = [b for b in batch_names if b in include_samples]
+                    if incl_batch_names:
+                        info(f'Using sample {description} with batch info {", ".join(batch_names)}')
+                    extr_batch_names = [b for b in batch_names if extra_batches and b in extra_batches]
+                    if extr_batch_names and not incl_batch_names:
+                        info(f'Using sample {description} as it shares batches {extr_batch_names} with included samples')
+                    incl_batch_names += extr_batch_names
+
+                    if incl_batch_names:
+                        batch_names = incl_batch_names
+                    else:
                         return None
-                    batch_names = filtered_batch_names
-                    info(f'Using sample {description} with batch info {", ".join(batch_names)}')
 
         s = BcbioSample(bcbio_project)
         s.sample_info = sample_info
@@ -424,9 +444,24 @@ class BcbioProject:
 
     def set_samples(self, bcbio_cnf, exclude_samples=None, include_samples=None):
         debug('Reading sample details...')
+
+        # First pass - just to get extra batch IDs that we need to include to have batches consistent
+        extra_batches = set()
+        for sample_info in bcbio_cnf['details']:
+            sname, batch_names = BcbioSample.parse_sample_ids(sample_info)
+            if sname in include_samples:
+                for b in batch_names:
+                    if b not in (include_samples or []) and b not in (exclude_samples or []):
+                        extra_batches.add(b)
+
+        # Second pass - including/excluding, and creating BcbioSample objects
         for sample_info in bcbio_cnf['details']:
             s = BcbioSample.load_from_sample_info(
-                sample_info, bcbio_project=self, exclude_samples=exclude_samples, include_samples=include_samples)
+                sample_info,
+                bcbio_project=self,
+                exclude_samples=exclude_samples,
+                include_samples=include_samples,
+                extra_batches=extra_batches)
             if s:
                 self.samples.append(s)
 
