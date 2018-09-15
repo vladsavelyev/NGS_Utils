@@ -478,7 +478,7 @@ class BcbioProject:
                      f'Please check the bcbio YAML file: {self.bcbio_yaml_fpath}.')
 
         if any(not s.bam for s in self.samples):
-            warn('ERROR: for some samples, BAM files not found in the final dir')
+            warn('Warning: for some samples, BAM files not found in the final dir')
 
         self.samples.sort(key=lambda _s: _s.key_to_sort())
         self.batch_by_name = self.update_batches(self.samples)
