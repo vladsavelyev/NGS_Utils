@@ -10,12 +10,13 @@ from ngs_utils.file_utils import file_transaction, verify_file
 from ngs_utils.logger import info, err, warn
 
 
-def run_simple(cmd, env_vars=None):
+def run_simple(cmd, env_vars=None, silent=False):
     """Run the provided command, logging details and checking for errors.
     """
     env = _get_env(env_vars)
     cmd, shell_arg, executable_arg = _normalize_cmd_args(cmd)
-    warn(' '.join(str(x) for x in cmd) if not isinstance(cmd, str) else cmd)
+    if not silent:
+        warn(' '.join(str(x) for x in cmd) if not isinstance(cmd, str) else cmd)
     subprocess.check_call(cmd, shell=shell_arg, executable=executable_arg, env=env)
 
 
