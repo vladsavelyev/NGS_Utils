@@ -55,7 +55,7 @@ rule extract_transcripts:
             if rec.end - rec.start < 0: continue
 
             fs = [rec.chrom,
-                  str(rec.start),
+                  str(rec.start - 1),
                   str(rec.end),
                   gname]
             lines.append(fs)

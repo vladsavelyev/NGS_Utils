@@ -91,7 +91,4 @@ def get_key_genes_bed(genome, is_critical=False):
     return _get('key_genes/key_genes.' + genome + '.bed', is_critical=is_critical)
 
 def get_key_genes_set(is_critical=False):
-    return \
-        get_genes_from_file(_get('key_genes/az_key_genes.300.txt', is_critical=is_critical)) | \
-        get_genes_from_file(_get('key_genes/umccr_extra_key_genes.txt', is_critical=is_critical))
-
+    return get_genes_from_file(_get('key_genes/umccr_cancer_genes.v1.txt', is_critical=is_critical))
