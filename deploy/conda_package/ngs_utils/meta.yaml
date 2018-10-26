@@ -22,11 +22,11 @@ requirements:
     # - htslib
     # - cython
     # - numpy
-    # - pyyaml
     # - pysam
     # - pybedtools
     # - gffutils                # for generating regions through GFF file
-    # - natsort                 # for Sample calss
+    # - pyyaml                  # for Bcbio parsing
+    # - natsort                 # for Sample calss and Bcbio parsing
     # - joblib                  # for parallelization
     # - ipython-cluster-helper  # for parallelization
     # - lxml                    # for html2base64

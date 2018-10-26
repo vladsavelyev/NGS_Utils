@@ -49,7 +49,7 @@ def get_sample_ids(vcf_path, return_names=False):
                 tumor_id, control_id = None, None
                 if tumor_name:
                     tumor_id = samples.index(tumor_name)
-                if control_name:
+                if control_name and control_name in samples:
                     control_id = samples.index(control_name)
 
                 if tumor_id is None and control_id is not None:
