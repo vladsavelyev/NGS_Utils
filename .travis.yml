@@ -1,5 +1,7 @@
 sudo: required
 
+language: python
+
 before_install:
   - export PACKAGE_NAME=ngs_utils
   # Get and install anaconda (https://conda.io/docs/travis.html)
