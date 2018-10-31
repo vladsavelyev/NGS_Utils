@@ -27,7 +27,7 @@ script:
 deploy:
   # Deploy to Anaconda.org
   - provider: script
-    script: ./deploy/deploy_anaconda.sh
+    script: ./deploy/deploy_anaconda.sh $PACKAGE_NAME $ANACONDA_TOKEN
     on:
       tags: true
     skip_cleanup: true
