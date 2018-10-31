@@ -1,6 +1,8 @@
 sudo: required
 
 language: python
+python:
+  - "3.6"  # required, otherwise conda will try to clash with py2 packages
 
 before_install:
   - export PACKAGE_NAME=ngs_utils
