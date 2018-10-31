@@ -12,10 +12,10 @@ build:
 
 requirements:
   build:
-    - python ==3.6
+    - python >=3.7
     - numpy
   run:
-    - python ==3.6
+    - python >=3.7
     # All dependencies are optional, depending on functionality you'd want:
     # - bedtools>=2.25
     # - sambamba

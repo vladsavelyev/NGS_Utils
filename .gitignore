@@ -94,3 +94,4 @@ ENV/
 
 ngs_utils/version.py
 conda/.index.json
+ngs_utils/reference_data/key_genes/.snakemake/
