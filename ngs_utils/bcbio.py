@@ -64,7 +64,8 @@ class BcbioSample(BaseSample):
         return description, batch_names
 
     @staticmethod
-    def load_from_sample_info(sample_info, bcbio_project, exclude_samples=None, include_samples=None, extra_batches=None):
+    def load_from_sample_info(sample_info, bcbio_project, exclude_samples=None,
+                              include_samples=None, extra_batches=None, silent=False):
         # Get sample and batch names and exclude/include based on exclude_samples and include_samples
         description = str(sample_info['description'])
 
@@ -79,29 +80,29 @@ class BcbioSample(BaseSample):
         if exclude_samples:
             # Sample name
             if description in exclude_samples:
-                info(f'Skipping sample {description}')
+                if not silent: info(f'Skipping sample {description}')
                 return None
             # Batch names
             if batch_names:
                 filtered_batch_names = [b for b in batch_names if b not in exclude_samples]
                 if not filtered_batch_names:
-                    info(f'Skipping sample {description} with batch info {", ".join(batch_names)}')
+                    if not silent: info(f'Skipping sample {description} with batch info {", ".join(batch_names)}')
                     return None
                 batch_names = filtered_batch_names
 
         if include_samples:
             # Sample name
             if description in include_samples:
-                info(f'Using sample {description} and all samples sharing batches {batch_names}')
+                if not silent: info(f'Using sample {description} and all samples sharing batches {batch_names}')
             else:
                 # Batch names
                 if batch_names:
                     incl_batch_names = [b for b in batch_names if b in include_samples]
                     if incl_batch_names:
-                        info(f'Using sample {description} with batch info {", ".join(batch_names)}')
+                        if not silent: info(f'Using sample {description} with batch info {", ".join(batch_names)}')
                     extr_batch_names = [b for b in batch_names if extra_batches and b in extra_batches]
                     if extr_batch_names and not incl_batch_names:
-                        info(f'Using sample {description} as it shares batches {extr_batch_names} with included samples')
+                        if not silent: info(f'Using sample {description} as it shares batches {extr_batch_names} with included samples')
                     incl_batch_names += extr_batch_names
 
                     if incl_batch_names:
@@ -140,19 +141,30 @@ class BcbioSample(BaseSample):
             s.coverage_interval = 'regional'
         s.is_wgs = s.coverage_interval == 'genome'
 
-        s._set_name_and_paths(
+        if s._set_name_and_paths(
             name=description,
             phenotype=sample_info.get('metadata', dict()).get('phenotype'),
             batch_names=batch_names,
-            variantcallers=sample_info['algorithm'].get('variantcaller'))
-        return s
+            variantcallers=sample_info['algorithm'].get('variantcaller'),
+            silent=silent):
+            return s
+        else:
+            return None
 
-    def _set_name_and_paths(self, name, phenotype, batch_names, variantcallers):
+    def _set_name_and_paths(self, name, phenotype, batch_names, variantcallers, silent=False):
         self.raw_name = name
         self.name = self.raw_name.replace('.', '_')
         self.dirpath = verify_dir(join(self.bcbio_project.final_dir, self.name))
-        if not verify_dir(self.dirpath):
-            critical('Directory for sample ' + self.name + ' is not found in ' + self.bcbio_project.final_dir)
+        if not verify_dir(self.dirpath, silent=silent):
+            if not silent:
+                critical(f'Sample "{self.name}" specified in bcbio YAML is not found in the final directory '
+                         f'{self.bcbio_project.final_dir}. Please check consistency between the YAML '
+                         f'{self.bcbio_project.bcbio_yaml_fpath} and the directories in `final`: '
+                         f'to every "description" value in YAML, there should be a corresponding folder with the '
+                         f'same name in `final`. You can use `-e` option to exclude samples (comma-separated) '
+                         f'from consideration, if you are sure that missing folders are expected.')
+            else:
+                return False
         self.var_dirpath = join(self.dirpath, BcbioProject.var_dir)
 
         bam = adjust_path(join(self.dirpath, self.get_name_for_files() + '-ready.bam'))
@@ -176,16 +188,17 @@ class BcbioSample(BaseSample):
                     else:
                         debug('Input BAM file for sample ' + self.name + ' in YAML ' + input_file + ' does not exist')
         if not self.bam:
-            warn('No BAM file found for ' + self.name)
+            if not silent: warn('No BAM file found for ' + self.name)
 
         if self.is_rnaseq:
             gene_counts = adjust_path(join(self.dirpath, self.get_name_for_files() + '-ready.counts'))
             if isfile(gene_counts) and verify_file(gene_counts):
                 self.counts_file = gene_counts
             else:
-                warn('Counts for ' + self.name + ' not found')
+                if not silent: warn('Counts for ' + self.name + ' not found')
         else:
             self._set_variant_files(phenotype, batch_names, variantcallers)
+        return True
 
     def _set_variant_files(self, phenotype, batch_names, variantcallers):
         self.phenotype = phenotype or 'tumor'
@@ -229,7 +242,7 @@ class BcbioSample(BaseSample):
             vcf_fpath = self.bcbio_project.find_vcf_file_from_sample_dir(
                 self, silent=silent or self.phenotype == 'normal', caller=caller)
         return vcf_fpath
-        
+
     def find_annotated_vcf(self, caller=MAIN_CALLER):
         return verify_file(join(self.dirpath, BcbioProject.varannotate_dir,
                                 self.name + '-' + caller + BcbioProject.anno_vcf_ending + '.gz'), silent=True)
@@ -311,7 +324,7 @@ class BcbioSample(BaseSample):
 
     def get_avg_depth(self):
         return self.get_metric(['Avg_coverage', 'Avg_coverage_per_region'])
-    
+
     def get_reads_count(self):
         return self.get_metric(['Total_reads', 'Total reads'])
 
@@ -321,8 +334,8 @@ class BcbioSample(BaseSample):
 
     def is_dedupped(self):
         return self.sample_info.get('algorithm', {}).get('mark_duplicates', False)
-    
-    
+
+
 class Batch:
     def __init__(self, name=None):
         self.name = name
@@ -349,6 +362,14 @@ class Batch:
 #         return self.name
 
 
+class NoConfigDirException(Exception):
+    pass
+class NoDateStampsException(Exception):
+    pass
+class MultipleDateStampsException(Exception):
+    pass
+
+
 class BcbioProject:
     varfilter_dir = 'varFilter'
     varannotate_dir = 'varAnnotate'
@@ -371,7 +392,8 @@ class BcbioProject:
     multiqc_report_name = 'report.html'
     call_vis_name = 'call_vis.html'
 
-    def __init__(self, input_dir=None, project_name=None, proc_name='postproc', exclude_samples=None, include_samples=None):
+    def __init__(self, input_dir=None, project_name=None, proc_name='postproc',
+                 exclude_samples=None, include_samples=None, silent=False):
         self.dir = None
         self.config_dir = None
         self.final_dir = None
@@ -402,6 +424,8 @@ class BcbioProject:
         self.is_rnaseq = None
         self.postproc_mqc_files = []
 
+        self.silent = silent
+
         if input_dir:
             self.load_from_bcbio_dir(input_dir, project_name, proc_name,
                                      exclude_samples=exclude_samples, include_samples=include_samples)
@@ -418,7 +442,8 @@ class BcbioProject:
         self.work_dir = abspath(join(self.dir, 'work', proc_name))
         if create_dirs: safe_mkdir(self.work_dir)
 
-        self.date_dir = self._set_date_dir(bcbio_cnf, self.final_dir, date_dir, create_dir=create_dirs)
+        self.date_dir = self._set_date_dir(bcbio_cnf, self.final_dir, date_dir, create_dir=create_dirs,
+                                           silent=self.silent)
         self.log_dir = join(self.date_dir, 'log')
         self.postproc_log_dir = join(self.log_dir, proc_name)
         if create_dirs: safe_mkdir(self.postproc_log_dir)
@@ -433,14 +458,15 @@ class BcbioProject:
         Analyses existing bcbio folder.
         input_dir: root bcbio folder, or any other directory inside it
         """
-        self.dir, detected_final_dir, detected_date_dir = detect_bcbio_dir(input_dir)
+        self.dir, detected_final_dir, detected_date_dir = detect_bcbio_dir(input_dir, silent=self.silent)
         self.config_dir = abspath(join(self.dir, 'config'))
-        bcbio_cnf, self.bcbio_yaml_fpath = load_bcbio_cnf(self.config_dir)
+        bcbio_cnf, self.bcbio_yaml_fpath = load_bcbio_cnf(self.config_dir, silent=self.silent)
         self.set_project_level_dirs(bcbio_cnf, project_name=project_name, final_dir=detected_final_dir,
                                     date_dir=detected_date_dir, proc_name=proc_name)
         self.set_samples(bcbio_cnf, exclude_samples=exclude_samples, include_samples=include_samples)
         self._load_bcbio_summary()
         # self._load_target_info()
+        return self
 
     def set_samples(self, bcbio_cnf, exclude_samples=None, include_samples=None):
         debug('Reading sample details...')
@@ -462,7 +488,8 @@ class BcbioProject:
                 bcbio_project=self,
                 exclude_samples=exclude_samples,
                 include_samples=include_samples,
-                extra_batches=extra_batches)
+                extra_batches=extra_batches,
+                silent=self.silent)
             if s:
                 self.samples.append(s)
 
@@ -478,10 +505,10 @@ class BcbioProject:
                      f'Please check the bcbio YAML file: {self.bcbio_yaml_fpath}.')
 
         if any(not s.bam for s in self.samples):
-            warn('Warning: for some samples, BAM files not found in the final dir')
+            if not self.silent: warn('Warning: for some samples, BAM files not found in the final dir')
 
         self.samples.sort(key=lambda _s: _s.key_to_sort())
-        self.batch_by_name = self.update_batches(self.samples)
+        self.batch_by_name = self.update_batches(self.samples, self.silent)
 
         def _check_dup_props(prop, is_critical=False):
             _vals = set([s_.__dict__.get(prop) for s_ in self.samples])
@@ -507,7 +534,7 @@ class BcbioProject:
                 self.samples_by_caller[(caller, s.phenotype == 'germline')].append(s)
 
         debug('Done loading bcbio project ' + self.project_name)
-        
+
     def _load_bcbio_summary(self):
         fp = self.find_in_log('project-summary.yaml')
         if fp:
@@ -536,7 +563,7 @@ class BcbioProject:
     #             else:
     #                 err('Not found coverage_interval in ' + target_info_file)
     #     return interval
-    
+
     # def init_new(self, proj_dir, bcbio_cnf, project_name=None):
     #     """ Creates folders
     #     """
@@ -558,7 +585,7 @@ class BcbioProject:
             return val
 
     @staticmethod
-    def _set_date_dir(bcbio_cnf, final_dir, date_dir, create_dir=False):
+    def _set_date_dir(bcbio_cnf, final_dir, date_dir, create_dir=False, silent=False):
         if not date_dir:
             fc_date = bcbio_cnf.get('fc_date')
             fc_name = bcbio_cnf.get('fc_name') or 'project'
@@ -571,7 +598,7 @@ class BcbioProject:
                 # bcbio-CWL
                 date_dir = join(final_dir, 'project')
                 if isdir(date_dir):
-                    info('Using the datestamp dir from bcbio-CWL: ' + date_dir)
+                    if not silent: info('Using the datestamp dir from bcbio-CWL: ' + date_dir)
                 else:
                     # bcbio since 1.0.6
                     regexs = [fr'^\d\d\d\d-[01][0-9]-[0-3][0-9]_{fc_name}']
@@ -579,11 +606,11 @@ class BcbioProject:
                                  for dirpath in listdir(final_dir)
                                  if any(re.match(regex, dirpath) for regex in regexs)]
                     if len(date_dirs) == 0:
-                        critical('Error: no datestamp directory!')
+                        raise NoDateStampsException('Error: no datestamp directory!')
                     elif len(date_dirs) > 1:
-                        critical('Error: more than one datestamp directory found!')
+                        raise MultipleDateStampsException('Error: more than one datestamp directory found!')
                     date_dir = date_dirs[0]
-                    info('Using the datestamp dir: ' + date_dir)
+                    if not silent: info('Using the datestamp dir: ' + date_dir)
         if create_dir:
             safe_mkdir(date_dir)
         return date_dir
@@ -619,9 +646,9 @@ class BcbioProject:
             if not verify_dir(final_dir):
                 critical('If final directory it is not named "final", please, specify it in the bcbio config.')
         return final_dir
-    
+
     @staticmethod
-    def update_batches(samples):
+    def update_batches(samples, silent=False):
         batch_by_name = {bn: Batch(bn) for bn in list(set([b for s in samples for b in s.batch_names]))}
         for sample in samples:
             for bn in sample.batch_names:
@@ -636,7 +663,7 @@ class BcbioProject:
 
         for batch in batch_by_name.values():
             if batch.normal and not batch.tumor:
-                info('Batch ' + batch.name + ' contains only normal, treating sample ' + batch.normal.name + ' as tumor')
+                if not silent: info('Batch ' + batch.name + ' contains only normal, treating sample ' + batch.normal.name + ' as tumor')
                 batch.normal.phenotype = 'tumor'
                 batch.normal.batch = batch
                 batch.tumor = batch.normal
@@ -665,56 +692,56 @@ class BcbioProject:
 
         if isfile(vcf_annot_fpath_gz):
             verify_file(vcf_annot_fpath_gz, is_critical=True)
-            info('Found annotated VCF in the datestamp dir ' + vcf_annot_fpath_gz)
+            if not silent: info('Found annotated VCF in the datestamp dir ' + vcf_annot_fpath_gz)
             return vcf_annot_fpath_gz
         else:
             debug('Not found annotated VCF in the datestamp dir ' + vcf_annot_fpath_gz)
 
         if isfile(var_raw_vcf_annot_fpath_gz):
             verify_file(var_raw_vcf_annot_fpath_gz, is_critical=True)
-            info('Found annotated VCF in the datestamp/var/raw dir ' + var_raw_vcf_annot_fpath_gz)
+            if not silent: info('Found annotated VCF in the datestamp/var/raw dir ' + var_raw_vcf_annot_fpath_gz)
             return var_raw_vcf_annot_fpath_gz
         else:
             debug('Not found annotated VCF in the datestamp/var/raw dir ' + var_raw_vcf_annot_fpath_gz)
 
         if isfile(vcf_fpath_gz):
             verify_file(vcf_fpath_gz, is_critical=True)
-            info('Found VCF in the datestamp dir ' + vcf_fpath_gz)
+            if not silent: info('Found VCF in the datestamp dir ' + vcf_fpath_gz)
             return vcf_fpath_gz
         else:
             debug('Not found VCF in the datestamp dir ' + vcf_fpath_gz)
 
         if isfile(var_raw_vcf_fpath_gz):
             verify_file(var_raw_vcf_fpath_gz, is_critical=True)
-            info('Found VCF in the datestamp/var/raw dir ' + var_raw_vcf_fpath_gz)
+            if not silent: info('Found VCF in the datestamp/var/raw dir ' + var_raw_vcf_fpath_gz)
             return var_raw_vcf_fpath_gz
         else:
             debug('Not found VCF in the datestamp/var/raw dir ' + var_raw_vcf_fpath_gz)
 
         if isfile(vcf_fpath):
             verify_file(vcf_fpath, is_critical=True)
-            info('Found uncompressed VCF in the datestamp dir ' + vcf_fpath)
+            if not silent: info('Found uncompressed VCF in the datestamp dir ' + vcf_fpath)
             return vcf_fpath
         else:
             debug('Not found uncompressed VCF in the datestamp dir ' + vcf_fpath)
 
         if isfile(var_raw_vcf_fpath):
             verify_file(var_raw_vcf_fpath, is_critical=True)
-            info('Found uncompressed VCF in the datestamp/var/raw dir ' + var_raw_vcf_fpath)
+            if not silent: info('Found uncompressed VCF in the datestamp/var/raw dir ' + var_raw_vcf_fpath)
             return var_raw_vcf_fpath
         else:
             debug('Not found uncompressed VCF in the datestamp/var/raw dir ' + var_raw_vcf_fpath)
 
         if isfile(var_vcf_fpath_gz):
             verify_file(var_vcf_fpath_gz, is_critical=True)
-            info('Found VCF in the datestamp/var dir ' + var_vcf_fpath_gz)
+            if not silent: info('Found VCF in the datestamp/var dir ' + var_vcf_fpath_gz)
             return var_vcf_fpath_gz
         else:
             debug('Not found VCF in the datestamp/var dir ' + var_vcf_fpath_gz)
 
         if isfile(var_vcf_fpath):
             verify_file(var_vcf_fpath, is_critical=True)
-            info('Found uncompressed VCF in the datestamp/var dir ' + var_vcf_fpath)
+            if not silent: info('Found uncompressed VCF in the datestamp/var dir ' + var_vcf_fpath)
             return var_vcf_fpath
         else:
             debug('Not found uncompressed VCF in the datestamp/var dir ' + var_vcf_fpath)
@@ -727,7 +754,7 @@ class BcbioProject:
     @staticmethod
     def find_vcf_file_from_sample_dir(sample, silent=False, caller=MAIN_CALLER):
         vcf_fname = sample.get_name_for_files() + '-' + caller + '.vcf'
-        
+
         sample_var_dirpath = join(sample.dirpath, 'var')
         vcf_fpath_gz = adjust_path(join(sample.dirpath, vcf_fname + '.gz'))  # in var
         var_vcf_fpath_gz = adjust_path(join(sample_var_dirpath, vcf_fname + '.gz'))  # in var
@@ -738,42 +765,42 @@ class BcbioProject:
 
         if isfile(vcf_fpath_gz):
             verify_file(vcf_fpath_gz, is_critical=True)
-            info('Found VCF ' + vcf_fpath_gz)
+            if not silent: info('Found VCF ' + vcf_fpath_gz)
             return vcf_fpath_gz
         else:
             debug('Not found VCF ' + vcf_fpath_gz)
 
         if isfile(var_vcf_fpath_gz):
             verify_file(var_vcf_fpath_gz, is_critical=True)
-            info('Found VCF in the var/ dir ' + var_vcf_fpath_gz)
+            if not silent: info('Found VCF in the var/ dir ' + var_vcf_fpath_gz)
             return var_vcf_fpath_gz
         else:
             debug('Not found VCF in the var/ dir ' + var_vcf_fpath_gz)
 
         if isfile(var_raw_vcf_fpath_gz):
             verify_file(var_raw_vcf_fpath_gz, is_critical=True)
-            info('Found VCF in the var/raw/ dir ' + var_raw_vcf_fpath_gz)
+            if not silent: info('Found VCF in the var/raw/ dir ' + var_raw_vcf_fpath_gz)
             return var_raw_vcf_fpath_gz
         else:
             debug('Not found VCF in the var/raw/ dir ' + var_raw_vcf_fpath_gz)
 
         if isfile(vcf_fpath):
             verify_file(vcf_fpath, is_critical=True)
-            info('Found uncompressed VCF ' + vcf_fpath)
+            if not silent: info('Found uncompressed VCF ' + vcf_fpath)
             return vcf_fpath
         else:
             debug('Not found uncompressed VCF ' + vcf_fpath)
 
         if isfile(var_vcf_fpath):
             verify_file(var_vcf_fpath, is_critical=True)
-            info('Found uncompressed VCF in the var/ dir ' + var_vcf_fpath)
+            if not silent: info('Found uncompressed VCF in the var/ dir ' + var_vcf_fpath)
             return var_vcf_fpath
         else:
             debug('Not found VCF in the var/ dir ' + var_vcf_fpath)
 
         if isfile(var_raw_vcf_fpath):
             verify_file(var_raw_vcf_fpath, is_critical=True)
-            info('Found uncompressed VCF in the var/raw/ dir ' + var_raw_vcf_fpath)
+            if not silent: info('Found uncompressed VCF in the var/raw/ dir ' + var_raw_vcf_fpath)
             return var_raw_vcf_fpath
         else:
             debug('Not found VCF in the var/raw/ dir ' + var_raw_vcf_fpath)
@@ -826,7 +853,7 @@ class BcbioProject:
 
     def find_mutation_files(self, passed=True, caller=MAIN_CALLER, is_germline=False):
         return _find_mutation_files(self.var_dir, passed=passed, caller=caller, is_germline=is_germline)
-    
+
     def find_in_log(self, fname, is_critical=False, silent=True):
         options = [join(self.log_dir, fname),
                    join(self.date_dir, fname)]
@@ -889,32 +916,31 @@ def detect_bcbio_dir(input_dir, silent=False):
             date_dir = abspath(join(input_dir, pardir))
 
     else:
-        if silent:
-            return None, None, None
-        else:
-            critical(
+        if not silent:
+            err(
                 'Are you running on a bcbio directory?\n'
                 'Can\'t find `config` directory at ' + join(input_dir, 'config') + ' or ' + abspath(join(input_dir, pardir, 'config')) + '. '
                 'Make sure that you changed to a bcbio root or final directory, or provided it as a first argument.')
+        raise NoConfigDirException('No config dir')
 
     if not silent:
-        info('Bcbio project directory: ' + root_dir)
+        if not silent: info('Bcbio project directory: ' + root_dir)
         if final_dir:
-            info('"final" directory: ' + final_dir)
+            if not silent: info('"final" directory: ' + final_dir)
             if date_dir:
-                info('"datestamp" directory: ' + date_dir)
+                if not silent: info('"datestamp" directory: ' + date_dir)
 
     return root_dir, final_dir, date_dir
 
 
-def load_bcbio_cnf(config_dir):
+def load_bcbio_cnf(config_dir, silent=False):
     all_yamls = [
         abspath(join(config_dir, fname))
         for fname in listdir(config_dir)
         if fname.endswith('.yaml')]
     if len(all_yamls) == 0:
         critical('No YAML file in the config directory.')
-    
+
     bcbio_yamls = []
     for fpath in all_yamls:
         if not fpath.endswith('-template.yaml'):
@@ -928,7 +954,7 @@ def load_bcbio_cnf(config_dir):
         critical('More than one bcbio YAML file found in the config directory ' +
                  config_dir + ': ' + ' '.join(bcbio_yamls))
     yaml_fpath = bcbio_yamls[0]
-    info('Using bcbio YAML config: ' + yaml_fpath)
+    if not silent: info('Using bcbio YAML config: ' + yaml_fpath)
     return load_yaml_config(yaml_fpath), yaml_fpath
 
 
@@ -936,14 +962,14 @@ def _normalize(name):
     return name.lower().replace('_', '').replace('-', '')
 
 
-def ungzip_if_needed(cnf, fpath):
+def ungzip_if_needed(cnf, fpath, silent=False):
     if fpath.endswith('.gz'):
         fpath = fpath[:-3]
     if not file_exists(fpath) and file_exists(fpath + '.gz'):
         gz_fpath = fpath + '.gz'
         cmdline = 'gunzip -c {gz_fpath}'.format(**locals())
         res = run(cmdline, output_fpath=fpath)
-        info()
+        if not silent: info()
         if not res:
             return None
     return fpath
