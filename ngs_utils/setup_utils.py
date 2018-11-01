@@ -50,6 +50,7 @@ def get_cur_version(package_name='*'):
     version_py = glob.glob(f'{package_name}/_version.py')
     if version_py:
         version_py = version_py[0]
+        package_name = dirname(version_py)
         cur_version = importlib.import_module(f'{package_name}._version').__version__
         err(f'Found current version file {version_py}, current version: {cur_version}')
     else:
