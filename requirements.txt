@@ -1,5 +1,6 @@
 pip
 setuptools
+click
 # cython
 # numpy
 # pyyaml
