@@ -7,7 +7,7 @@ import ngs_utils
 package_name = ngs_utils.__name__
 
 
-version = setup_utils.init(package_name, package_name, __file__)
+version = setup_utils.get_cur_version(package_name)
 
 
 from setuptools import setup
@@ -45,6 +45,11 @@ setup(
              'cols',
              'hg19_addchr.py',
          ]]],
+    entry_points={
+        'console_scripts': [
+            'release = ngs_utils.setup_utils:release',
+        ],
+    },
     classifiers=[
         'Environment :: Console',
         'Environment :: Web Environment',
