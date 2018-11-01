@@ -18,7 +18,7 @@ before_install:
   - conda config --set anaconda_upload no
 
 install:
-  - conda install -q python=$TRAVIS_PYTHON_VERSION pip requests conda-build jinja2 anaconda-client
+  - conda install -q python=$TRAVIS_PYTHON_VERSION pip requests conda-build jinja2 anaconda-client click
   # Building package
   - conda build -c vladsaveliev -c bioconda -c conda-forge deploy/conda_package/${PACKAGE_NAME}
   - conda install -c vladsaveliev -c bioconda -c conda-forge --use-local ${PACKAGE_NAME}
