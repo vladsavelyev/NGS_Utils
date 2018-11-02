@@ -11,11 +11,11 @@ from ngs_utils.file_utils import verify_dir, verify_file, safe_mkdir
 from ngs_utils.utils import is_travis
 
 
-def info(msg=''):
-    sys.stdout.write(msg + '\n')
+def echo(msg=''):
+    sys.stderr.write(msg + '\n')
 
 def call(cmdl, suppress_output=False):
-    info(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
+    echo(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
     if isinstance(cmdl, str):
         return subprocess.call(cmdl, shell=True, executable='/bin/bash',
                                stdout=subprocess.DEVNULL if suppress_output else None)
@@ -24,14 +24,14 @@ def call(cmdl, suppress_output=False):
                                stdout=subprocess.DEVNULL if suppress_output else None)
 
 def check_call(cmdl):
-    info(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
+    echo(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
     if isinstance(cmdl, str):
         subprocess.check_call(cmdl, shell=True, executable='/bin/bash')
     else:
         subprocess.check_call(cmdl)
 
 def check_output(cmdl):
-    info(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
+    echo(cmdl if isinstance(cmdl, str) else subprocess.list2cmdline(cmdl))
     if isinstance(cmdl, str):
         return subprocess.check_output(cmdl, shell=True, executable='/bin/bash', stderr=subprocess.STDOUT)
     else:
@@ -102,10 +102,10 @@ class BaseTestCase(unittest.TestCase):
             if before_run_fn:
                 before_run_fn()
 
-            info('-' * 100)
+            echo('-' * 100)
             check_call(cmdl)
-            info('-' * 100)
-            info('')
+            echo('-' * 100)
+            echo('')
 
     def _check_file_throws(self, wc_fpath, ignore_matching_lines=None, wrapper=None, cmp_line_number_only=True,
                            check_diff=True):

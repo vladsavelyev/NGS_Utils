@@ -15,7 +15,7 @@ setup(
     name=package_name,
     version=version,
     author='Vlad Saveliev',
-    author_email='vlad.saveliev@astrazeneca.com',
+    author_email='vladislav.sav@gmail.com',
     description='Utils for NGS pipelines by Vlad Saveliev',
     keywords='bioinformatics',
     url='https://github.com/vladsaveliev/NGS_Utils',
