@@ -26,10 +26,9 @@ def release(new_version, package_name=None):
     '''
     version_file, new_version = increment_version(new_version, package_name)
     run_cmdl(f'git add {version_file}')
-    run_cmdl(f'git commit -m "Bump {new_version} [ci skip]"')
+    run_cmdl(f'git commit -m "Bump {new_version}"')
     run_cmdl(f'git tag {new_version}')
-    run_cmdl(f'git push')
-    run_cmdl(f'git push --tags')
+    run_cmdl(f'git push origin --tags')  # pushes both commits and tags
 
 
 def err(msg=''):
