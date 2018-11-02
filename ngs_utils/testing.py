@@ -87,8 +87,8 @@ class BaseTestCase(unittest.TestCase):
             os.makedirs(self.results_dir)
 
     def _run_cmd(self, cmdl, input_paths, output_path, before_run_fn=None):
-        only_diff = BaseTestCase.only_diff or os.environ.get('TEST_ONLY_DIFF')
-        reuse = BaseTestCase.reuse or os.environ.get('TEST_REUSE')
+        only_diff = BaseTestCase.only_diff or any('TEST' in e.upper() and 'DIFF'  in e.upper() for e in os.environ)
+        reuse     = BaseTestCase.reuse     or any('TEST' in e.upper() and 'REUSE' in e.upper() for e in os.environ)
 
         if not only_diff:
             input_paths = [input_paths] if isinstance(input_paths, str) else input_paths
