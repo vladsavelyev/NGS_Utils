@@ -110,12 +110,21 @@ class BcbioSample(BaseSample):
                     else:
                         return None
 
+        # Creating BcbioSample object
         s = BcbioSample(bcbio_project)
         s.sample_info = sample_info
-
         if 'description_original' in sample_info:
             s.old_name = str(sample_info['description_original']).replace('.', '_')
 
+        # Setting phenotype and batches
+        s.phenotype = sample_info.get('metadata', dict()).get('phenotype', 'tumor')
+        if not batch_names:
+            batch_names = [s.get_name_for_files() + '-batch']
+        if len(batch_names) > 1 and s.phenotype != 'normal':
+            critical('Multiple batches for non-normal ' + s.phenotype + ' sample ' + s.name + ': ' + ', '.join(s.batch_names))
+        s.batch_names = batch_names
+
+        # Setting genome build based reference paths
         s.genome_build = sample_info['genome_build']
         s.variant_regions_bed = s.bcbio_project.config_path(val=sample_info['algorithm'].get('variant_regions'))
         s.sv_regions_bed = s.bcbio_project.config_path(val=sample_info['algorithm'].get('sv_regions')) or s.variant_regions_bed
@@ -143,15 +152,13 @@ class BcbioSample(BaseSample):
 
         if s._set_name_and_paths(
             name=description,
-            phenotype=sample_info.get('metadata', dict()).get('phenotype'),
-            batch_names=batch_names,
             variantcallers=sample_info['algorithm'].get('variantcaller'),
             silent=silent):
             return s
         else:
             return None
 
-    def _set_name_and_paths(self, name, phenotype, batch_names, variantcallers, silent=False):
+    def _set_name_and_paths(self, name, variantcallers, silent=False):
         self.raw_name = name
         self.name = self.raw_name.replace('.', '_')
         self.dirpath = verify_dir(join(self.bcbio_project.final_dir, self.name))
@@ -197,18 +204,10 @@ class BcbioSample(BaseSample):
             else:
                 if not silent: warn('Counts for ' + self.name + ' not found')
         else:
-            self._set_variant_files(phenotype, batch_names, variantcallers)
+            self._set_variant_files(variantcallers)
         return True
 
-    def _set_variant_files(self, phenotype, batch_names, variantcallers):
-        self.phenotype = phenotype or 'tumor'
-        if not batch_names:
-            batch_names = [self.get_name_for_files() + '-batch']
-        self.batch_names = batch_names
-        if len(self.batch_names) > 1 and self.phenotype != 'normal':
-            critical('Multiple batches for non-normal ' + self.phenotype + ' sample ' + self.name + ': ' +
-                ', '.join(self.batch_names))
-
+    def _set_variant_files(self, variantcallers):
         if isinstance(variantcallers, dict):
             if 'germline' in variantcallers and self.phenotype == 'normal':
                 self.variantcallers = variantcallers.get('germline')
@@ -502,7 +501,7 @@ class BcbioProject:
                 critical(f'Error: could not find a batch or a sample with the name(s): {", ".join(include_samples)}. '
                          f'Check the YAML file for available options: {self.bcbio_yaml_fpath}')
             critical(f'Error: could not parse any batch or samples in the bcbio project. '
-                     f'Please check the bcbio YAML file: {self.bcbio_yaml_fpath}.')
+                     f'Please check the bcbio YAML file: {self.bcbio_yaml_fpath}')
 
         if any(not s.bam for s in self.samples):
             if not self.silent: warn('Warning: for some samples, BAM files not found in the final dir')
