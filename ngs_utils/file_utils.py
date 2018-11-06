@@ -619,7 +619,10 @@ def tx_tmpdir(base_dir, rollback_dirpath):
             os.rename(tmp_dir, rollback_dirpath)
 
 
-def safe_symlink_to(fpath, dst_dirpath):
+def safe_symlink_to(fpath, dst_dirpath, rel=False):
+    if rel:
+        fpath = os.path.relpath(fpath, dst_dirpath)
+
     dst = join(dst_dirpath, basename(fpath))
     if not exists(dst):
         try:
@@ -632,7 +635,10 @@ def safe_symlink_to(fpath, dst_dirpath):
     return dst
 
 
-def safe_symlink(src_path, dst_path):
+def safe_symlink(src_path, dst_path, rel=False):
+    if rel:
+        src_path = os.path.relpath(src_path, dirname(dst_path))
+
     if not exists(dst_path):
         try:
             if os.lstat(dst_path):  # broken symlink
