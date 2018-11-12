@@ -89,6 +89,10 @@ class BaseTestCase(unittest.TestCase):
     def _run_cmd(self, cmdl, input_paths, output_path, before_run_fn=None):
         only_diff = BaseTestCase.only_diff or any('TEST' in e.upper() and 'DIFF'  in e.upper() for e in os.environ)
         reuse     = BaseTestCase.reuse     or any('TEST' in e.upper() and 'REUSE' in e.upper() for e in os.environ)
+        if only_diff:
+            echo('TESRT_DIFF_ONLY set: not actually running the program, only checking diffs with the previous results')
+        if reuse:
+            echo('TEST_REUSE set: running on top of the previous results')
 
         if not only_diff:
             input_paths = [input_paths] if isinstance(input_paths, str) else input_paths
