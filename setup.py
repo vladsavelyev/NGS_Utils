@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 import sys
 from os.path import join
+from setuptools import setup
+import releazit
 
-from ngs_utils import setup_utils
 import ngs_utils
 package_name = ngs_utils.__name__
 
+version = releazit.get_version(package_name)
 
-version = setup_utils.get_cur_version(package_name)
-
-
-from setuptools import setup
 setup(
     name=package_name,
     version=version,
@@ -25,11 +23,11 @@ setup(
         'tab_utils'
     ],
     package_data={
-        package_name: setup_utils.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
+        package_name: releazit.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
     },
     include_package_data=True,
     zip_safe=False,
-    install_requires=setup_utils.get_reqs(),
+    install_requires=releazit.get_reqs(),
     setup_requires=['numpy'],
     scripts=[path for path in
          [join('scripts', fn) for fn in [

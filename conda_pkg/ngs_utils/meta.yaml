@@ -1,8 +1,8 @@
-{% set version=load_setup_py_data().get('version') %}
+{% set data=load_setup_py_data() %}
 
 package:
   name: ngs_utils
-  version: "{{ version }}"
+  version: {{ data.version }}
 
 source:
   path: ../../../
@@ -14,10 +14,14 @@ requirements:
   build:
     - python ==3.6
     - numpy
-    - click
+    {% for dep in data.install_requires -%}
+    - {{ dep.lower() }}
+    {% endfor %}
   run:
     - python ==3.6
-    - click
+    {% for dep in data.install_requires -%}
+    - {{ dep.lower() }}
+    {% endfor %}
     # All dependencies are optional, depending on functionality you'd want:
     # - bedtools>=2.25
     # - sambamba
@@ -41,7 +45,7 @@ test:
     - tab_utils
 
 about:
-  home: https://github.com/vladsaveliev/NGS_Utils
-  license: GNU General Public License v3 (GPLv3)
-  summary: 'Helper function for NGS projects by Vlad Saveliev'
+  home: "{{ data.url }}"
+  license: "GNU General Public License v3 (GPLv3)"
   license_family: GPL3
+  summary: "{{ data.description }}"

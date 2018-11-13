@@ -5,7 +5,6 @@ python:
   - "3.6"  # required, otherwise conda will try to clash with py2 packages
 
 before_install:
-  - export PACKAGE_NAME=ngs_utils
   # Get and install anaconda (https://conda.io/docs/travis.html)
   - wget -nv https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
@@ -14,14 +13,13 @@ before_install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a  # Useful for debugging any issues with conda
-  - conda config --set always_yes true
-  - conda config --set anaconda_upload no
 
 install:
+  - export PACKAGE_NAME=ngs_utils
   - conda config --add channels defaults --add channels vladsaveliev --add channels bioconda --add channels conda-forge
-  - conda install -q python=$TRAVIS_PYTHON_VERSION pip requests conda-build jinja2 anaconda-client click
+  - conda install python=$TRAVIS_PYTHON_VERSION pip requests conda-build jinja2 anaconda-client releazit
   # Building package
-  - conda build deploy/conda_package/${PACKAGE_NAME}
+  - conda build conda_pkg/${PACKAGE_NAME}
   - conda install --use-local ${PACKAGE_NAME}
 
 script:
@@ -32,8 +30,9 @@ script:
 deploy:
   # Deploy to Anaconda.org
   - provider: script
-    script: ./deploy/deploy_anaconda.sh $PACKAGE_NAME $ANACONDA_TOKEN
+    script:
+      conda convert --platform osx-64 $HOME/miniconda/conda-bld/linux-64/${PACKAGE_NAME}-*.tar.bz2 --output-dir $HOME/miniconda/conda-bld/ &&
+      anaconda -t ${ANACONDA_TOKEN} upload $HOME/miniconda/conda-bld/**/${PACKAGE_NAME}-*.tar.bz2
     on:
       tags: true
     skip_cleanup: true
-
