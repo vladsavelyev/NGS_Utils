@@ -1,3 +1,4 @@
+from collections import defaultdict
 from os.path import join, splitext, isfile
 from pybedtools import BedTool
 from ngs_utils.key_genes_utils import get_genes_from_file
@@ -13,12 +14,12 @@ GENOMES = ['GRCh37', 'hg38']
 
 rule all:
     input:
-        expand('key_genes.{genome}.bed', genome=GENOMES)
+        expand('key_genes.{genome}.{featuretype}.bed', genome=GENOMES, featuretype=['transcript', 'coding']),
 
 
 rule gene_list:
     input:
-        'umccr_cancer_genes.v1.txt'
+        'umccr_cancer_genes.latest.txt'
     output:
         temp('key_genes.txt')
     shell:
@@ -29,7 +30,8 @@ rule extract_transcripts:
     input:
         gene_list = rules.gene_list.output
     output:
-        temp('key_genes.{genome}.transcripts.unmerged.bed')
+        trx = temp('key_genes.{genome}.transcript.unmerged.bed'),
+        cds = temp('key_genes.{genome}.coding.unmerged.bed'),
     run:
         info(f'Getting coordinates for key/target genes for {wildcards.genome}')
         gene_names = get_genes_from_file(input.gene_list[0])
@@ -45,28 +47,36 @@ rule extract_transcripts:
             assert len(val) == 1, (_key, str(val))
             return val[0]
 
-        lines = []
-        info(f'Extracting transcripts for {len(gene_names)} genes')
+        info(f'Extracting transcripts and CDS for {len(gene_names)} genes')
+        trx_fs = []
+        cds_fs = []
         for rec in db.all_features(order_by=('seqid', 'start', 'end')):
             gname = _get(rec, 'gene_name')
             if gname not in gene_names: continue
-
-            if rec.featuretype != 'transcript': continue
             if rec.end - rec.start < 0: continue
-
             fs = [rec.chrom,
                   str(rec.start - 1),
                   str(rec.end),
                   gname]
-            lines.append(fs)
-        BedTool(lines).saveas(output[0])
+
+            if rec.featuretype == 'transcript':
+                trx_fs.append(fs)
+            elif rec.featuretype in ['CDS', 'stop_codon']:
+                cds_fs.append(fs)
+            else:
+                continue
+
+        print(len(trx_fs))
+        print(len(cds_fs))
+        BedTool(trx_fs).saveas(output.trx)
+        BedTool(cds_fs).saveas(output.cds)
 
 
 rule merge_transcripts_bed:
     input:
-        rules.extract_transcripts.output[0]
+        'key_genes.{genome}.{featuretype}.unmerged.bed',
     output:
-        'key_genes.{genome}.bed'
+        'key_genes.{genome}.{featuretype}.bed',
     run:
         info('Sorting and merging results')
         BedTool(input[0]).sort().merge(c=4, o='distinct').saveas(output[0])
