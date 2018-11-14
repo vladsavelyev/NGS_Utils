@@ -42,7 +42,6 @@ test:
   imports:
     - ngs_utils.file_utils
     - ngs_utils.reference_data
-    - tab_utils
 
 about:
   home: "{{ data.url }}"

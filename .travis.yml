@@ -25,7 +25,6 @@ install:
 script:
   - python -c "from ngs_utils import file_utils"
   - python -c "from ngs_utils import reference_data"
-  - python -c "import tab_utils"
 
 deploy:
   # Deploy to Anaconda.org

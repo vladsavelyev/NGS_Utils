@@ -20,7 +20,6 @@ setup(
     license='GPLv3',
     packages=[
         package_name,
-        'tab_utils'
     ],
     package_data={
         package_name: releazit.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
@@ -38,16 +37,8 @@ setup(
              'bed_file_from_gene_list.py',
              'html_to_base64.py',
              'group_and_merge_by_gene.py',
-             'tabutils',
-             'tsv',
-             'cols',
              'hg19_addchr.py',
          ]]],
-    entry_points={
-        'console_scripts': [
-            'release = ngs_utils.setup_utils:release',
-        ],
-    },
     classifiers=[
         'Environment :: Console',
         'Environment :: Web Environment',
