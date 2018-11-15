@@ -31,10 +31,10 @@ def make_cluster_cmdl(log_dir, app_name=''):
     # Also overriding jobscript?
     jobscript = loc.cluster.get('jobscript')
     if jobscript:
-        fixed_jobscript = join(log_dir, 'jobscript.sh')
-        with open(jobscript) as f_in, open(fixed_jobscript, 'w') as f_out:
-            f_out.write(f_in.read().replace('{path}', os.environ["PATH"]))
-        cluster_cmdl += f' --jobscript "{fixed_jobscript}"'
+        jobscript_file = join(log_dir, 'jobscript.sh')
+        with open(jobscript_file, 'w') as f_out:
+            f_out.write(jobscript.replace('{path}', os.environ["PATH"]))
+        cluster_cmdl += f' --jobscript "{jobscript_file}"'
 
     return cluster_cmdl
 
