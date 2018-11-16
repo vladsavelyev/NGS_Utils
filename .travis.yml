@@ -17,7 +17,7 @@ before_install:
 install:
   - export PACKAGE_NAME=ngs_utils
   - conda config --add channels defaults --add channels vladsaveliev --add channels bioconda --add channels conda-forge
-  - conda install python=$TRAVIS_PYTHON_VERSION pip requests conda-build jinja2 anaconda-client releazit
+  - conda install python=$TRAVIS_PYTHON_VERSION pip requests conda-build jinja2 anaconda-client versionpy
   # Building package
   - conda build conda_pkg/${PACKAGE_NAME}
   - conda install --use-local ${PACKAGE_NAME}

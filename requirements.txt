@@ -1,7 +1,7 @@
 pip
 setuptools
 click
-releazit
+versionpy
 # cython
 # numpy
 # pyyaml

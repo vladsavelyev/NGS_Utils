@@ -2,12 +2,12 @@
 import sys
 from os.path import join
 from setuptools import setup
-import releazit
+import versionpy
 
 import ngs_utils
 package_name = ngs_utils.__name__
 
-version = releazit.get_version(package_name)
+version = versionpy.get_version(package_name)
 
 setup(
     name=package_name,
@@ -22,11 +22,11 @@ setup(
         package_name,
     ],
     package_data={
-        package_name: releazit.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
+        package_name: versionpy.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
     },
     include_package_data=True,
     zip_safe=False,
-    install_requires=releazit.get_reqs(),
+    install_requires=versionpy.get_reqs(),
     setup_requires=['numpy'],
     scripts=[path for path in
          [join('scripts', fn) for fn in [
