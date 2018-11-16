@@ -87,12 +87,13 @@ class BaseTestCase(unittest.TestCase):
             os.makedirs(self.results_dir)
 
     def _run_cmd(self, cmdl, input_paths, output_path, before_run_fn=None):
-        only_diff = BaseTestCase.only_diff or any('TEST' in e.upper() and 'DIFF'  in e.upper() for e in os.environ)
-        reuse     = BaseTestCase.reuse     or any('TEST' in e.upper() and 'REUSE' in e.upper() for e in os.environ)
+        only_diff  = BaseTestCase.only_diff or any('TEST' in e.upper() and 'DIFF'  in e.upper() for e in os.environ)
+        reuse      = BaseTestCase.reuse     or any('TEST' in e.upper() and 'REUSE' in e.upper() for e in os.environ)
         if only_diff:
             echo('TESRT_DIFF_ONLY set: not actually running the program, only checking diffs with the previous results')
         if reuse:
             echo('TEST_REUSE set: running on top of the previous results')
+        tools_opts = next((os.environ[e] for e in os.environ if 'TEST' in e.upper() and 'OPTS' in e.upper()), '')
 
         if not only_diff:
             input_paths = [input_paths] if isinstance(input_paths, str) else input_paths
@@ -107,7 +108,7 @@ class BaseTestCase(unittest.TestCase):
                 before_run_fn()
 
             echo('-' * 100)
-            check_call(cmdl)
+            check_call(cmdl + ' ' + tools_opts)
             echo('-' * 100)
             echo('')
 
