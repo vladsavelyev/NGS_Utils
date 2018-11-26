@@ -34,9 +34,11 @@ if 'wildcards' in job_properties:
     if values:
         job_name += '.' + '__'.join(values)
 
+jobid = job_properties['jobid']
+
 submit_cmd = submit_cmd\
     .replace('{job_name}', job_name)\
-    .replace('{log_file}', os.path.join(logs_dir, f'{timestamp}_{job_name}.cluster.log'))
+    .replace('{log_file}', os.path.join(logs_dir, f'{timestamp}_{job_name}_{jobid}.cluster.log'))
 
 # Run submittion command
 cmd = f'{submit_cmd} {job_cmd}'
