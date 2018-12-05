@@ -438,7 +438,7 @@ class BcbioProject:
 
         self.project_name = self._set_project_name(self.dir, project_name)
 
-        self.work_dir = abspath(join(self.dir, 'work', proc_name))
+        self.work_dir = abspath(join(self.dir, 'work'))
         if create_dirs: safe_mkdir(self.work_dir)
 
         self.date_dir = self._set_date_dir(bcbio_cnf, self.final_dir, date_dir, create_dir=create_dirs,
