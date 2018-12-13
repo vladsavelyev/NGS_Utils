@@ -74,8 +74,6 @@ class BcbioSample(BaseSample):
             batch_names = str(batch_names)
         if isinstance(batch_names, str):
             batch_names = [batch_names]
-        if batch_names:
-            batch_names = [b.replace('.', '_') for b in batch_names if b]
 
         if exclude_samples:
             # Sample name
@@ -121,8 +119,8 @@ class BcbioSample(BaseSample):
         if not batch_names:
             batch_names = [s.get_name_for_files() + '-batch']
         if len(batch_names) > 1 and s.phenotype != 'normal':
-            critical('Multiple batches for non-normal ' + s.phenotype + ' sample ' + s.name + ': ' + ', '.join(s.batch_names))
-        s.batch_names = batch_names
+            critical('Multiple batches for non-normal ' + s.phenotype + ' sample ' + s.name + ': ' + ', '.join(batch_names))
+        s.batch_names = [b.replace('.', '_') for b in batch_names if b]
 
         # Setting genome build based reference paths
         s.genome_build = sample_info['genome_build']
