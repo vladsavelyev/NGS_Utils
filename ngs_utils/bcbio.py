@@ -51,7 +51,7 @@ class BcbioSample(BaseSample):
 
     @staticmethod
     def parse_sample_ids(sample_info):
-        description = str(sample_info['description'])
+        description = str(sample_info['description']).replace('.', '_')
 
         batch_names = sample_info.get('metadata', dict()).get('batch')
         if isinstance(batch_names, int) or isinstance(batch_names, float):
@@ -67,13 +67,14 @@ class BcbioSample(BaseSample):
     def load_from_sample_info(sample_info, bcbio_project, exclude_samples=None,
                               include_samples=None, extra_batches=None, silent=False):
         # Get sample and batch names and exclude/include based on exclude_samples and include_samples
-        description = str(sample_info['description'])
+        description = str(sample_info['description']).replace('.', '_')
 
         batch_names = sample_info.get('metadata', dict()).get('batch')
         if isinstance(batch_names, int) or isinstance(batch_names, float):
             batch_names = str(batch_names)
         if isinstance(batch_names, str):
             batch_names = [batch_names]
+        batch_names = [b.replace('.', '_') for b in batch_names if b]
 
         if exclude_samples:
             # Sample name
@@ -120,7 +121,7 @@ class BcbioSample(BaseSample):
             batch_names = [s.get_name_for_files() + '-batch']
         if len(batch_names) > 1 and s.phenotype != 'normal':
             critical('Multiple batches for non-normal ' + s.phenotype + ' sample ' + s.name + ': ' + ', '.join(batch_names))
-        s.batch_names = [b.replace('.', '_') for b in batch_names if b]
+        s.batch_names = batch_names
 
         # Setting genome build based reference paths
         s.genome_build = sample_info['genome_build']
@@ -467,6 +468,8 @@ class BcbioProject:
 
     def set_samples(self, bcbio_cnf, exclude_samples=None, include_samples=None):
         debug('Reading sample details...')
+        exclude_samples = [s.replace('.', '_') for s in exclude_samples] if exclude_samples else None
+        include_samples = [s.replace('.', '_') for s in include_samples] if include_samples else None
 
         # First pass - just to get extra batch IDs that we need to include to have batches consistent
         extra_batches = set()
