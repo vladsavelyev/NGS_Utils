@@ -39,7 +39,7 @@ def make_cluster_cmdl(log_dir, app_name=''):
     return cluster_cmdl
 
 
-def run_snakemake(smk_file, conf, jobs, output_dir, force_rerun=None, unlock=False):
+def run_snakemake(smk_file, conf, jobs=None, output_dir=None, force_rerun=None, unlock=False):
     """ Runs snakemake
     """
     f = tempfile.NamedTemporaryFile(mode='wt', delete=False)
@@ -51,7 +51,7 @@ def run_snakemake(smk_file, conf, jobs, output_dir, force_rerun=None, unlock=Fal
            f'--printshellcmds ' +
           (f'--directory {output_dir} ' if output_dir else '') +
            f'--configfile {f.name} ' +
-           f'--jobs {jobs} ' +
+          (f'--jobs {jobs} ' if jobs is not None else '') +
           (f'--forcerun {force_rerun}' if force_rerun else '')
            )
 
