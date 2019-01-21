@@ -1,11 +1,23 @@
 from collections import defaultdict
-from os.path import join, splitext, isfile
+from os.path import join, splitext, isfile, basename
 from pybedtools import BedTool
 from ngs_utils.logger import info
 from ngs_utils import gtf
+from ngs_utils.reference_data import get_key_genes_set
+from ngs_utils.key_genes_utils import get_genes_from_file
 from umccrise import package_path
 from hpc_utils.hpc import get_ref_file
-from ngs_utils.reference_data import get_key_genes_set
+
+
+gene_list_file = config.get('gene_list')
+if gene_list_file is None:
+    gene_names = get_key_genes_set()
+    input = 'umccr_cancer_genes.latest.tsv'
+    output = 'umccr_cancer_genes.{genome}.{featuretype}.bed'
+else:
+    gene_names = get_genes_from_file(gene_list_file)
+    input = gene_list_file
+    output = basename(splitext(gene_list_file)[0]) + '.{genome}.{featuretype}.bed'
 
 
 GENOMES = ['GRCh37', 'hg38']
@@ -13,18 +25,17 @@ GENOMES = ['GRCh37', 'hg38']
 
 rule all:
     input:
-        expand('key_genes.{genome}.{featuretype}.bed', genome=GENOMES, featuretype=['transcript', 'coding']),
+        expand(output, genome=GENOMES, featuretype=['transcript', 'coding']),
 
 
 rule extract_transcripts:
     input:
-        genes_file = 'umccr_cancer_genes.latest.tsv'
+        genes_file = gene_list_file or 'umccr_cancer_genes.latest.tsv'
     output:
-        trx = temp('key_genes.{genome}.transcript.unmerged.bed'),
-        cds = temp('key_genes.{genome}.coding.unmerged.bed'),
+        trx = temp('work/unmerged/' + output.replace('{featuretype}', 'transcript')),
+        cds = temp('work/unmerged/' + output.replace('{featuretype}', 'coding')),
     run:
         info(f'Getting coordinates for key/target genes for {wildcards.genome}')
-        gene_names = get_key_genes_set(input.genes_file)
 
         gtf_fpath = get_ref_file(wildcards.genome, key='gtf')
         info('Reading the GTF database')
@@ -64,9 +75,9 @@ rule extract_transcripts:
 
 rule merge_transcripts_bed:
     input:
-        'key_genes.{genome}.{featuretype}.unmerged.bed',
+        temp('work/unmerged/' + output),
     output:
-        'key_genes.{genome}.{featuretype}.bed',
+        output
     run:
         info('Sorting and merging results')
         BedTool(input[0]).sort().merge(c=4, o='distinct').saveas(output[0])

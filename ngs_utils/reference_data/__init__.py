@@ -93,5 +93,5 @@ def get_key_genes_set(fpath=get_key_genes()):
     return genes
 
 def get_key_genes_bed(genome, is_critical=False, coding_only=False):
-    return _get(f'key_genes/key_genes.{genome}.{"transcript" if not coding_only else "coding"}.bed',
+    return _get(f'key_genes/umccr_cancer_genes.{genome}.{"transcript" if not coding_only else "coding"}.bed',
                 is_critical=is_critical)
