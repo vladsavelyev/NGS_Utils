@@ -1,12 +1,11 @@
 from collections import defaultdict
 from os.path import join, splitext, isfile
 from pybedtools import BedTool
-from ngs_utils.key_genes_utils import get_genes_from_file
 from ngs_utils.logger import info
 from ngs_utils import gtf
-
 from umccrise import package_path
 from hpc_utils.hpc import get_ref_file
+from ngs_utils.reference_data import get_key_genes_set
 
 
 GENOMES = ['GRCh37', 'hg38']
@@ -17,24 +16,15 @@ rule all:
         expand('key_genes.{genome}.{featuretype}.bed', genome=GENOMES, featuretype=['transcript', 'coding']),
 
 
-rule gene_list:
-    input:
-        'umccr_cancer_genes.latest.txt'
-    output:
-        temp('key_genes.txt')
-    shell:
-        'cat {input} > {output}'
-
-
 rule extract_transcripts:
     input:
-        gene_list = rules.gene_list.output
+        genes_file = 'umccr_cancer_genes.latest.tsv'
     output:
         trx = temp('key_genes.{genome}.transcript.unmerged.bed'),
         cds = temp('key_genes.{genome}.coding.unmerged.bed'),
     run:
         info(f'Getting coordinates for key/target genes for {wildcards.genome}')
-        gene_names = get_genes_from_file(input.gene_list[0])
+        gene_names = get_key_genes_set(input.genes_file)
 
         gtf_fpath = get_ref_file(wildcards.genome, key='gtf')
         info('Reading the GTF database')

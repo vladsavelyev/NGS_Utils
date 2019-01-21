@@ -81,18 +81,17 @@ def ucsc_to_ensembl(genome, is_critical=False):
 def get_signatures_probabilities(is_critical=False):
     return _get('signatures_probabilities.txt', is_critical=is_critical)
 
-def get_suppressors(is_critical=False):
-    return _get('suppressors.txt', is_critical=is_critical)
+def get_key_genes():
+    return _get('key_genes/umccr_cancer_genes.latest.tsv')
 
-def get_cancermine(is_critical=False):
-    return _get('cancermine_collated.tsv', is_critical=is_critical)
-
-def get_key_genes(is_critical=False):
-    return _get('key_genes/key_genes.txt', is_critical=is_critical)
+def get_key_genes_set(fpath=get_key_genes()):
+    genes = set()
+    with open(fpath) as f:
+        for i, l in enumerate(f):
+            if i != 0:
+                genes.add(l.strip().split('\t')[0])
+    return genes
 
 def get_key_genes_bed(genome, is_critical=False, coding_only=False):
     return _get(f'key_genes/key_genes.{genome}.{"transcript" if not coding_only else "coding"}.bed',
                 is_critical=is_critical)
-
-def get_key_genes_set(is_critical=False):
-    return get_genes_from_file(get_key_genes(is_critical=is_critical))

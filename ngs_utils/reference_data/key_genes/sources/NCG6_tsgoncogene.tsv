@@ -1,0 +1,712 @@
+entrez	symbol	cgc_annotation	vogelstein_annotation	NCG6_oncogene	NCG6_tsg
+29974	A1CF	oncogene		1	0
+10006	ABI1	"TSG, fusion"		0	1
+25	ABL1	"oncogene, fusion"	Oncogene	1	0
+27	ABL2	"oncogene, fusion"		1	0
+57007	ACKR3	"oncogene, fusion"		1	0
+2181	ACSL3	fusion		0	0
+23305	ACSL6	fusion		0	0
+90	ACVR1	oncogene		1	0
+91	ACVR1B		TSG	0	1
+92	ACVR2A	TSG		0	1
+4301	AFDN	"oncogene, fusion"		1	0
+4299	AFF1	fusion		0	0
+3899	AFF3	"oncogene, fusion"		1	0
+27125	AFF4	"oncogene, fusion"		1	0
+10142	AKAP9	fusion		0	0
+207	AKT1	oncogene	Oncogene	1	0
+208	AKT2	oncogene		1	0
+10000	AKT3	oncogene		1	0
+217	ALDH2	fusion		0	0
+238	ALK	"oncogene, fusion"	Oncogene	1	0
+139285	AMER1	TSG	TSG	0	1
+286	ANK1			0	0
+324	APC	TSG	TSG	0	1
+9582	APOBEC3B	"oncogene, TSG"		0	0
+367	AR	oncogene	Oncogene	1	0
+369	ARAF	oncogene		1	0
+23092	ARHGAP26	"TSG, fusion"		0	1
+394	ARHGAP5	oncogene		1	0
+9639	ARHGEF10	TSG		0	1
+55160	ARHGEF10L	TSG		0	1
+23365	ARHGEF12	"TSG, fusion"		0	1
+8289	ARID1A	"TSG, fusion"	TSG	0	1
+57492	ARID1B	TSG	TSG	0	1
+196528	ARID2	TSG	TSG	0	1
+405	ARNT	"oncogene, TSG, fusion"		0	0
+79058	ASPSCR1	fusion		0	0
+171023	ASXL1	TSG	TSG	0	1
+55252	ASXL2	TSG		0	1
+466	ATF1	"oncogene, fusion"		1	0
+471	ATIC	fusion		0	0
+472	ATM	TSG	TSG	0	1
+476	ATP1A1	"oncogene, TSG"		0	0
+492	ATP2B3	TSG		0	1
+545	ATR	TSG		0	1
+546	ATRX	TSG	TSG	0	1
+8312	AXIN1	TSG	TSG	0	1
+8313	AXIN2	TSG		0	1
+567	B2M	TSG	TSG	0	1
+8314	BAP1	TSG	TSG	0	1
+580	BARD1	TSG		0	1
+581	BAX	TSG		0	1
+11177	BAZ1A	TSG		0	1
+8915	BCL10	"TSG, fusion"		0	1
+53335	BCL11A	"oncogene, fusion"		1	0
+64919	BCL11B	"oncogene, TSG, fusion"		0	0
+596	BCL2	"oncogene, fusion"	Oncogene	1	0
+83596	BCL2L12	oncogene		1	0
+602	BCL3	"oncogene, fusion"		1	0
+604	BCL6	"oncogene, fusion"		1	0
+605	BCL7A	fusion		0	0
+607	BCL9	"oncogene, fusion"		1	0
+283149	BCL9L	"oncogene, TSG"		0	0
+9774	BCLAF1			0	0
+54880	BCOR	"TSG, fusion"	TSG	0	1
+63035	BCORL1	"oncogene, TSG"		0	0
+613	BCR	fusion		0	0
+330	BIRC3	"oncogene, TSG, fusion"		0	0
+57448	BIRC6	"oncogene, fusion"		1	0
+641	BLM	TSG		0	1
+653	BMP5			0	0
+657	BMPR1A	"oncogene, TSG"		0	0
+673	BRAF	"oncogene, fusion"	Oncogene	1	0
+672	BRCA1	TSG	TSG	0	1
+675	BRCA2	TSG	TSG	0	1
+8019	BRD3	"oncogene, fusion"		1	0
+23476	BRD4	"oncogene, fusion"		1	0
+83990	BRIP1	TSG		0	1
+694	BTG1	"TSG, fusion"		0	1
+695	BTK	"oncogene, TSG"		0	0
+701	BUB1B	TSG		0	1
+145788	C15orf65	fusion		0	0
+776	CACNA1D	oncogene		1	0
+811	CALR	oncogene		1	0
+23261	CAMTA1	"TSG, fusion"		0	1
+124583	CANT1	fusion		0	0
+84433	CARD11	oncogene	Oncogene	1	0
+833	CARS	"TSG, fusion"		0	1
+836	CASP3	TSG		0	1
+841	CASP8	TSG	TSG	0	1
+842	CASP9	TSG		0	1
+863	CBFA2T3	"TSG, fusion"		0	1
+865	CBFB	"TSG, fusion"		0	1
+867	CBL	"oncogene, TSG, fusion"	Oncogene	0	0
+868	CBLB	TSG		0	1
+23624	CBLC	"oncogene, TSG"		0	0
+8030	CCDC6	"TSG, fusion"		0	1
+57820	CCNB1IP1	"TSG, fusion"		0	1
+892	CCNC	TSG		0	1
+595	CCND1	"oncogene, fusion"		1	0
+894	CCND2	"oncogene, fusion"		1	0
+896	CCND3	"oncogene, fusion"		1	0
+898	CCNE1	oncogene		1	0
+1233	CCR4	oncogene		1	0
+1236	CCR7	oncogene		1	0
+30835	CD209			0	0
+29126	CD274	"TSG, fusion"		0	1
+940	CD28	oncogene		1	0
+972	CD74	"oncogene, fusion"		1	0
+973	CD79A	oncogene		1	0
+974	CD79B	oncogene		1	0
+79577	CDC73	TSG	TSG	0	1
+999	CDH1	TSG	TSG	0	1
+1008	CDH10	TSG		0	1
+1009	CDH11	"TSG, fusion"		0	1
+1015	CDH17	oncogene		1	0
+51755	CDK12	TSG		0	1
+1019	CDK4	oncogene		1	0
+1021	CDK6	"oncogene, fusion"		1	0
+1026	CDKN1A	"oncogene, TSG"		0	0
+1027	CDKN1B	TSG		0	1
+1029	CDKN2A	TSG	TSG	0	1
+1031	CDKN2C	TSG		0	1
+1045	CDX2	"TSG, fusion"		0	1
+1050	CEBPA	TSG	TSG	0	1
+84902	CEP89	fusion		0	0
+79145	CHCHD7	fusion		0	0
+1106	CHD2	TSG		0	1
+1108	CHD4	oncogene		1	0
+11200	CHEK2	TSG		0	1
+26511	CHIC2	fusion		0	0
+50515	CHST11	"oncogene, fusion"		1	0
+23152	CIC	"oncogene, TSG, fusion"	TSG	0	0
+4261	CIITA	"TSG, fusion"		0	1
+6249	CLIP1	fusion		0	0
+10978	CLP1	fusion		0	0
+1213	CLTC	"TSG, fusion"		0	1
+8218	CLTCL1	"TSG, fusion"		0	1
+168975	CNBD1			0	0
+7555	CNBP	"TSG, fusion"		0	1
+4849	CNOT3	TSG		0	1
+26047	CNTNAP2	TSG		0	1
+11064	CNTRL	fusion		0	0
+1277	COL1A1	fusion		0	0
+1280	COL2A1	fusion		0	0
+1281	COL3A1	fusion		0	0
+1345	COX6C	fusion		0	0
+22849	CPEB3	TSG		0	1
+1385	CREB1	"oncogene, fusion"		1	0
+90993	CREB3L1	"TSG, fusion"		0	1
+64764	CREB3L2	"oncogene, fusion"		1	0
+1387	CREBBP	"oncogene, TSG, fusion"	TSG	0	0
+64109	CRLF2	"oncogene, fusion"	Oncogene	1	0
+51340	CRNKL1			0	0
+23373	CRTC1	"oncogene, fusion"		1	0
+64784	CRTC3	fusion		0	0
+1436	CSF1R	oncogene	Oncogene	1	0
+1441	CSF3R	oncogene		1	0
+114788	CSMD3	TSG		0	1
+10664	CTCF	TSG		0	1
+1496	CTNNA2	oncogene		1	0
+1499	CTNNB1	"oncogene, fusion"	Oncogene	1	0
+1500	CTNND1			0	0
+1501	CTNND2	oncogene		1	0
+8452	CUL3	TSG		0	1
+1523	CUX1	"oncogene, TSG"		0	0
+7852	CXCR4	oncogene		1	0
+1540	CYLD	TSG	TSG	0	1
+1558	CYP2C8			0	0
+57105	CYSLTR2	oncogene		1	0
+1616	DAXX	"oncogene, TSG"	TSG	0	0
+340578	DCAF12L2			0	0
+1630	DCC			0	0
+1639	DCTN1	fusion		0	0
+1643	DDB2	"oncogene, TSG"		0	0
+1649	DDIT3	"oncogene, fusion"		1	0
+4921	DDR2	oncogene		1	0
+1662	DDX10	"TSG, fusion"		0	1
+1654	DDX3X	TSG		0	1
+1655	DDX5	"oncogene, fusion"		1	0
+1656	DDX6	"oncogene, fusion"		1	0
+7913	DEK	"oncogene, fusion"		1	0
+54487	DGCR8	oncogene		1	0
+23405	DICER1	TSG		0	1
+3337	DNAJB1	fusion		0	0
+1785	DNM2	TSG		0	1
+1786	DNMT1		Oncogene	1	0
+1788	DNMT3A	TSG	Oncogene	0	0
+29102	DROSHA	TSG		0	1
+1879	EBF1	"TSG, fusion"		0	1
+345930	ECT2L			0	0
+8726	EED	TSG		0	1
+1956	EGFR	oncogene	Oncogene	1	0
+1964	EIF1AX			0	0
+3646	EIF3E	"TSG, fusion"		0	1
+1974	EIF4A2	fusion		0	0
+1999	ELF3	TSG		0	1
+2000	ELF4	"oncogene, TSG, fusion"		0	0
+2005	ELK4	"oncogene, fusion"		1	0
+8178	ELL	"TSG, fusion"		0	1
+2006	ELN	fusion		0	0
+27436	EML4	fusion		0	0
+2033	EP300	"TSG, fusion"	TSG	0	1
+2034	EPAS1	"oncogene, TSG"		0	0
+2042	EPHA3			0	0
+2045	EPHA7			0	0
+2060	EPS15	"TSG, fusion"		0	1
+2064	ERBB2	"oncogene, fusion"	Oncogene	1	0
+2065	ERBB3	oncogene		1	0
+2066	ERBB4	"oncogene, TSG"		0	0
+23085	ERC1	fusion		0	0
+2068	ERCC2	TSG		0	1
+2071	ERCC3	TSG		0	1
+2072	ERCC4	TSG		0	1
+2078	ERG	"oncogene, fusion"		1	0
+2099	ESR1	"oncogene, TSG, fusion"		0	0
+55500	ETNK1	TSG		0	1
+2115	ETV1	"oncogene, fusion"		1	0
+2118	ETV4	"oncogene, fusion"		1	0
+2119	ETV5	"oncogene, fusion"		1	0
+2120	ETV6	"TSG, fusion"		0	1
+2130	EWSR1	"oncogene, fusion"		1	0
+2131	EXT1	"TSG, fusion"		0	1
+2132	EXT2	TSG		0	1
+2146	EZH2	"oncogene, TSG"	Oncogene	0	0
+7430	EZR	fusion		0	0
+9715	FAM131B	fusion		0	0
+51059	FAM135B			0	0
+54855	FAM46C	TSG		0	1
+442444	FAM47C			0	0
+2175	FANCA	TSG		0	1
+2176	FANCC	TSG		0	1
+2177	FANCD2	TSG		0	1
+2178	FANCE	TSG		0	1
+2188	FANCF	TSG		0	1
+2189	FANCG	TSG		0	1
+355	FAS	TSG		0	1
+2195	FAT1	TSG		0	1
+120114	FAT3			0	0
+79633	FAT4	TSG		0	1
+2199	FBLN2	TSG		0	1
+80204	FBXO11	TSG		0	1
+55294	FBXW7	TSG	TSG	0	1
+2213	FCGR2B	"oncogene, fusion"		1	0
+83417	FCRL4	"oncogene, fusion"		1	0
+2237	FEN1	TSG		0	1
+2242	FES	"oncogene, TSG"		0	0
+54738	FEV	"oncogene, fusion"		1	0
+2260	FGFR1	"oncogene, fusion"		1	0
+11116	FGFR1OP	fusion		0	0
+2263	FGFR2	"oncogene, fusion"	Oncogene	1	0
+2261	FGFR3	"oncogene, fusion"	Oncogene	1	0
+2264	FGFR4	oncogene		1	0
+2271	FH	TSG		0	1
+2272	FHIT	"TSG, fusion"		0	1
+81608	FIP1L1	fusion		0	0
+11328	FKBP9			0	0
+201163	FLCN	TSG		0	1
+2313	FLI1	"oncogene, fusion"		1	0
+2316	FLNA			0	0
+2322	FLT3	oncogene	Oncogene	1	0
+2324	FLT4	oncogene		1	0
+23048	FNBP1	fusion		0	0
+3169	FOXA1	oncogene		1	0
+668	FOXL2	"oncogene, TSG"	Oncogene	0	0
+2308	FOXO1	"oncogene, TSG, fusion"		0	0
+2309	FOXO3	"oncogene, TSG, fusion"		0	0
+4303	FOXO4	"oncogene, TSG, fusion"		0	0
+27086	FOXP1	"oncogene, fusion"		1	0
+283150	FOXR1	"oncogene, fusion"		1	0
+10272	FSTL3	"oncogene, fusion"		1	0
+8880	FUBP1	oncogene	TSG	0	0
+2521	FUS	"TSG, fusion"		0	1
+8522	GAS7	fusion		0	0
+2623	GATA1	"oncogene, TSG"	TSG	0	0
+2624	GATA2	oncogene	Oncogene	1	0
+2625	GATA3	"oncogene, TSG"	TSG	0	0
+2735	GLI1	"oncogene, fusion"		1	0
+8833	GMPS	fusion		0	0
+2767	GNA11	oncogene	Oncogene	1	0
+2776	GNAQ	oncogene	Oncogene	1	0
+2778	GNAS	oncogene	Oncogene	1	0
+9950	GOLGA5	fusion		0	0
+57120	GOPC	fusion		0	0
+2719	GPC3	"oncogene, TSG"		0	0
+2262	GPC5	TSG		0	1
+10243	GPHN	fusion		0	0
+2903	GRIN2A	TSG		0	1
+2913	GRM3	oncogene		1	0
+3020	H3F3A	oncogene	Oncogene	1	0
+3021	H3F3B	oncogene		1	0
+9709	HERPUD1	fusion		0	0
+23462	HEY1	"oncogene, fusion"		1	0
+3091	HIF1A	oncogene		1	0
+3092	HIP1	"oncogene, fusion"		1	0
+8358	HIST1H3B	oncogene	Oncogene	1	0
+8294	HIST1H4I	fusion		0	0
+3105	HLA-A	fusion		0	0
+3131	HLF	"oncogene, fusion"		1	0
+3159	HMGA1	"oncogene, fusion"		1	0
+8091	HMGA2	"oncogene, fusion"		1	0
+6927	HNF1A	TSG	TSG	0	1
+3181	HNRNPA2B1	"oncogene, fusion"		1	0
+84376	HOOK3	fusion		0	0
+3207	HOXA11	"oncogene, TSG, fusion"		0	0
+3209	HOXA13	"oncogene, fusion"		1	0
+3205	HOXA9	"oncogene, TSG, fusion"		0	0
+3227	HOXC11	"oncogene, fusion"		1	0
+3229	HOXC13	"oncogene, fusion"		1	0
+3237	HOXD11	"oncogene, fusion"		1	0
+3239	HOXD13	"oncogene, fusion"		1	0
+3265	HRAS	oncogene	Oncogene	1	0
+3320	HSP90AA1	fusion		0	0
+3326	HSP90AB1	fusion		0	0
+3399	ID3	TSG		0	1
+3417	IDH1	oncogene	Oncogene	1	0
+3418	IDH2	oncogene	Oncogene	1	0
+10644	IGF2BP2	TSG		0	1
+3551	IKBKB	oncogene		1	0
+10320	IKZF1	"TSG, fusion"		0	1
+3558	IL2	fusion		0	0
+50615	IL21R	fusion		0	0
+3572	IL6ST	oncogene		1	0
+3575	IL7R	oncogene		1	0
+3662	IRF4	"oncogene, TSG, fusion"		0	0
+8471	IRS4	"oncogene, TSG"		0	0
+91464	ISX			0	0
+3685	ITGAV			0	0
+3702	ITK	fusion		0	0
+3716	JAK1	"oncogene, TSG"	Oncogene	0	0
+3717	JAK2	"oncogene, fusion"	Oncogene	1	0
+3718	JAK3	oncogene	Oncogene	1	0
+221895	JAZF1	fusion		0	0
+3725	JUN	oncogene		1	0
+7994	KAT6A	"oncogene, fusion"		1	0
+23522	KAT6B	"TSG, fusion"		0	1
+11143	KAT7	oncogene		1	0
+3762	KCNJ5	oncogene		1	0
+5927	KDM5A	"oncogene, fusion"		1	0
+8242	KDM5C	TSG	TSG	0	1
+7403	KDM6A	"oncogene, TSG"	TSG	0	0
+3791	KDR	oncogene		1	0
+2531	KDSR	fusion		0	0
+9817	KEAP1	TSG		0	1
+57670	KIAA1549	fusion		0	0
+3799	KIF5B	fusion		0	0
+3815	KIT	oncogene	Oncogene	1	0
+9314	KLF4	"oncogene, TSG"	Oncogene	0	0
+1316	KLF6	TSG		0	1
+3817	KLK2	fusion		0	0
+4297	KMT2A	"oncogene, fusion"		1	0
+58508	KMT2C	TSG	TSG	0	1
+8085	KMT2D	"oncogene, TSG"	TSG	0	0
+57082	KNL1	"TSG, fusion"		0	1
+90417	KNSTRN	oncogene		1	0
+3845	KRAS	oncogene	Oncogene	1	0
+3895	KTN1	fusion		0	0
+23185	LARP4B	TSG		0	1
+3927	LASP1	fusion		0	0
+3932	LCK	"oncogene, fusion"		1	0
+3936	LCP1	fusion		0	0
+51176	LEF1	"oncogene, TSG"		0	0
+23484	LEPROTL1	TSG		0	1
+10186	LHFPL6	fusion		0	0
+3977	LIFR	fusion		0	0
+4000	LMNA	fusion		0	0
+4004	LMO1	"oncogene, fusion"		1	0
+4005	LMO2	"oncogene, fusion"		1	0
+4026	LPP	"oncogene, fusion"		1	0
+121227	LRIG3	"TSG, fusion"		0	1
+53353	LRP1B	TSG		0	1
+26065	LSM14A	fusion		0	0
+4066	LYL1	"oncogene, fusion"		1	0
+8216	LZTR1	TSG		0	1
+4094	MAF	"oncogene, fusion"		1	0
+9935	MAFB	"oncogene, fusion"		1	0
+10892	MALT1	"oncogene, fusion"		1	0
+84441	MAML2	"oncogene, fusion"		1	0
+5604	MAP2K1	oncogene	Oncogene	1	0
+5605	MAP2K2	oncogene		1	0
+6416	MAP2K4	"oncogene, TSG"		0	0
+4214	MAP3K1	"oncogene, TSG"	TSG	0	0
+9175	MAP3K13	"oncogene, TSG"		0	0
+5594	MAPK1	oncogene		1	0
+4149	MAX	TSG		0	1
+151963	MB21D2			0	0
+4193	MDM2	oncogene		1	0
+4194	MDM4	oncogene		1	0
+259283	MDS2	fusion		0	0
+2122	MECOM	"oncogene, fusion"		1	0
+9968	MED12	TSG	Oncogene	0	0
+4221	MEN1	TSG	TSG	0	1
+4233	MET	oncogene	Oncogene	1	0
+4255	MGMT	TSG		0	1
+4286	MITF	oncogene		1	0
+57591	MKL1	"oncogene, TSG, fusion"		0	0
+4291	MLF1	"TSG, fusion"		0	1
+4292	MLH1	TSG	TSG	0	1
+4298	MLLT1	fusion		0	0
+8028	MLLT10	"oncogene, fusion"		1	0
+10962	MLLT11	fusion		0	0
+4300	MLLT3	fusion		0	0
+4302	MLLT6	fusion		0	0
+4330	MN1	"oncogene, fusion"		1	0
+3110	MNX1	fusion		0	0
+4352	MPL	oncogene	Oncogene	1	0
+4436	MSH2	TSG	TSG	0	1
+2956	MSH6	TSG	TSG	0	1
+124540	MSI2	"oncogene, fusion"		1	0
+4478	MSN	fusion		0	0
+4515	MTCP1	"oncogene, fusion"		1	0
+2475	MTOR	oncogene		1	0
+4582	MUC1	fusion		0	0
+94025	MUC16	oncogene		1	0
+4585	MUC4	oncogene		1	0
+4595	MUTYH	TSG		0	1
+4602	MYB	"oncogene, fusion"		1	0
+4609	MYC	"oncogene, fusion"		1	0
+4610	MYCL	oncogene		1	0
+4613	MYCN	oncogene		1	0
+4615	MYD88	oncogene	Oncogene	1	0
+4629	MYH11	fusion		0	0
+4627	MYH9	"TSG, fusion"		0	1
+4644	MYO5A	fusion		0	0
+4654	MYOD1	oncogene		1	0
+55728	N4BP2	TSG		0	1
+4665	NAB2	"TSG, fusion"		0	1
+4666	NACA	fusion		0	0
+26960	NBEA			0	0
+4683	NBN	TSG		0	1
+51517	NCKIPSD	fusion		0	0
+8648	NCOA1	fusion		0	0
+10499	NCOA2	"oncogene, fusion"		1	0
+8031	NCOA4	"TSG, fusion"		0	1
+9611	NCOR1	TSG	TSG	0	1
+9612	NCOR2	TSG		0	1
+10397	NDRG1	"TSG, fusion"		0	1
+4763	NF1	"TSG, fusion"	TSG	0	1
+4771	NF2	TSG	TSG	0	1
+4773	NFATC2	"oncogene, fusion"		1	0
+4780	NFE2L2	"oncogene, TSG"	Oncogene	0	0
+4781	NFIB	fusion		0	0
+4791	NFKB2	"oncogene, TSG, fusion"		0	0
+4794	NFKBIE	TSG		0	1
+51199	NIN	fusion		0	0
+7080	NKX2-1	"oncogene, TSG"		0	0
+4841	NONO	fusion		0	0
+4851	NOTCH1	"oncogene, TSG, fusion"	TSG	0	0
+4853	NOTCH2	"oncogene, TSG"	TSG	0	0
+4869	NPM1	"oncogene, fusion"	TSG	0	0
+8013	NR4A3	"oncogene, fusion"		1	0
+4893	NRAS	oncogene	Oncogene	1	0
+3084	NRG1	"TSG, fusion"		0	1
+64324	NSD1	fusion		0	0
+7468	NSD2	"oncogene, fusion"		1	0
+54904	NSD3	"oncogene, fusion"		1	0
+22978	NT5C2	oncogene		1	0
+4913	NTHL1	TSG		0	1
+4914	NTRK1	"oncogene, TSG, fusion"		0	0
+4916	NTRK3	"oncogene, fusion"		1	0
+4926	NUMA1	fusion		0	0
+8021	NUP214	fusion		0	0
+4928	NUP98	"oncogene, fusion"		1	0
+256646	NUTM1	"oncogene, fusion"		1	0
+728118	NUTM2A	fusion		0	0
+729262	NUTM2B	fusion		0	0
+10215	OLIG2	"oncogene, fusion"		1	0
+4958	OMD	fusion		0	0
+286530	P2RY8	"oncogene, fusion"		1	0
+26986	PABPC1	"oncogene, TSG"		0	0
+5049	PAFAH1B2	fusion		0	0
+79728	PALB2	TSG		0	1
+23598	PATZ1	"TSG, fusion"		0	1
+5077	PAX3	"oncogene, fusion"		1	0
+5079	PAX5	"oncogene, TSG, fusion"	TSG	0	0
+5081	PAX7	fusion		0	0
+7849	PAX8	fusion		0	0
+55193	PBRM1	TSG	TSG	0	1
+5087	PBX1	"oncogene, fusion"		1	0
+5093	PCBP1			0	0
+5108	PCM1	fusion		0	0
+80380	PDCD1LG2	"oncogene, fusion"		1	0
+5155	PDGFB	"oncogene, fusion"		1	0
+5156	PDGFRA	"oncogene, fusion"	Oncogene	1	0
+5159	PDGFRB	"oncogene, fusion"		1	0
+5187	PER1	"TSG, fusion"		0	1
+84295	PHF6	TSG	TSG	0	1
+8929	PHOX2B	TSG		0	1
+8301	PICALM	fusion		0	0
+5290	PIK3CA	oncogene	Oncogene	1	0
+5291	PIK3CB	oncogene		1	0
+5295	PIK3R1	TSG	TSG	0	1
+5292	PIM1	"oncogene, fusion"		1	0
+5324	PLAG1	"oncogene, fusion"		1	0
+5335	PLCG1	"oncogene, fusion"		1	0
+5371	PML	"TSG, fusion"		0	1
+5378	PMS1			0	0
+5395	PMS2	TSG		0	1
+5424	POLD1	TSG		0	1
+5426	POLE	TSG		0	1
+5428	POLG	TSG		0	1
+10721	POLQ	"oncogene, TSG"		0	0
+25913	POT1	TSG		0	1
+5450	POU2AF1	"oncogene, fusion"		1	0
+5460	POU5F1	"oncogene, fusion"		1	0
+5468	PPARG	"TSG, fusion"		0	1
+8496	PPFIBP1	fusion		0	0
+8493	PPM1D	oncogene		1	0
+5518	PPP2R1A	TSG	Oncogene	0	0
+5537	PPP6C	TSG		0	1
+5546	PRCC	fusion		0	0
+639	PRDM1	TSG	TSG	0	1
+63976	PRDM16	"oncogene, fusion"		1	0
+7799	PRDM2	TSG		0	1
+80243	PREX2	oncogene		1	0
+5551	PRF1	TSG		0	1
+5566	PRKACA	oncogene		1	0
+5573	PRKAR1A	"oncogene, TSG, fusion"		0	0
+5579	PRKCB			0	0
+25766	PRPF40B			0	0
+5396	PRRX1	fusion		0	0
+11168	PSIP1	"oncogene, fusion"		1	0
+5727	PTCH1	TSG	TSG	0	1
+5728	PTEN	TSG	TSG	0	1
+5753	PTK6	"oncogene, TSG"		0	0
+5781	PTPN11	oncogene	Oncogene	1	0
+5783	PTPN13	TSG		0	1
+5777	PTPN6	TSG		0	1
+5787	PTPRB	TSG		0	1
+5788	PTPRC	TSG		0	1
+5789	PTPRD	TSG		0	1
+5796	PTPRK	"TSG, fusion"		0	1
+11122	PTPRT	TSG		0	1
+114825	PWWP2A	fusion		0	0
+9444	QKI	"oncogene, TSG"		0	0
+9135	RABEP1	fusion		0	0
+5879	RAC1	oncogene		1	0
+5884	RAD17	TSG		0	1
+5885	RAD21	"oncogene, TSG"		0	0
+5890	RAD51B	"TSG, fusion"		0	1
+5894	RAF1	"oncogene, fusion"		1	0
+5900	RALGDS	fusion		0	0
+5903	RANBP2	"TSG, fusion"		0	1
+5910	RAP1GDS1	"oncogene, fusion"		1	0
+5914	RARA	"oncogene, fusion"		1	0
+5925	RB1	TSG	TSG	0	1
+8241	RBM10	TSG		0	1
+64783	RBM15	fusion		0	0
+9401	RECQL4	"oncogene, TSG"		0	0
+5966	REL	oncogene		1	0
+5979	RET	"oncogene, fusion"	Oncogene	1	0
+55159	RFWD3	TSG		0	1
+653489	RGPD3			0	0
+6000	RGS7			0	0
+387	RHOA	"oncogene, TSG"		0	0
+399	RHOH	"TSG, fusion"		0	1
+116028	RMI2	"TSG, fusion"		0	1
+57674	RNF213	fusion		0	0
+54894	RNF43	TSG	TSG	0	1
+6092	ROBO2	TSG		0	1
+6098	ROS1	"oncogene, fusion"		1	0
+6134	RPL10	TSG		0	1
+6146	RPL22	"TSG, fusion"		0	1
+6125	RPL5	TSG		0	1
+6184	RPN1	fusion		0	0
+340419	RSPO2	"TSG, fusion"		0	1
+84870	RSPO3	"oncogene, fusion"		1	0
+861	RUNX1	"oncogene, TSG, fusion"	TSG	0	0
+862	RUNX1T1	"oncogene, TSG, fusion"		0	0
+6278	S100A7	fusion		0	0
+57167	SALL4	oncogene		1	0
+51119	SBDS	TSG		0	1
+6385	SDC4	fusion		0	0
+6389	SDHA	TSG		0	1
+54949	SDHAF2	TSG		0	1
+6390	SDHB	TSG		0	1
+6391	SDHC	TSG		0	1
+6392	SDHD	TSG		0	1
+5413	SEPT5	fusion		0	0
+23157	SEPT6	fusion		0	0
+10801	SEPT9	fusion		0	0
+6418	SET	"oncogene, fusion"		1	0
+26040	SETBP1	"oncogene, fusion"	Oncogene	1	0
+23067	SETD1B	TSG		0	1
+29072	SETD2	TSG	TSG	0	1
+23451	SF3B1	oncogene	Oncogene	1	0
+6421	SFPQ	"TSG, fusion"		0	1
+6424	SFRP4	TSG		0	1
+6446	SGK1	oncogene		1	0
+10019	SH2B3	TSG		0	1
+6455	SH3GL1	"oncogene, fusion"		1	0
+57698	SHTN1	fusion		0	0
+140885	SIRPA	TSG		0	1
+6495	SIX1	oncogene		1	0
+10736	SIX2	oncogene		1	0
+6497	SKI	oncogene		1	0
+10568	SLC34A2	"TSG, fusion"		0	1
+85414	SLC45A3	fusion		0	0
+4087	SMAD2	TSG	TSG	0	1
+4088	SMAD3	TSG		0	1
+4089	SMAD4	TSG	TSG	0	1
+6597	SMARCA4	TSG	TSG	0	1
+6598	SMARCB1	TSG	TSG	0	1
+6602	SMARCD1	TSG		0	1
+6605	SMARCE1	TSG		0	1
+8243	SMC1A	TSG		0	1
+6608	SMO	oncogene	Oncogene	1	0
+27044	SND1	"oncogene, fusion"		1	0
+92017	SNX29	fusion		0	0
+8651	SOCS1	TSG	TSG	0	1
+6657	SOX2	oncogene		1	0
+11166	SOX21	TSG		0	1
+6662	SOX9		TSG	0	1
+92521	SPECC1	fusion		0	0
+23013	SPEN	TSG		0	1
+8405	SPOP	TSG	Oncogene	0	0
+6714	SRC	oncogene		1	0
+9901	SRGAP3	fusion		0	0
+6427	SRSF2	oncogene	Oncogene	1	0
+6428	SRSF3	"oncogene, fusion"		1	0
+6760	SS18	fusion		0	0
+26039	SS18L1	fusion		0	0
+6756	SSX1	"oncogene, fusion"		1	0
+6757	SSX2	"oncogene, fusion"		1	0
+6759	SSX4	"oncogene, fusion"		1	0
+10274	STAG1	TSG		0	1
+10735	STAG2	TSG	TSG	0	1
+6774	STAT3	oncogene		1	0
+6777	STAT5B	"oncogene, TSG, fusion"		0	0
+6778	STAT6	"oncogene, fusion"		1	0
+6491	STIL	"oncogene, fusion"		1	0
+6794	STK11	TSG	TSG	0	1
+6801	STRN	fusion		0	0
+51684	SUFU	TSG		0	1
+23512	SUZ12	"oncogene, TSG, fusion"		0	0
+6850	SYK	"oncogene, fusion"		1	0
+8148	TAF15	"oncogene, fusion"		1	0
+6886	TAL1	"oncogene, fusion"		1	0
+6887	TAL2	"oncogene, fusion"		1	0
+79718	TBL1XR1	"oncogene, TSG, fusion"		0	0
+6926	TBX3	"oncogene, TSG"		0	0
+6917	TCEA1	fusion		0	0
+6938	TCF12	fusion		0	0
+6929	TCF3	"oncogene, TSG, fusion"		0	0
+6934	TCF7L2	"oncogene, fusion"		1	0
+8115	TCL1A	"oncogene, fusion"		1	0
+7006	TEC	"oncogene, fusion"		1	0
+7015	TERT	"oncogene, TSG"		0	0
+80312	TET1	"oncogene, TSG, fusion"		0	0
+54790	TET2	TSG	TSG	0	1
+7030	TFE3	"oncogene, fusion"		1	0
+7942	TFEB	"oncogene, fusion"		1	0
+10342	TFG	fusion		0	0
+29844	TFPT	fusion		0	0
+7037	TFRC	fusion		0	0
+7048	TGFBR2	TSG		0	1
+9967	THRAP3	fusion		0	0
+3195	TLX1	"oncogene, fusion"		1	0
+30012	TLX3	"oncogene, fusion"		1	0
+55654	TMEM127	TSG		0	1
+7113	TMPRSS2	fusion		0	0
+3371	TNC	oncogene		1	0
+7128	TNFAIP3	TSG	TSG	0	1
+8764	TNFRSF14	TSG		0	1
+608	TNFRSF17	"oncogene, fusion"		1	0
+7150	TOP1	fusion		0	0
+7157	TP53	"oncogene, TSG, fusion"	TSG	0	0
+8626	TP63	"oncogene, TSG"		0	0
+7170	TPM3	"TSG, fusion"		0	1
+7171	TPM4	fusion		0	0
+7175	TPR	fusion		0	0
+84231	TRAF7	TSG	TSG	0	1
+8805	TRIM24	"oncogene, TSG, fusion"		0	0
+5987	TRIM27	"oncogene, fusion"		1	0
+51592	TRIM33	"TSG, fusion"		0	1
+9321	TRIP11	fusion		0	0
+8295	TRRAP	oncogene		1	0
+7248	TSC1	TSG	TSG	0	1
+7249	TSC2	TSG		0	1
+7253	TSHR	oncogene	Oncogene	1	0
+7307	U2AF1	oncogene	Oncogene	1	0
+51366	UBR5	TSG		0	1
+84101	USP44	TSG		0	1
+9098	USP6	"oncogene, fusion"		1	0
+9101	USP8	oncogene		1	0
+7409	VAV1	fusion		0	0
+7428	VHL	TSG	TSG	0	1
+143187	VTI1A	fusion		0	0
+7454	WAS	oncogene		1	0
+80304	WDCP	fusion		0	0
+11197	WIF1	"TSG, fusion"		0	1
+65268	WNK2	TSG		0	1
+7486	WRN	TSG		0	1
+7490	WT1	"oncogene, TSG, fusion"	TSG	0	0
+25937	WWTR1	"oncogene, fusion"		1	0
+7507	XPA	TSG		0	1
+7508	XPC	TSG		0	1
+7514	XPO1	oncogene		1	0
+7531	YWHAE	"TSG, fusion"		0	1
+7704	ZBTB16	"TSG, fusion"		0	1
+55596	ZCCHC8	fusion		0	0
+6935	ZEB1	oncogene		1	0
+463	ZFHX3	TSG		0	1
+7750	ZMYM2	fusion		0	0
+9203	ZMYM3	TSG		0	1
+55422	ZNF331	"TSG, fusion"		0	1
+171017	ZNF384	fusion		0	0
+353088	ZNF429			0	0
+90827	ZNF479			0	0
+25925	ZNF521	"oncogene, fusion"		1	0
+84133	ZNRF3	TSG		0	1
+8233	ZRSR2	TSG		0	1
