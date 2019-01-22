@@ -1,0 +1,98 @@
+
+date = 20180830
+date = 20180907
+date = 20181112
+
+rule all:
+    input:
+        expand('bed/cancer_genes.{date}.exons.slop10bp.bed', date=date),
+        expand('bed/cancer_genes.{date}.exons.slop2bp.bed', date=date),
+        expand('bed/cancer_genes.{date}.exons.bed', date=date),
+        expand('bed/cancer_genes.{date}.genes.slop2kbp.bed', date=date),
+        expand('bed/cancer_genes.{date}.genes.bed', date=date),
+        expand('bed/tiers/tier1.{date}.bed', date=date),
+        expand('bed/tiers/tier2.{date}.bed', date=date),
+        expand('bed/tiers/tier3.{date}.bed', date=date),
+        expand('bed/tiers/tier4.{date}.bed', date=date),
+        expand('bed/tiers/tier5.{date}.bed', date=date),
+        expand('bed/LCR/{tier}.{date}.LCR.bed', date=date, tier=['tier1', 'tier2', 'tier3', 'tier4', 'tier5']),
+
+rule cancer_exon_bed:
+    input:
+        gene_list = 'cancer_genes.{date}.genes'
+    output:
+        temp_bed = temp('temp/bed/cancer_genes.{date}.exons.bed'),
+        exon_bed = 'bed/cancer_genes.{date}.exons.bed',
+        exon_slop10_bed = 'bed/cancer_genes.{date}.exons.slop10bp.bed',
+        exon_slop2_bed = 'bed/cancer_genes.{date}.exons.slop2bp.bed'
+    params:
+        addendum = '/sandbox/alhsu/wgs/validation/region/cancer_genes.addendum.MSI.bed',
+        addendum1 = '/sandbox/alhsu/wgs/validation/region/cancer_genes.addendum.ACMG59exons.bed',
+        addendum2 = '/sandbox/alhsu/wgs/validation/region/cancer_genes.addendum.EMAST.bed',
+        genome_fai = '/sandbox/alhsu/wgs/validation/region/GRCh37.fa.fai',
+        genome_size = '/sandbox/alhsu/wgs/validation/region/GRCh37.sizes'
+    shell:
+        "/sandbox/alhsu/wgs/validation/region/refgene2bed.py exon {input.gene_list} > {output.temp_bed} && "
+        "cat {output.temp_bed} {params.addendum} {params.addendum1} {params.addendum2} | bedtools sort -i - -faidx {params.genome_fai} | uniq > {output.exon_bed} && "
+        "bedtools slop -b 10 -i {output.exon_bed} -g {params.genome_size} > {output.exon_slop10_bed} && "
+        "bedtools slop -b 2 -i {output.exon_bed} -g {params.genome_size} > {output.exon_slop2_bed}"
+
+rule cancer_gene_beds:
+    input:
+        gene_list = 'cancer_genes.{date}.genes'
+    output:
+        temp_bed = temp('temp/bed/cancer_genes.{date}.genes.bed'),
+        gene_bed = 'bed/cancer_genes.{date}.genes.bed',
+        gene_slop_bed = 'bed/cancer_genes.{date}.genes.slop2kbp.bed'
+    params:
+        addendum = '/sandbox/alhsu/wgs/validation/region/cancer_genes.addendum.MSI.bed',
+        addendum1 = '/sandbox/alhsu/wgs/validation/region/cancer_genes.addendum.ACMG59genes.bed',
+        addendum2 = '/sandbox/alhsu/wgs/validation/region/cancer_genes.addendum.EMAST.bed',
+        genome_fai = '/sandbox/alhsu/wgs/validation/region/GRCh37.fa.fai',
+        genome_size = '/sandbox/alhsu/wgs/validation/region/GRCh37.sizes'
+    shell:
+        "/sandbox/alhsu/wgs/validation/region/refgene2bed.py gene {input.gene_list} > {output.temp_bed} && "
+        "cat {output.temp_bed} {params.addendum} {params.addendum1} {params.addendum2} | bedtools sort -i - -faidx {params.genome_fai} | uniq > {output.gene_bed} && "
+        "bedtools slop -b 2000 -i {output.gene_bed} -g {params.genome_size} > {output.gene_slop_bed}"
+
+rule tiered_region_beds:
+    input:
+        exon_bed = 'bed/cancer_genes.{date}.exons.slop10bp.bed',
+        gene_bed = 'bed/cancer_genes.{date}.genes.slop2kbp.bed',
+    output:
+        tier1_bed = 'bed/tiers/tier1.{date}.bed',
+        tier2_bed = 'bed/tiers/tier2.{date}.bed',
+        tier3_bed = 'bed/tiers/tier3.{date}.bed',
+        tier4_bed = 'bed/tiers/tier4.{date}.bed',
+        tier5_bed = 'bed/tiers/tier5.{date}.bed',
+    params:
+        genome_bed = '/sandbox/alhsu/wgs/validation/region/GRCh37.bed',
+        genome_fai = '/sandbox/alhsu/wgs/validation/region/GRCh37.fa.fai',
+        refgene_exon_bed = '/sandbox/alhsu/wgs/validation/region/refgene.exons.slop10bp.bed',
+        refgene_gene_bed = '/sandbox/alhsu/wgs/validation/region/refgene.genes.slop2kb.bed',
+    shell:
+        "cp {input.exon_bed} {output.tier1_bed} && "
+        "bedtools subtract -a {input.gene_bed} -b {input.exon_bed} | "
+        "  bedtools sort -i - -faidx {params.genome_fai} > {output.tier2_bed} && "
+        "bedtools subtract -a {params.refgene_exon_bed} -b {input.gene_bed} | "
+        "  bedtools sort -i - -faidx {params.genome_fai} > {output.tier3_bed} && "
+        "bedtools subtract -a {params.refgene_gene_bed} -b {params.refgene_exon_bed} | "
+        "  bedtools subtract -a - -b {input.gene_bed} | "
+        "  bedtools sort -i - -faidx {params.genome_fai} > {output.tier4_bed} && "
+        "bedtools subtract -a {params.genome_bed} -b {params.refgene_gene_bed} | "
+        "  bedtools subtract -a - -b {input.gene_bed} | "
+        "  bedtools sort -i - -faidx {params.genome_fai} > {output.tier5_bed}"
+
+rule LCR_tiered_region:
+    input:
+        tier_bed = 'bed/tiers/{tier}.{date}.bed',
+    output:
+        lcr_tier = 'bed/LCR/{tier}.{date}.LCR.bed',
+    params:
+        lcr_bed = '/sandbox/alhsu/wgs/validation/region/LCR.bed',
+        genome_fai = '/sandbox/alhsu/wgs/validation/region/GRCh37.fa.fai',
+    shell:
+        "bedtools intersect -a {input.tier_bed} -b {params.lcr_bed} | "
+        "  bedtools sort -i - -faidx {params.genome_fai} > {output.lcr_tier}"
+        
+
