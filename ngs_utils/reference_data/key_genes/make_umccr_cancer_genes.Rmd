@@ -205,8 +205,18 @@ umccr %>% nrow()
 genes_sum %>% filter(keep) %>% nrow()
 ```
 
+Comparing COSMIC germline and PCGR predispose: PCGR includes _all_ COSMIC germline genes
+```{r germline}
+genes_tsg %>%
+  group_by(symbol) %>%
+  summarise(
+    cos_germ = any(cos_germ, na.rm = T),
+    predispose = any(str_detect(sources, "predispose"))
+  ) %>% count(cos_germ, predispose)
+```
+
 ```{r write_results}
-genes_sum %>% filter(keep) %>% select(-keep) %>% write_tsv("/Users/vsaveliev/git/NGS_Utils/ngs_utils/reference_data/key_genes/umccr_cancer_genes.20190121.tsv")
+genes_sum %>% filter(keep) %>% select(-keep) %>% write_tsv("/Users/vsaveliev/git/NGS_Utils/ngs_utils/reference_data/key_genes/umccr_cancer_genes.20190122.tsv")
 ```
 
 ```{r}

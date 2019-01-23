@@ -67,15 +67,15 @@ rule extract_transcripts:
             else:
                 continue
 
-        print(len(trx_fs))
-        print(len(cds_fs))
+        print(wildcards.genome, 'transcript regions:', len(trx_fs))
+        print(wildcards.genome, 'CDS regions:', len(cds_fs))
         BedTool(trx_fs).saveas(output.trx)
         BedTool(cds_fs).saveas(output.cds)
 
 
 rule merge_transcripts_bed:
     input:
-        temp('work/unmerged/' + output),
+        'work/unmerged/' + output,
     output:
         output
     run:
