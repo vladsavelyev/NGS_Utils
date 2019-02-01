@@ -438,9 +438,9 @@ class BcbioProject:
             self.load_from_bcbio_dir(input_dir, project_name, proc_name,
                                      exclude_samples=exclude_samples, include_samples=include_samples)
 
-    def set_project_level_dirs(self, bcbio_cnf, project_name=None, final_dir=None, date_dir=None,
+    def set_project_level_dirs(self, bcbio_cnf, config_dir, project_name=None, final_dir=None, date_dir=None,
                                create_dirs=False, proc_name='postproc'):
-        self.final_dir = self.set_final_dir(bcbio_cnf, final_dir)
+        self.final_dir = self.set_final_dir(bcbio_cnf, config_dir, final_dir)
         if create_dirs: safe_mkdir(self.final_dir)
 
         self.project_name = self._set_project_name(self.final_dir, project_name)
@@ -469,7 +469,7 @@ class BcbioProject:
         """
         self.config_dir, self.final_dir, self.date_dir = detect_bcbio_dir(input_dir, silent=self.silent)
         bcbio_cnf, self.bcbio_yaml_fpath = load_bcbio_cnf(self.config_dir, silent=self.silent)
-        self.set_project_level_dirs(bcbio_cnf, project_name=project_name, final_dir=self.final_dir,
+        self.set_project_level_dirs(bcbio_cnf, self.config_dir, project_name=project_name, final_dir=self.final_dir,
                                     date_dir=self.date_dir, proc_name=proc_name)
         self.set_samples(bcbio_cnf, exclude_samples=exclude_samples, include_samples=include_samples)
         self._load_bcbio_summary()
