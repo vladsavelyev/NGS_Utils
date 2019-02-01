@@ -14,9 +14,7 @@ from ngs_utils.key_genes_utils import get_target_genes, is_small_target
 import ngs_utils.variant_filtering as vf
 
 
-CALLER_PRIORITY = ['vardict', 'freebayes', 'mutect', 'gatk-haplotype']
-MAIN_CALLER = 'vardict'
-MAIN_GERMLINE_CALLER = None
+CALLER_PRIORITY = ['ensemble', 'strelka2', 'vardict', 'gatk-haplotype']
 
 
 class BcbioSample(BaseSample):
@@ -151,13 +149,14 @@ class BcbioSample(BaseSample):
 
         if s._set_name_and_paths(
             name=description,
-            variantcallers=sample_info['algorithm'].get('variantcaller'),
+            variantcallers_data=sample_info['algorithm'].get('variantcaller'),
+            ensemble='ensemble' in sample_info['algorithm'],
             silent=silent):
             return s
         else:
             return None
 
-    def _set_name_and_paths(self, name, variantcallers, silent=False):
+    def _set_name_and_paths(self, name, variantcallers_data, ensemble=False, silent=False):
         self.raw_name = name
         self.name = self.raw_name.replace('.', '_')
         self.dirpath = verify_dir(join(self.bcbio_project.final_dir, self.name))
@@ -203,32 +202,36 @@ class BcbioSample(BaseSample):
             else:
                 if not silent: warn('Counts for ' + self.name + ' not found')
         else:
-            self._set_variant_files(variantcallers)
+            self._set_variant_files(variantcallers_data, ensemble=ensemble)
         return True
 
-    def _set_variant_files(self, variantcallers):
-        if isinstance(variantcallers, dict):
-            if 'germline' in variantcallers and self.phenotype == 'normal':
-                self.variantcallers = variantcallers.get('germline')
+    def _set_variant_files(self, variantcallers_data, ensemble=False):
+        if isinstance(variantcallers_data, dict):
+            if 'germline' in variantcallers_data and self.phenotype == 'normal':
+                self.variantcallers = variantcallers_data.get('germline')
             else:
-                self.variantcallers = variantcallers.get('somatic')
+                self.variantcallers = variantcallers_data.get('somatic')
 
-        if isinstance(variantcallers, str):
-            self.variantcallers = [variantcallers]
-        elif isinstance(variantcallers, list):
-            self.variantcallers = variantcallers
+        if isinstance(variantcallers_data, str):
+            self.variantcallers = [variantcallers_data]
+        elif isinstance(variantcallers_data, list):
+            self.variantcallers = variantcallers_data
+
+        if ensemble and len(self.variantcallers) > 1:
+            self.variantcallers = ['ensemble'] + self.variantcallers
 
         if self.phenotype != 'germline' and self.phenotype != 'normal':
-            global MAIN_CALLER
-            MAIN_CALLER = next((c for c in CALLER_PRIORITY if c in self.variantcallers), None)
+            self.bcbio_project.somatic_caller = next((c for c in CALLER_PRIORITY if c in self.variantcallers),
+                                                     self.variantcallers[0])
         else:
-            global MAIN_GERMLINE_CALLER
-            MAIN_GERMLINE_CALLER = next((c for c in CALLER_PRIORITY if c in self.variantcallers), None)
+            self.bcbio_project.germline_caller = next((c for c in CALLER_PRIORITY if c in self.variantcallers),
+                                                      self.variantcallers[0])
 
-    def find_mutation_files(self, passed=True, caller=MAIN_CALLER):
+    def find_mutation_files(self, passed=True, caller=None):
         return _find_mutation_files(join(self.dirpath, BcbioProject.varfilter_dir), passed, caller=caller)
 
-    def find_raw_vcf(self, silent=False, caller=MAIN_CALLER):
+    def find_raw_vcf(self, silent=False, caller=None):
+        caller = caller or self.bcbio_project.somatic_caller
         vcf_fpath = None
         if self.batch and self.phenotype != 'normal':
             vcf_fpath = self.bcbio_project.find_vcf_file(self.batch.name, silent=silent, caller=caller)
@@ -241,16 +244,19 @@ class BcbioSample(BaseSample):
                 self, silent=silent or self.phenotype == 'normal', caller=caller)
         return vcf_fpath
 
-    def find_annotated_vcf(self, caller=MAIN_CALLER):
+    def find_annotated_vcf(self, caller=None):
+        caller = caller or self.bcbio_project.somatic_caller
         return verify_file(join(self.dirpath, BcbioProject.varannotate_dir,
                                 self.name + '-' + caller + BcbioProject.anno_vcf_ending + '.gz'), silent=True)
 
-    def find_filt_vcf(self, passed=False, caller=MAIN_CALLER):
+    def find_filt_vcf(self, passed=False, caller=None):
+        caller = caller or self.bcbio_project.somatic_caller
         path = join(self.dirpath, BcbioProject.varfilter_dir, self.name + '-' + caller +
                     ((BcbioProject.filt_vcf_ending + '.gz') if not passed else (BcbioProject.pass_filt_vcf_ending + '.gz')))
         return verify_file(path, silent=True)
 
-    def find_mutation_file(self, passed=True, caller=MAIN_CALLER):
+    def find_mutation_file(self, passed=True, caller=None):
+        caller = caller or self.bcbio_project.somatic_caller
         mut_fname = caller + '.' + vf.mut_file_ext
         mut_fpath = join(self.dirpath, BcbioProject.varfilter_dir, mut_fname)
         if passed:
@@ -392,7 +398,6 @@ class BcbioProject:
 
     def __init__(self, input_dir=None, project_name=None, proc_name='postproc',
                  exclude_samples=None, include_samples=None, silent=False):
-        self.dir = None
         self.config_dir = None
         self.final_dir = None
         self.date_dir = None
@@ -405,9 +410,14 @@ class BcbioProject:
         self.raw_var_dir = None
         self.expression_dir = None
 
+        self.versions = None
+        self.programs = None
+
         self.samples = []
         self.batch_by_name = dict()
         self.samples_by_caller = defaultdict(list)  # (caller, is_germline) -> [samples]
+        self.somatic_caller = 'ensemble'
+        self.germline_caller = 'ensemble'
 
         self.variant_regions_bed = None
         self.sv_regions_bed = None          # "sv_regions" or "variant_regions"
@@ -430,14 +440,12 @@ class BcbioProject:
 
     def set_project_level_dirs(self, bcbio_cnf, project_name=None, final_dir=None, date_dir=None,
                                create_dirs=False, proc_name='postproc'):
-        assert self.dir
-
-        self.final_dir = self.set_final_dir(bcbio_cnf, self.dir, final_dir)
+        self.final_dir = self.set_final_dir(bcbio_cnf, final_dir)
         if create_dirs: safe_mkdir(self.final_dir)
 
-        self.project_name = self._set_project_name(self.dir, project_name)
+        self.project_name = self._set_project_name(self.final_dir, project_name)
 
-        self.work_dir = abspath(join(self.dir, 'work'))
+        self.work_dir = abspath(join(self.final_dir, pardir, 'work'))
         if create_dirs: safe_mkdir(self.work_dir)
 
         self.date_dir = self._set_date_dir(bcbio_cnf, self.final_dir, date_dir, create_dir=create_dirs,
@@ -450,17 +458,19 @@ class BcbioProject:
         self.raw_var_dir = join(self.var_dir, 'raw')
         self.expression_dir = join(self.date_dir, BcbioProject.expression_dir)
 
+        self.versions = verify_file(join(self.date_dir, 'data_versions.txt'), silent=True)
+        self.programs = verify_file(join(self.date_dir, 'programs.txt'), silent=True)
+
     def load_from_bcbio_dir(self, input_dir, project_name=None, proc_name='postproc',
                             exclude_samples=None, include_samples=None):
         """
         Analyses existing bcbio folder.
         input_dir: root bcbio folder, or any other directory inside it
         """
-        self.dir, detected_final_dir, detected_date_dir = detect_bcbio_dir(input_dir, silent=self.silent)
-        self.config_dir = abspath(join(self.dir, 'config'))
+        self.config_dir, self.final_dir, self.date_dir = detect_bcbio_dir(input_dir, silent=self.silent)
         bcbio_cnf, self.bcbio_yaml_fpath = load_bcbio_cnf(self.config_dir, silent=self.silent)
-        self.set_project_level_dirs(bcbio_cnf, project_name=project_name, final_dir=detected_final_dir,
-                                    date_dir=detected_date_dir, proc_name=proc_name)
+        self.set_project_level_dirs(bcbio_cnf, project_name=project_name, final_dir=self.final_dir,
+                                    date_dir=self.date_dir, proc_name=proc_name)
         self.set_samples(bcbio_cnf, exclude_samples=exclude_samples, include_samples=include_samples)
         self._load_bcbio_summary()
         # self._load_target_info()
@@ -549,32 +559,6 @@ class BcbioProject:
                     sname = re.sub(r'-germline$', '', s.name)
                 s.sample_info['metrics'] = metrics_by_sample[sname]
 
-    # def _load_target_info(self):
-    #     interval = None
-    #     target_info_file = join(self.date_dir, 'multiqc', 'report', 'metrics', 'target_info.yaml')
-    #     if not isfile(target_info_file):
-    #         target_info_file = join(self.date_dir, 'log', 'multiqc_bcbio', 'report', 'metrics', 'target_info.yaml')
-    #     if isfile(target_info_file):
-    #         debug('Parsing ' + target_info_file + ' for coverage_interval')
-    #         with open(target_info_file) as f:
-    #             d = yaml.load(f)
-    #             if 'coverage_interval' in d:
-    #                 interval = d['coverage_interval']
-    #             else:
-    #                 err('Not found coverage_interval in ' + target_info_file)
-    #     return interval
-
-    # def init_new(self, proj_dir, bcbio_cnf, project_name=None):
-    #     """ Creates folders
-    #     """
-    #     self.dir = proj_dir
-    #     self.config_dir = safe_mkdir(abspath(join(self.dir, 'config')))
-    #     with open(join(self.config_dir, 'bcbio.yaml'), 'w') as yaml_file:
-    #         yaml_file.write(save_yaml(bcbio_cnf))
-    #
-    #     self._set_props(bcbio_cnf, project_name=project_name, create_dirs=True)
-    #     self._set_samples(bcbio_cnf)
-
     def config_path(self, val):
         if not val:
             return val
@@ -595,8 +579,7 @@ class BcbioProject:
                 if not create_dir and not verify_dir(date_dir, silent=True):
                     critical('Error: no project directory of format {fc_date}_{fc_name} or {fc_name}_{fc_date}')
             else:
-                # bcbio-CWL
-                date_dir = join(final_dir, 'project')
+                date_dir = join(final_dir, 'project')  # bcbio-CWL
                 if isdir(date_dir):
                     if not silent: info('Using the datestamp dir from bcbio-CWL: ' + date_dir)
                 else:
@@ -616,32 +599,26 @@ class BcbioProject:
         return date_dir
 
     @staticmethod
-    def _set_project_name(dirpath, project_name=None):
-        small_project_path = None
-        if '/ngs/oncology/analysis/' in realpath(dirpath):
-            short_path = realpath(dirpath).split('/ngs/oncology/analysis/')[1]  # bioscience/Bio_0031_Heme_MRL_DLBCL_IRAK4/bcbio_Dev_0079
-            small_project_path = '/'.join(short_path.split('/')[1:])
+    def _set_project_name(final_dir, project_name=None):
         if not project_name:
-            # path is like /ngs/oncology/analysis/bioscience/Bio_0031_Heme_MRL_DLBCL_IRAK4/bcbio_Dev_0079
-            if small_project_path:
-                project_name = '_'.join(small_project_path.split('/'))  # Bio_0031_Heme_MRL_DLBCL_IRAK4_bcbio_Dev_0079
-        second_part = basename(dirpath)  # bcbio_Dev_0079
-        bcbio_project_parent_dirname = basename(dirname(dirpath))  # Bio_0031_Heme_MRL_DLBCL_IRAK4
-        if not project_name:
+            root_dir = dirname(final_dir)
+            # path is like ../Bio_0031_Heme_MRL_DLBCL_IRAK4/bcbio_Dev_0079/final
+            second_part = basename(root_dir)  # bcbio_Dev_0079
+            bcbio_project_parent_dirname = basename(dirname(root_dir))  # Bio_0031_Heme_MRL_DLBCL_IRAK4
             project_name = bcbio_project_parent_dirname + '_' + second_part
         return project_name
 
     @staticmethod
-    def set_final_dir(bcbio_cnf, proj_dir, final_dir=None, create_dir=False):
+    def set_final_dir(bcbio_cnf, config_dir, final_dir=None, create_dir=False):
         if final_dir:
             return final_dir
         elif 'upload' in bcbio_cnf and 'dir' in bcbio_cnf['upload']:
             final_dirname = bcbio_cnf['upload']['dir']
-            final_dir = adjust_path(join(proj_dir, 'config', final_dirname))
+            final_dir = adjust_path(join(config_dir, final_dirname))
             if create_dir: safe_mkdir(final_dir)
             verify_dir(final_dir, 'upload directory specified in the bcbio config', is_critical=True)
         else:
-            final_dir = join(proj_dir, 'final')
+            final_dir = abspath(join(config_dir, pardir, 'final'))
             if create_dir: safe_mkdir(final_dir)
             if not verify_dir(final_dir):
                 critical('If final directory it is not named "final", please, specify it in the bcbio config.')
@@ -675,7 +652,8 @@ class BcbioProject:
 
         return batch_by_name
 
-    def find_vcf_file(self, batch_name, silent=False, caller=MAIN_CALLER):
+    def find_vcf_file(self, batch_name, silent=False, caller=None):
+        caller = caller or self.bcbio_project.somatic_caller
         vcf_fname = batch_name + '-' + caller + '.vcf'
         annot_vcf_fname = batch_name + '-' + caller + '-annotated.vcf'
 
@@ -752,7 +730,8 @@ class BcbioProject:
         return None
 
     @staticmethod
-    def find_vcf_file_from_sample_dir(sample, silent=False, caller=MAIN_CALLER):
+    def find_vcf_file_from_sample_dir(sample, silent=False, caller=None):
+        caller = caller or sample.bcbio_project.somatic_caller
         vcf_fname = sample.get_name_for_files() + '-' + caller + '.vcf'
 
         sample_var_dirpath = join(sample.dirpath, 'var')
@@ -851,7 +830,7 @@ class BcbioProject:
             if verify_file(fpath, silent=True):
                 return fpath
 
-    def find_mutation_files(self, passed=True, caller=MAIN_CALLER, is_germline=False):
+    def find_mutation_files(self, passed=True, caller=None, is_germline=False):
         return _find_mutation_files(self.var_dir, passed=passed, caller=caller, is_germline=is_germline)
 
     def find_in_log(self, fname, is_critical=False, silent=True):
@@ -873,7 +852,8 @@ class BcbioProject:
         return is_small_target(self.coverage_bed)
 
 
-def _find_mutation_files(base_dir, passed=True, caller=MAIN_CALLER, is_germline=False):
+def _find_mutation_files(base_dir, passed=True, caller=None, is_germline=False):
+    assert caller
     mut_fname = caller + '.' + vf.mut_file_ext
     mut_fpath = join(base_dir, mut_fname)
     single_mut_fpath = add_suffix(mut_fpath, vf.mut_single_suffix)
@@ -886,51 +866,61 @@ def _find_mutation_files(base_dir, passed=True, caller=MAIN_CALLER, is_germline=
 
 def detect_bcbio_dir(input_dir, silent=False):
     """
-    :param input_dir: root dir, or any other directory inside it
-    :return: (root_dir, final_dir=None)
+    :param input_dir: `config` dir, or `final` dir, or datestamp dir, or the directory root to `final`
+    :return: (config_dir, final_dir, date_dir)
     """
-    root_dir, final_dir, date_dir = None, None, None
+    config_dir, final_dir, date_dir = None, None, None
+
     input_dir = abspath(input_dir)
 
-    if isdir(join(input_dir, 'config')):
-        root_dir = input_dir
-        final_dir = None
-        date_dir = None
+    # We are inside `*final*`
+    if 'final' in basename(input_dir):  # allow prefixes and postfixes
+        final_dir = input_dir
+        root_dir = dirname(final_dir)
+        config_dir = join(root_dir, 'config')
+        if not isdir(config_dir):
+            err(f'Are you running on a bcbio output?\n'
+                f'The input folder appear to be `final` ({input_dir}), '
+                f'however can\'t find `config` directory at the same level ({config_dir})')
+            raise NoConfigDirException('No config dir')
 
-    elif isdir(abspath(join(input_dir, pardir, 'config'))):
-        root_dir = abspath(join(input_dir, pardir))
-        if 'final' in basename(input_dir):
-            final_dir = input_dir
-            date_dir = None
+    # We are inside `config`
+    elif basename(input_dir) == 'config':
+        config_dir = input_dir
 
+    # We are in a parent dir to `config` (and possibly `final`, called otherwise)
+    elif isdir(join(input_dir, 'config')):
+        config_dir = join(input_dir, 'config')
+
+    # We are inside a date dir
     elif isdir(abspath(join(input_dir, pardir, pardir, 'config'))):
+        final_dir = abspath(join(input_dir, pardir))
         root_dir = abspath(join(input_dir, pardir, pardir))
-        if 'final' in basename(abspath(join(input_dir, pardir))):
-            final_dir = abspath(join(input_dir, pardir))
-            date_dir = input_dir
+        config_dir = abspath(join(root_dir, 'config'))
 
-    elif isdir(abspath(join(input_dir, pardir, pardir, pardir, 'config'))):
-        root_dir = abspath(join(input_dir, pardir, pardir, pardir))
-        if 'final' in basename(abspath(join(input_dir, pardir, pardir))):
-            final_dir = abspath(join(input_dir, pardir, pardir))
-            date_dir = abspath(join(input_dir, pardir))
+        # if 'final' not in basename(final_dir):
+        #     err(f'Are you running on a bcbio output?\n'
+        #         f'Found config directory 2 level up at {config_dir}, assuming your input {input_dir} '
+        #         f'is a datestamp directory. However, the parent directory is not called `*final*`')
+        #     raise NoConfigDirException('No final dir')
 
     else:
         if not silent:
-            err(
-                'Are you running on a bcbio directory?\n'
-                'Can\'t find `config` directory at ' + join(input_dir, 'config') + ' or ' + abspath(join(input_dir, pardir, 'config')) + '. '
-                'Make sure that you changed to a bcbio root or final directory, or provided it as a first argument.')
+            err(f'Are you running on a bcbio output?\n'
+                f'{input_dir} is not `config` or `*final*`, and '
+                f'can\'t find a `config` directory at {join(input_dir, "config")}, or {abspath(join(input_dir, pardir, "config"))}.'
+                f'Make sure that you changed to a bcbio root or final directory, or provided it as a first argument.')
         raise NoConfigDirException('No config dir')
 
     if not silent:
-        if not silent: info('Bcbio project directory: ' + root_dir)
+        if not silent:
+            info(f'Bcbio config directory: ' + config_dir)
         if final_dir:
             if not silent: info('"final" directory: ' + final_dir)
             if date_dir:
                 if not silent: info('"datestamp" directory: ' + date_dir)
 
-    return root_dir, final_dir, date_dir
+    return config_dir, final_dir, date_dir
 
 
 def load_bcbio_cnf(config_dir, silent=False):
