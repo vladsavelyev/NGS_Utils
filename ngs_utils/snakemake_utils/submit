@@ -6,19 +6,20 @@ from snakemake.utils import read_job_properties
 
 
 # Read arguments
+from ngs_utils.file_utils import safe_mkdir
 args = sys.argv[1:]
 timestamp = args[0]
 logs_dir = args[1]
 app_name = args[2] if len(args) >= 4 else 'snakemake'
-job_cmd = sys.argv[-1]
+wrapper_sh = sys.argv[-1].strip()
+assert ' ' not in wrapper_sh, wrapper_sh
 
 # Get submit command from hpc_utils/hpc.py
 loc = get_loc()
 submit_cmd = loc.cluster['submit_cmd']
 
 # Replace submit command wildcards with current job properties
-job_properties = read_job_properties(job_cmd)
-
+job_properties = read_job_properties(wrapper_sh)
 submit_cmd = submit_cmd\
     .replace('{threads}', str(job_properties.get('threads', 1)))\
     .replace('{resources.mem_mb}', str(job_properties.get('resources', {}).get('mem_mb', 2000)))\
@@ -35,12 +36,49 @@ if 'wildcards' in job_properties:
         job_name += '.' + '__'.join(values)
 
 jobid = job_properties['jobid']
-
+full_job_name = f'{timestamp}_{job_name}_{jobid}'
+log_path = os.path.join(logs_dir, f'{full_job_name}.log')
 submit_cmd = submit_cmd\
     .replace('{job_name}', job_name)\
-    .replace('{log_file}', os.path.join(logs_dir, f'{timestamp}_{job_name}_{jobid}.cluster.log'))
+    .replace('{log_file}', log_path)
+
+# extending shell wrapper to print PATH variable
+wrappers_dir = safe_mkdir(os.path.join(logs_dir, 'sh_wrappers'))
+new_wrapper_sh = os.path.join(wrappers_dir, full_job_name + '.sh')
+with open(wrapper_sh) as inp, open(new_wrapper_sh, 'w') as out:
+    for l in inp:
+        out.write(l)
+        if l.startswith('export PATH='):
+            out.write('(>&2 echo "PATH=$PATH")\n')
 
 # Run submittion command
-cmd = f'{submit_cmd} {job_cmd}'
+cmd = f'{submit_cmd} {new_wrapper_sh}'
 sys.stderr.write(cmd + '\n')
 os.system(cmd)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
