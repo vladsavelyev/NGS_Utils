@@ -579,18 +579,19 @@ class BcbioProject:
                 if not create_dir and not verify_dir(date_dir, silent=True):
                     critical('Error: no project directory of format {fc_date}_{fc_name} or {fc_name}_{fc_date}')
             else:
-                date_dir = join(final_dir, 'project')  # bcbio-CWL
-                if isdir(date_dir):
+                if isdir(join(final_dir, 'project')):  # bcbio-CWL?
+                    date_dir = join(final_dir, 'project')
                     if not silent: info('Using the datestamp dir from bcbio-CWL: ' + date_dir)
                 else:
-                    # bcbio since 1.0.6
                     regexs = [fr'^\d\d\d\d-[01][0-9]-[0-3][0-9]_{fc_name}']
                     date_dirs = [join(final_dir, dirpath)
                                  for dirpath in listdir(final_dir)
                                  if any(re.match(regex, dirpath) for regex in regexs)]
                     if len(date_dirs) == 0:
                         raise NoDateStampsException('Error: no datestamp directory!')
-                    elif len(date_dirs) > 1:
+                    elif len(date_dirs) == 1:
+                        date_dir = date_dirs[0]
+                    else:
                         # import pdb;pdb.set_trace()
                         dates = [(tuple(map(int, basename(d).split('_')[0].split('-'))), d) for d in date_dirs]
                         newest_date, newest_dir = sorted(dates, reverse=True)[0]
