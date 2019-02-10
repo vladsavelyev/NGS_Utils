@@ -591,8 +591,15 @@ class BcbioProject:
                     if len(date_dirs) == 0:
                         raise NoDateStampsException('Error: no datestamp directory!')
                     elif len(date_dirs) > 1:
-                        raise MultipleDateStampsException('Error: more than one datestamp directory found!')
-                    date_dir = date_dirs[0]
+                        # import pdb;pdb.set_trace()
+                        dates = [(tuple(map(int, basename(d).split('_')[0].split('-'))), d) for d in date_dirs]
+                        newest_date, newest_dir = sorted(dates, reverse=True)[0]
+                        newest_dirs = [d_dir for d_dir in date_dirs if d_dir == newest_dir]
+                        if len(newest_dirs) > 1:
+                            raise MultipleDateStampsException(f'Error: multiple datestamp directory found, '
+                               f'and can\'t select the most recent one because there are multiple latest dirs: {newest_dirs}')
+                        date_dir = newest_dirs[0]
+
                     if not silent: info('Using the datestamp dir: ' + date_dir)
         if create_dir:
             safe_mkdir(date_dir)
