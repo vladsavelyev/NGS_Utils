@@ -592,7 +592,6 @@ class BcbioProject:
                     elif len(date_dirs) == 1:
                         date_dir = date_dirs[0]
                     else:
-                        # import pdb;pdb.set_trace()
                         dates = [(tuple(map(int, basename(d).split('_')[0].split('-'))), d) for d in date_dirs]
                         newest_date, newest_dir = sorted(dates, reverse=True)[0]
                         newest_dirs = [d_dir for d_dir in date_dirs if d_dir == newest_dir]
@@ -661,7 +660,7 @@ class BcbioProject:
         return batch_by_name
 
     def find_vcf_file(self, batch_name, silent=False, caller=None):
-        caller = caller or self.bcbio_project.somatic_caller
+        caller = caller or self.somatic_caller
         vcf_fname = batch_name + '-' + caller + '.vcf'
         annot_vcf_fname = batch_name + '-' + caller + '-annotated.vcf'
 
