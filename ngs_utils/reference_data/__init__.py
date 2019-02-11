@@ -95,3 +95,57 @@ def get_key_genes_set(fpath=get_key_genes()):
 def get_key_genes_bed(genome, is_critical=False, coding_only=False):
     return _get(f'key_genes/umccr_cancer_genes.{genome}.{"transcript" if not coding_only else "coding"}.bed',
                 is_critical=is_critical)
+
+#############################
+###### Known fusions ########
+
+"""
+Bcbio uses simple-sv-annotation to prioritize SVs based on [this list of known fusions](https://github.com/AstraZeneca-NGS/simple_sv_annotation/blob/master/fusion_pairs.txt)
+
+We extend the list with known fusions from [Hartwig's resources](https://nc.hartwigmedicalfoundation.nl/index.php/s/a8lgLsUrZI5gndd?path=%2FHMF-Pipeline-Resources) and feed the result into a rerun of `simple-sv-annotation`.
+
+To make the list, first download Hartwig's fusions:
+
+```
+wget https://nc.hartwigmedicalfoundation.nl/index.php/s/a8lgLsUrZI5gndd/download?path=%2FHMF-Pipeline-Resources&files=KnownFusions.zip -O hmf.zip
+unzip hmf.zip
+```
+
+Results are:
+
+```
+knownFusionPairs.csv
+knownPromiscuousFive.csv
+knownPromiscuousThree.csv
+```
+
+simple_sv_annotation list is coming from FusionCatcher, so we get it from there to make sure it's most recent (e.g. 11 Feb, 2019 fusioncather has 7866 pairs versus 6527 in simple_sv_annotation):
+
+```
+wget https://raw.githubusercontent.com/ndaniel/fusioncatcher/master/bin/generate_known.py
+grep "        \['" generate_known.py | sed "s#        \['##" | sed "s#','#,#" | sed "s#'\],##" | sed "s#'\]##" > fusioncatcher_pairs.txt
+```
+
+Also we bring cancer genes as we have known fusion genes there:
+
+```
+cp ../key_genes/umccr_cancer_genes.latest.tsv .
+```
+
+We compare lists in `compare.R` and deside that fusionscatcher list is too big and we'll exclude it altogether.
+
+We also compare with NGC or COSMIC Cencus fusion genes in our cancer list, they mostly overlap, so we added remaining 200 into the cancer list.
+"""
+
+def get_known_fusion_pairs():
+    return _get('fusions/knownFusionPairs.csv')
+
+def get_known_fusion_heads():
+    return _get('fusions/knownPromiscuousFive.csv')
+
+def get_known_fusion_tails():
+    return _get('fusions/knownPromiscuousThree.csv')
+
+
+
+
