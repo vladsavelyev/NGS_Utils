@@ -15,7 +15,6 @@ library(readr)
 library(purrr)
 library(crayon)
 library(knitr)
-library(kableExtra)
 
 folder = "/Users/vsaveliev/git/NGS_Utils/ngs_utils/reference_data/key_genes/"
 ```
@@ -27,7 +26,7 @@ folder = "/Users/vsaveliev/git/NGS_Utils/ngs_utils/reference_data/key_genes/"
 #   filter(sources != 'AZ800') %>% 
 #   bind_rows(az300 %>% mutate(sources = "AZ300"))
 
-predispose   <- read_tsv(str_c(folder, "pcgr_predispose_genes.txt"), col_names = c('symbol'))
+predispose   <- read_tsv(str_c(folder, "sources/pcgr_predispose_genes.txt"), col_names = c('symbol'))
 az300        <- read_tsv(str_c(folder, "sources/az_key_genes.300.txt"), col_names = c('symbol'))
 genes <- predispose %>% mutate(sources = "predispose") %>% 
   bind_rows(az300 %>% mutate(sources = "AZ300"))
@@ -83,7 +82,7 @@ cancermine_prep <- cancermine %>%
          cm_driver = role == "Driver") %>% 
   select(symbol, starts_with("cm_")) %>% 
   group_by(symbol) %>% 
-  summarise(sources = "Cancermine",
+  summarise(sources = "cancermine",
             cm_pub = dplyr::n(),
             cm_total_cite = sum(cm_cite),
             cm_og = mean(cm_og),
@@ -95,7 +94,7 @@ cancermine_prep <- cancermine %>%
 genes_cm <- genes_ngc %>% 
   bind_rows(cancermine_prep)
 
-genes_cm %>% filter(sources == "Cancermine")
+genes_cm %>% filter(sources == "cancermine")
 ```
 
 ```{r oncokb}
@@ -145,12 +144,31 @@ genes_tsg <- genes_cos %>% mutate(
 genes_tsg
 ```
 
+```{r hmf_fusions}
+hmf_pairs = read_csv("../fusions/knownFusionPairs.csv", quote = '"')
+hmf_prom_head = read_csv("../fusions/knownPromiscuousFive.csv", quote = '"')
+hmf_prom_tail = read_csv("../fusions/knownPromiscuousThree.csv", quote = '"')
+hmf_fus_genes = union_all(
+    hmf_pairs %>% select(symbol = T_gene),
+    hmf_pairs %>% select(symbol = H_gene),
+    hmf_prom_head %>% select(symbol = gene),
+    hmf_prom_tail %>% select(symbol = gene)
+  ) %>% 
+  distinct() %>% 
+  mutate(
+    sources = 'hmf',
+    hmf_fu = T     
+  )
+
+genes_hmf <- genes_tsg %>% bind_rows(hmf_fus_genes)
+```
+
 ```{r summarise}
 names(genes_tsg)
 
 ?nrow
 
-genes_sum <- genes_tsg %>%
+genes_sum <- genes_hmf %>%
   group_by(symbol) %>%
   summarise(
     n = dplyr::n(),
@@ -171,19 +189,50 @@ genes_sum <- genes_tsg %>%
     tsg_og = any(tsg_og, na.rm = T),
 
     driver = sum(cm_driver, na.rm = T),
-    fusion = any(ngc_fu, na.rm = T) | any(cos_fu, na.rm = T),
+    cos_fu = any(cos_fu, na.rm = T),
+    hmf_fu = any(hmf_fu, na.rm = T),
+    ngc_fu = any(ngc_fu, na.rm = T)
   ) %>%
   mutate(
     tumorsuppressor = ngc_ts | cm_ts > 0 | cos_ts | tsg_ts,
-    oncogene = ngc_og | cm_og > 0 | cos_og | tsg_og
+    oncogene = ngc_og | cm_og > 0 | cos_og | tsg_og,
+    fusion = hmf_fu | cos_fu | ngc_fu
   ) %>% 
-  mutate(keep = ngc | cosm1 | cancermine | germ | n >= 2) %>% 
+  mutate(
+    tier1 = ngc | cosm1 | cancermine | n >= 4,  # well curated cancer genes
+    keep = tier1 | germ | hmf_fu | n >= 2       # + not so confident + predisposition + known fusions
+  ) %>% 
   select(-ends_with("_og"), -ends_with("_ts"), -starts_with("ngc_"), -driver, -ngc, -cosm1, -cancermine)
 
 genes_sum %>% filter(symbol == "TP53")
 ```
 
-```{r compare_to_previous_list}
+```{r compare_to_previous}
+prev = read_tsv("umccr_cancer_genes.2019-01-22.tsv")
+
+(added   <- genes_sum %>% filter(keep, !symbol %in% prev$symbol))
+(removed <- genes_sum %>% filter(symbol %in% prev$symbol, !keep))
+
+genes_sum %>% filter(keep) %>% filter(tier1)
+
+genes_sum %>% filter(keep) %>% filter(cosm1 & cancermine & !ngc)  # 0
+
+genes_sum %>% filter(keep) %>% filter(ngc) %>% arrange(desc(n))
+genes_sum %>% filter(keep & !tumorsuppressor & !oncogene & !fusion & !germ) %>% arrange(desc(n))
+genes_sum %>% filter(cos_fu & !hmf_fu)
+```
+
+```{r write_results}
+library(lubridate)
+res_fp = str_c("umccr_cancer_genes.", lubridate::today(), ".tsv", sep = "")
+genes_sum %>% filter(keep) %>% select(-keep) %>% write_tsv(res_fp)
+```
+
+
+
+
+
+```{r compare_to_arthurs_list}
 added <- genes_sum %>% filter(keep, !symbol %in% umccr$symbol)
 removed <- genes_sum %>% filter(symbol %in% umccr$symbol, !keep)
 
@@ -213,10 +262,6 @@ genes_tsg %>%
     cos_germ = any(cos_germ, na.rm = T),
     predispose = any(str_detect(sources, "predispose"))
   ) %>% count(cos_germ, predispose)
-```
-
-```{r write_results}
-genes_sum %>% filter(keep) %>% select(-keep) %>% write_tsv("/Users/vsaveliev/git/NGS_Utils/ngs_utils/reference_data/key_genes/umccr_cancer_genes.20190122.tsv")
 ```
 
 ```{r}
