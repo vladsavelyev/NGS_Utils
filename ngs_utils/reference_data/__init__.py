@@ -84,6 +84,9 @@ def get_signatures_probabilities(is_critical=False):
 def get_key_genes():
     return _get('key_genes/umccr_cancer_genes.latest.tsv')
 
+def get_key_genes_txt():
+    return _get('key_genes/umccr_cancer_genes.latest.genes')
+
 def get_key_genes_set(fpath=get_key_genes()):
     genes = set()
     with open(fpath) as f:
