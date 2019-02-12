@@ -199,10 +199,10 @@ genes_sum <- genes_hmf %>%
     fusion = hmf_fu | cos_fu | ngc_fu
   ) %>% 
   mutate(
-    tier1 = ngc | cosm1 | cancermine | n >= 4,  # well curated cancer genes
-    keep = tier1 | germ | hmf_fu | n >= 2       # + not so confident + predisposition + known fusions
+    tier1 = ngc | cosm1 | cancermine | driver | n >= 4,  # well curated cancer genes
+    keep = tier1 | germ | n >= 2       # + not so confident + predisposition + known fusions
   ) %>% 
-  select(-ends_with("_og"), -ends_with("_ts"), -starts_with("ngc_"), -driver, -ngc, -cosm1, -cancermine)
+  select(-ends_with("_og"), -ends_with("_ts"), -starts_with("ngc_"))
 
 genes_sum %>% filter(symbol == "TP53")
 ```
