@@ -12,12 +12,12 @@ from hpc_utils.hpc import get_ref_file
 gene_list_file = config.get('gene_list')
 if gene_list_file is None:
     gene_names = get_key_genes_set()
-    input = 'umccr_cancer_genes.latest.tsv'
-    output = 'umccr_cancer_genes.{genome}.{featuretype}.bed'
+    input_tsv = 'umccr_cancer_genes.latest.tsv'
+    output_bed = 'umccr_cancer_genes.{genome}.{featuretype}.bed'
 else:
     gene_names = get_genes_from_file(gene_list_file)
-    input = gene_list_file
-    output = basename(splitext(gene_list_file)[0]) + '.{genome}.{featuretype}.bed'
+    input_tsv = gene_list_file
+    output_bed = basename(splitext(gene_list_file)[0]) + '.{genome}.{featuretype}.bed'
 
 
 GENOMES = ['GRCh37', 'hg38']
@@ -25,15 +25,25 @@ GENOMES = ['GRCh37', 'hg38']
 
 rule all:
     input:
-        expand(output, genome=GENOMES, featuretype=['transcript', 'coding']),
+        expand(output_bed, genome=GENOMES, featuretype=['transcript', 'coding']),
+        input_tsv.replace('.tsv', '.genes'),
+
+
+rule make_gene_list:
+    input:
+        input_tsv,
+    output:
+        input_tsv.replace('.tsv', '.genes'),
+    shell:
+        'cut -f1 {input} | tail -n+2 > {output}'
 
 
 rule extract_transcripts:
     input:
-        genes_file = gene_list_file or 'umccr_cancer_genes.latest.tsv'
+        genes_file = input_tsv,
     output:
-        trx = temp('work/unmerged/' + output.replace('{featuretype}', 'transcript')),
-        cds = temp('work/unmerged/' + output.replace('{featuretype}', 'coding')),
+        trx = temp('work/unmerged/' + output_bed.replace('{featuretype}', 'transcript')),
+        cds = temp('work/unmerged/' + output_bed.replace('{featuretype}', 'coding')),
     run:
         info(f'Getting coordinates for key/target genes for {wildcards.genome}')
 
@@ -69,15 +79,15 @@ rule extract_transcripts:
 
         print(wildcards.genome, 'transcript regions:', len(trx_fs))
         print(wildcards.genome, 'CDS regions:', len(cds_fs))
-        BedTool(trx_fs).saveas(output.trx)
-        BedTool(cds_fs).saveas(output.cds)
+        BedTool(trx_fs).saveas(output_bed.trx)
+        BedTool(cds_fs).saveas(output_bed.cds)
 
 
 rule merge_transcripts_bed:
     input:
-        'work/unmerged/' + output,
+        'work/unmerged/' + output_bed,
     output:
-        output
+        output_bed
     run:
         info('Sorting and merging results')
-        BedTool(input[0]).sort().merge(c=4, o='distinct').saveas(output[0])
+        BedTool(input_tsv[0]).sort().merge(c=4, o='distinct').saveas(output_bed[0])
