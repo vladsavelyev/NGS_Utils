@@ -1,12 +1,8 @@
-from collections import defaultdict
 from os.path import join, splitext, isfile, basename
 from pybedtools import BedTool
 from ngs_utils.logger import info
-from ngs_utils import gtf
 from ngs_utils.reference_data import get_key_genes_set
 from ngs_utils.key_genes_utils import get_genes_from_file
-from umccrise import package_path
-from hpc_utils.hpc import get_ref_file
 
 
 gene_list_file = config.get('gene_list')
@@ -42,52 +38,57 @@ rule extract_transcripts:
     input:
         genes_file = input_tsv,
     output:
-        trx = temp('work/unmerged/' + output_bed.replace('{featuretype}', 'transcript')),
-        cds = temp('work/unmerged/' + output_bed.replace('{featuretype}', 'coding')),
-    run:
-        info(f'Getting coordinates for key/target genes for {wildcards.genome}')
+        # bed = temp('work/unmerged/' + output_bed),
+        bed = output_bed,
+    params:
+        features = lambda wc: 'CDS,stop_codon' if wc.featuretype == 'coding' else 'transcript'
+    shell:
+        'generate_bed.py -g GRCh37 --key-genes --features {params.features} --biotypes "" '
+        ' | sort -k1,1V -k2,2n'
+        ' | bedtools merge -c 4 -o distinct -i -'
+        ' > {output.bed}'
 
-        gtf_fpath = get_ref_file(wildcards.genome, key='gtf')
-        info('Reading the GTF database')
-        db = gtf.get_gtf_db(gtf_fpath)
+        # gtf_fpath = get_ref_file(wildcards.genome, key='gtf')
+        # info('Reading the GTF database')
+        # db = gtf.get_gtf_db(gtf_fpath)
+        #
+        # def _get(_rec, _key):
+        #     val = _rec.attributes.get(_key)
+        #     if val is None:
+        #         return None
+        #     assert len(val) == 1, (_key, str(val))
+        #     return val[0]
+        #
+        # info(f'Extracting transcripts and CDS for {len(gene_names)} genes')
+        # trx_fs = []
+        # cds_fs = []
+        # for rec in db.all_features(order_by=('seqid', 'start', 'end')):
+        #     gname = _get(rec, 'gene_name')
+        #     if gname not in gene_names: continue
+        #     if rec.end - rec.start < 0: continue
+        #     fs = [rec.chrom,
+        #           str(rec.start - 1),
+        #           str(rec.end),
+        #           gname]
+        #
+        #     if rec.featuretype == 'transcript':
+        #         trx_fs.append(fs)
+        #     elif rec.featuretype in ['CDS', 'stop_codon']:
+        #         cds_fs.append(fs)
+        #     else:
+        #         continue
+        #
+        # print(wildcards.genome, 'transcript regions:', len(trx_fs))
+        # print(wildcards.genome, 'CDS regions:', len(cds_fs))
+        # BedTool(trx_fs).saveas(output.trx)
+        # BedTool(cds_fs).saveas(output.cds)
 
-        def _get(_rec, _key):
-            val = _rec.attributes.get(_key)
-            if val is None:
-                return None
-            assert len(val) == 1, (_key, str(val))
-            return val[0]
 
-        info(f'Extracting transcripts and CDS for {len(gene_names)} genes')
-        trx_fs = []
-        cds_fs = []
-        for rec in db.all_features(order_by=('seqid', 'start', 'end')):
-            gname = _get(rec, 'gene_name')
-            if gname not in gene_names: continue
-            if rec.end - rec.start < 0: continue
-            fs = [rec.chrom,
-                  str(rec.start - 1),
-                  str(rec.end),
-                  gname]
-
-            if rec.featuretype == 'transcript':
-                trx_fs.append(fs)
-            elif rec.featuretype in ['CDS', 'stop_codon']:
-                cds_fs.append(fs)
-            else:
-                continue
-
-        print(wildcards.genome, 'transcript regions:', len(trx_fs))
-        print(wildcards.genome, 'CDS regions:', len(cds_fs))
-        BedTool(trx_fs).saveas(output_bed.trx)
-        BedTool(cds_fs).saveas(output_bed.cds)
-
-
-rule merge_transcripts_bed:
-    input:
-        'work/unmerged/' + output_bed,
-    output:
-        output_bed
-    run:
-        info('Sorting and merging results')
-        BedTool(input_tsv[0]).sort().merge(c=4, o='distinct').saveas(output_bed[0])
+# rule merge_transcripts_bed:
+#     input:
+#         bed = 'work/unmerged/' + output_bed,
+#     output:
+#         bed = output_bed
+#     run:
+#         info('Sorting and merging results')
+#         BedTool(input.bed).sort().merge(c=4, o='distinct').saveas(output.bed)
