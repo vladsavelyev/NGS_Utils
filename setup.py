@@ -38,6 +38,7 @@ setup(
              'html_to_base64.py',
              'group_and_merge_by_gene.py',
              'hg19_addchr.py',
+             'generate_bed.py',
          ]]],
     classifiers=[
         'Environment :: Console',
