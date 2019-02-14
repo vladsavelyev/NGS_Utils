@@ -93,7 +93,7 @@ def get_numeric_value(string_value):
 
 
 def get_hostname():
-    return os.environ.get('HOST') or os.environ.get('HOSTNAME') or socket.gethostname()
+    return os.environ.get('HOSTNAME') or os.environ.get('HOST') or socket.gethostname()
 
 hostname = get_hostname()
 
