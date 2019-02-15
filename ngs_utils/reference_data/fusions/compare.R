@@ -7,7 +7,9 @@ library(readr)
 library(purrr)
 
 
-
+# simple_sv_annotation list is coming from FusionCatcher, so we get it from there to make sure it's most recent (e.g. 11 Feb, 2019 fusioncather has 7866 pairs versus 6527 in simple_sv_annotation):
+# wget https://raw.githubusercontent.com/ndaniel/fusioncatcher/master/bin/generate_known.py
+# grep "        \['" generate_known.py | sed "s#        \['##" | sed "s#','#,#" | sed "s#'\],##" | sed "s#'\]##" > fusioncatcher_pairs.txt
 (fus_catcher = read_tsv("fusioncatcher_pairs.txt", col_names=c("pair")) %>% 
     separate(pair, c("H_gene", "T_gene"), sep = ",")
 )
@@ -33,12 +35,29 @@ library(purrr)
 pairs %>% filter(H_gene %in% pairs$T_gene) %>% distinct(H_gene)
 # 1318 such genes, e.g.:
 pairs %>% filter(H_gene == 'ACPP' | T_gene == 'ACPP')
-# and tend to be in the fusion catcher list, which is gigantic compared to HMF. Try to remove from it promiscuous fusions?
+# and tend to be in the fusioncatcher list, which is gigantic compared to HMF. Try to remove from it promiscuous fusions?
 
-fus_catcher %>% 
-  filter(H_gene %in% hmf_prom_head$gene | T_gene %in% hmf_prom_tail$gene)
-# 1082 with "or", 46 with "and"
-# So removing promuscous will still leave us with an enourmous amount of fusions. We better stick to HMF fusions only.
+
+# Do HMF pairs cover fusioncatcher?
+fus_catcher %>% unite(fus, H_gene, T_gene, sep='&') %>% 
+  filter(fus %in% (unite(hmf_pairs, fus, H_gene, T_gene, sep='&')$fus))
+# 353 / 7866
+# Plus 190 if we swap T and H
+# Do fusioncatcher cover HMF pairs?
+hmf_pairs %>% unite(fus, H_gene, T_gene, sep='&') %>% 
+  filter(fus %in% (unite(fus_catcher, fus, H_gene, T_gene, sep='&')$fus))
+# 255 / 401
+
+# Do HMF promiscous cover fusioncatcher?
+fus_catcher %>% filter(H_gene %in% hmf_prom_head$gene | T_gene %in% hmf_prom_tail$gene | T_gene %in% hmf_prom_head$gene | H_gene %in% hmf_prom_tail$gene)
+# 1829 / 7866
+# So promuscous cover only to 14% of fusions, so we better stick to HMF fusions only.
+# Also, do fusioncatcher cover HMF promiscous?
+hmf_prom_head %>% filter(gene %in% fus_catcher$H_gene | gene %in% fus_catcher$T_gene)
+# 29/30
+hmf_prom_tail %>% filter(gene %in% fus_catcher$H_gene | gene %in% fus_catcher$T_gene)
+# 36/36
+
 
 
 # How about cancer genes?
