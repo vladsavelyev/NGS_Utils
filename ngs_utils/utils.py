@@ -200,13 +200,12 @@ def flatten(l):
     example: flatten([[[1, 2, 3], [4, 5]], 6]) -> [1, 2, 3, 4, 5, 6]
     lifted from: http://stackoverflow.com/questions/2158395/
     """
-    return itertools.chain.from_iterable(l)
-    # for el in l:
-    #     if isinstance(el, collections.Iterable) and not isinstance(el, str):
-    #         for sub in flatten(el):
-    #             yield sub
-    #     else:
-    #         yield el
+    for el in l:
+        if isinstance(el, collections.Iterable) and not isinstance(el, str):
+            for sub in flatten(el):
+                yield sub
+        else:
+            yield el
 
 
 def compose(f, g):
