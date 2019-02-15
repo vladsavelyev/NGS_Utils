@@ -126,7 +126,7 @@ simple_sv_annotation list is coming from FusionCatcher, so we get it from there 
 
 ```
 wget https://raw.githubusercontent.com/ndaniel/fusioncatcher/master/bin/generate_known.py
-grep "        \['" generate_known.py | sed "s#        \['##" | sed "s#','#,#" | sed "s#'\],##" | sed "s#'\]##" > fusioncatcher_pairs.txt
+grep "        \['" generate_known.py | sed "s#        \['##" | sed "s#','#,#" | sed "s#'\],##" | sed "s#'\]##" | sort -u > fusioncatcher_pairs.txt
 ```
 
 Also we bring cancer genes as we have known fusion genes there:
@@ -149,6 +149,8 @@ def get_known_fusion_heads():
 def get_known_fusion_tails():
     return _get('fusions/knownPromiscuousThree.csv')
 
+def get_fusioncatcher_pairs():
+    return _get('fusions/fusioncatcher_pairs.txt')
 
 
 
