@@ -45,7 +45,7 @@ genes_ngc <- genes %>%
                      ngc_og = NCG6_oncogene == 1,
                      ngc_ts = NCG6_tsg == 1,
                      ngc_fu = str_detect(cgc_annotation, "fusion")) %>% 
-              select(symbol, sources, starts_with("ngc_")))
+              dplyr::select(symbol, sources, starts_with("ngc_")))
 
 ngc_cancer   <- read_tsv(str_c(folder, "sources/NCG6_cancergenes.tsv"))
 
@@ -65,7 +65,7 @@ ngc_cancer_other <- ngc_cancer %>%
 genes_ngc <- genes_ngc %>% 
   bind_rows(ngc_cancer_other %>% 
               mutate(sources = "NGC_other") %>% 
-              select(symbol, sources, ngc_n))
+              dplyr::select(symbol, sources, ngc_n))
 
 genes_ngc %>% filter(sources == "NGC_known")
 ```
@@ -80,7 +80,7 @@ cancermine_prep <- cancermine %>%
          cm_og = role == "Oncogene",
          cm_ts = role == "Tumor_Suppressor",
          cm_driver = role == "Driver") %>% 
-  select(symbol, starts_with("cm_")) %>% 
+  dplyr::select(symbol, starts_with("cm_")) %>% 
   group_by(symbol) %>% 
   summarise(sources = "cancermine",
             cm_pub = dplyr::n(),
@@ -111,7 +111,7 @@ oncokb_prep <- oncokb %>%
   ) %>% 
   gather(key = "sources", value = "yes", -symbol) %>% 
   filter(yes) %>% 
-  select(-yes)
+  dplyr::select(-yes)
 
 oncokb_prep %>% filter(sources == "oncokb")
 
@@ -149,10 +149,10 @@ hmf_pairs = read_csv("../fusions/knownFusionPairs.csv", quote = '"')
 hmf_prom_head = read_csv("../fusions/knownPromiscuousFive.csv", quote = '"')
 hmf_prom_tail = read_csv("../fusions/knownPromiscuousThree.csv", quote = '"')
 hmf_fus_genes = union_all(
-    hmf_pairs %>% select(symbol = T_gene),
-    hmf_pairs %>% select(symbol = H_gene),
-    hmf_prom_head %>% select(symbol = gene),
-    hmf_prom_tail %>% select(symbol = gene)
+    hmf_pairs %>% dplyr::select(symbol = T_gene),
+    hmf_pairs %>% dplyr::select(symbol = H_gene),
+    hmf_prom_head %>% dplyr::select(symbol = gene),
+    hmf_prom_tail %>% dplyr::select(symbol = gene)
   ) %>% 
   distinct() %>% 
   mutate(
@@ -164,10 +164,6 @@ genes_hmf <- genes_tsg %>% bind_rows(hmf_fus_genes)
 ```
 
 ```{r summarise}
-names(genes_tsg)
-
-?nrow
-
 genes_sum <- genes_hmf %>%
   group_by(symbol) %>%
   summarise(
@@ -200,7 +196,7 @@ genes_sum <- genes_hmf %>%
   ) %>% 
   mutate(
     tier1 = ngc | cosm1 | cancermine | driver | n >= 4,  # well curated cancer genes
-    keep = tier1 | germ | n >= 2       # + not so confident + predisposition + known fusions
+    key = tier1 | germ | n >= 2       # + not so confident + predisposition + known fusions
   ) %>% 
   select(-ends_with("_og"), -ends_with("_ts"), -starts_with("ngc_"))
 
@@ -210,22 +206,28 @@ genes_sum %>% filter(symbol == "TP53")
 ```{r compare_to_previous}
 prev = read_tsv("umccr_cancer_genes.2019-01-22.tsv")
 
-(added   <- genes_sum %>% filter(keep, !symbol %in% prev$symbol))
-(removed <- genes_sum %>% filter(symbol %in% prev$symbol, !keep))
+(added   <- genes_sum %>% filter(key, !symbol %in% prev$symbol))
+(removed <- genes_sum %>% filter(symbol %in% prev$symbol, !key))
 
-genes_sum %>% filter(keep) %>% filter(tier1)
+genes_sum %>% filter(key) %>% filter(tier1)
 
-genes_sum %>% filter(keep) %>% filter(cosm1 & cancermine & !ngc)  # 0
+genes_sum %>% filter(key) %>% filter(cosm1 & cancermine & !ngc)  # 0
 
-genes_sum %>% filter(keep) %>% filter(ngc) %>% arrange(desc(n))
-genes_sum %>% filter(keep & !tumorsuppressor & !oncogene & !fusion & !germ) %>% arrange(desc(n))
+genes_sum %>% filter(key) %>% filter(ngc) %>% arrange(desc(n))
+genes_sum %>% filter(key & !tumorsuppressor & !oncogene & !fusion & !germ) %>% arrange(desc(n))
 genes_sum %>% filter(cos_fu & !hmf_fu)
 ```
 
 ```{r write_results}
 library(lubridate)
-res_fp = str_c("umccr_cancer_genes.", lubridate::today(), ".tsv", sep = "")
-genes_sum %>% filter(keep) %>% select(-keep) %>% write_tsv(res_fp)
+tsv_fp = str_c("umccr_cancer_genes.", lubridate::today(), ".tsv", sep = "")
+genes_sum %>% filter(key) %>% select(-key) %>% write_tsv(tsv_fp)
+
+list_fp = str_c("umccr_cancer_genes.", lubridate::today(), ".genes", sep = "")
+genes_sum %>% filter(key) %>% (function(d) {d$symbol}) %>% write_lines(list_fp)
+
+tsgenes_fp = str_c("umccr_cancer_genes.tsgenes.", lubridate::today(), ".genes", sep = "")
+genes_sum %>% filter(tumorsuppressor) %>% (function(d) {d$symbol}) %>% write_lines(tsgenes_fp)
 ```
 
 
