@@ -11,8 +11,9 @@ library(purrr)
 # wget https://raw.githubusercontent.com/ndaniel/fusioncatcher/master/bin/generate_known.py
 # grep "        \['" generate_known.py | sed "s#        \['##" | sed "s#','#,#" | sed "s#'\],##" | sed "s#'\]##" > fusioncatcher_pairs.txt
 (fus_catcher = read_tsv("fusioncatcher_pairs.txt", col_names=c("pair")) %>% 
-    separate(pair, c("H_gene", "T_gene"), sep = ",")
+    separate(pair, c("H_gene", "T_gene"), sep = ",") %>% distinct()
 )
+# 7632 distinct pairs
 
 (hmf_pairs = read_csv("knownFusionPairs.csv", quote = '"')
 )
@@ -41,8 +42,10 @@ pairs %>% filter(H_gene == 'ACPP' | T_gene == 'ACPP')
 # Do HMF pairs cover fusioncatcher?
 fus_catcher %>% unite(fus, H_gene, T_gene, sep='&') %>% 
   filter(fus %in% (unite(hmf_pairs, fus, H_gene, T_gene, sep='&')$fus))
-# 353 / 7866
-# Plus 190 if we swap T and H
+# 255 / 7632
+fus_catcher %>% unite(fus, H_gene, T_gene, sep='&') %>% 
+  filter(fus %in% (unite(hmf_pairs, fus, T_gene, H_gene, sep='&')$fus))
+# - plus 174 if we swap T and H
 # Do fusioncatcher cover HMF pairs?
 hmf_pairs %>% unite(fus, H_gene, T_gene, sep='&') %>% 
   filter(fus %in% (unite(fus_catcher, fus, H_gene, T_gene, sep='&')$fus))
@@ -50,7 +53,7 @@ hmf_pairs %>% unite(fus, H_gene, T_gene, sep='&') %>%
 
 # Do HMF promiscous cover fusioncatcher?
 fus_catcher %>% filter(H_gene %in% hmf_prom_head$gene | T_gene %in% hmf_prom_tail$gene | T_gene %in% hmf_prom_head$gene | H_gene %in% hmf_prom_tail$gene)
-# 1829 / 7866
+# 1659 / 7632
 # So promuscous cover only to 14% of fusions, so we better stick to HMF fusions only.
 # Also, do fusioncatcher cover HMF promiscous?
 hmf_prom_head %>% filter(gene %in% fus_catcher$H_gene | gene %in% fus_catcher$T_gene)
@@ -60,6 +63,13 @@ hmf_prom_tail %>% filter(gene %in% fus_catcher$H_gene | gene %in% fus_catcher$T_
 
 
 
+# https://github.com/pmelsted/pizzly/issues/19
+fus_catcher %>% filter(str_detect(H_gene, "IGH\\.*"))
+fus_catcher %>% filter(str_detect(H_gene, "DUX4"))
+
+
+
+################
 # How about cancer genes?
 cancer_genes
 # 352
