@@ -41,7 +41,7 @@ def get_sample_ids(vcf_path, return_names=False):
             if m:
                 control_name = m.group('name')
 
-            if tumor_name and return_names:
+            if tumor_name and control_name and return_names:
                 return tumor_name, control_name
 
             if line.startswith('#CHROM'):
@@ -65,8 +65,8 @@ def get_sample_ids(vcf_path, return_names=False):
 
                 if tumor_name is None:
                     tumor_name = samples[tumor_id]
-                    if control_name is None and len(samples) > 1:
-                        control_name = samples[control_id]
+                if control_name is None and len(samples) > 1:
+                    control_name = samples[control_id]
 
                 if return_names:
                     return tumor_name, control_name
