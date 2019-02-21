@@ -27,28 +27,29 @@ f''' * Examples *
 
 @click.command()
 @click.option('-g', 'genome', default='GRCh37')
+@click.option('--gtf', 'gtf_path', help='Path to GTF to extract features. Default is by hpc_utils')
 @click.option('--all-transcripts', 'all_transcripts', is_flag=True, help='Use all transcripts (default is principal+alternative by APPRIS)')
 @click.option('-p', '--principal', 'principal', is_flag=True, help='Use only principal transcripts (by APPRIS)')
 @click.option('-k', '--key-genes', 'only_key_genes', is_flag=True, help='Use UMCCR key cancer genes only')
 @click.option('--genes', 'gene_list', help='Use genes from the list only')
-@click.option('--gtf', 'gtf_path', help='Path to GTF to extract features. Default is by hpc_utils')
 @click.option('--biotypes', 'biotypes', default='protein_coding,decay', help='Feature types to extract')
 @click.option('--features', 'features', default='CDS,stop_codon', help='Feature types to extract')
 
-def main(genome, all_transcripts=False, principal=False, only_key_genes=False, gene_list=None, gtf_path=None,
+def main(genome=None, gtf_path=None, all_transcripts=False, principal=False, only_key_genes=False, gene_list=None,
          biotypes='', features=''):
     out = sys.stdout
 
     # GTF
     if not gtf_path:
         try:
-            from hpc_utils.hpc import get_ref_file
+            from hpc_utils import hpc
         except ImportError:
             critical('GTF file is needed. Either install hpc_utils, or provide GTF with --gtf')
-        if genome == 'GRCh37':
-            gtf_path = os.path.join(get_ref_file(key='pyensembl_data'), 'GRCh37/ensembl75/Homo_sapiens.GRCh37.75.gtf.gz')
         else:
-            gtf_path = os.path.join(get_ref_file(key='pyensembl_data'), 'GRCh38/ensembl95/Homo_sapiens.GRCh38.95.gtf.gz')
+            if genome == 'GRCh37':
+                gtf_path = os.path.join(hpc.get_ref_file(key='pyensembl_data'), 'GRCh37/ensembl75/Homo_sapiens.GRCh37.75.gtf.gz')
+            else:
+                gtf_path = os.path.join(hpc.get_ref_file(key='pyensembl_data'), 'GRCh38/ensembl95/Homo_sapiens.GRCh38.95.gtf.gz')
 
     # Genes
     key_genes = None
