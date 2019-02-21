@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-from hpc_utils.hpc import get_loc
+from hpc_utils import hpc
 from snakemake.utils import read_job_properties
 
 
@@ -15,8 +15,9 @@ wrapper_sh = sys.argv[-1].strip()
 assert ' ' not in wrapper_sh, wrapper_sh
 
 # Get submit command from hpc_utils/hpc.py
-loc = get_loc()
-submit_cmd = loc.cluster['submit_cmd']
+submit_cmd = ''
+if hpc.cluster_cmd:
+    submit_cmd = hpc.cluster_cmd
 
 # Replace submit command wildcards with current job properties
 job_properties = read_job_properties(wrapper_sh)
