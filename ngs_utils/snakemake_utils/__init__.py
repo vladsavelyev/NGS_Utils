@@ -65,7 +65,11 @@ def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
     #### Preparing config ####
     ##########################
 
-    conf_f = tempfile.NamedTemporaryFile(mode='wt', delete=False)
+    if log_dir:
+        safe_mkdir(log_dir)
+        conf_f = open(join(log_dir, '.conf.yaml'), 'w')
+    else:
+        conf_f = tempfile.NamedTemporaryFile(mode='wt', delete=False)
     yaml.dump(conf, conf_f)
     conf_f.close()
 
