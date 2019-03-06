@@ -88,14 +88,10 @@ def main(genome=None, gtf_path=None, all_transcripts=False, principal=False, onl
                 lines_cnt += 1
                 fields = l.strip().split('\t')
                 try:
-                    chrom, biotype, feature, start, end, _, _, _, annotations = fields
+                    chrom, _, feature, start, end, _, _, _, annotations = fields
                 except:
                     warn(f'Cannot read fields {str(fields)}')
                     raise
-
-                if biotypes:
-                    if not any(bt in biotype for bt in biotypes):
-                        continue
 
                 if features:
                     if not any(feature == ft for ft in features):
@@ -104,10 +100,14 @@ def main(genome=None, gtf_path=None, all_transcripts=False, principal=False, onl
                 annotations = {kv.split()[0].strip().strip('"'):
                                    kv.split()[1].strip().strip('"')
                                for kv in annotations.split('; ')}
-
                 gene_name = annotations['gene_name']
                 if only_key_genes and gene_name not in key_genes:
                     continue
+
+                if biotypes:
+                    biotype = annotations['gene_biotype']
+                    if not any(bt == biotype for bt in biotypes):
+                        continue
 
                 if transcripts_by_gid:
                     gene_id = annotations['gene_id']
