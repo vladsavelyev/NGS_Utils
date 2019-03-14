@@ -127,7 +127,8 @@ class BcbioSample(BaseSample):
         s.sv_regions_bed = s.bcbio_project.config_path(val=sample_info['algorithm'].get('sv_regions')) or s.variant_regions_bed
         s.coverage_bed = s.bcbio_project.config_path(val=sample_info['algorithm'].get('coverage')) or s.sv_regions_bed
         if s.coverage_bed and not isfile(s.coverage_bed):
-            debug('coverage bed ' + str(s.coverage_bed) + ' not found. Looking relatively to genomes "basedir"')
+            if not silent:
+                debug('coverage bed ' + str(s.coverage_bed) + ' not found. Looking relatively to genomes "basedir"')
             try:
                 import az
             except ImportError:
@@ -508,7 +509,6 @@ class BcbioProject:
                 critical(f'Error: no samples left with the exclusion of batch/sample name(s): {", ".join(exclude_samples)}.'
                          f'Check the YAML file for available options: {self.bcbio_yaml_fpath}.')
             if include_samples:
-                print(list(include_samples))
                 critical(f'Error: could not find a batch or a sample with the name(s): {", ".join(include_samples)}. '
                          f'Check the YAML file for available options: {self.bcbio_yaml_fpath}')
             critical(f'Error: could not parse any batch or samples in the bcbio project. '

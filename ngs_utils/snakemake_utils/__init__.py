@@ -90,7 +90,7 @@ def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
         f'{f"--directory {output_dir} " if output_dir else ""}'
         f'{f"-j {jobs} " if jobs else ""}'
         f'--rerun-incomplete '
-        f'{"--restart-times " if restart_times else ""}'
+        f'{f"--restart-times {restart_times} " if restart_times else ""}'
         f'{cluster_param} '
         f'--configfile {conf_f.name} ' +
         f'{"--dag " if dag else ""}'
