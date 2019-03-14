@@ -74,12 +74,12 @@ genes_ngc %>% filter(sources == "NGC_known")
 cancermine   <- read_tsv(str_c(folder, "sources/cancermine_collated.tsv"))
 
 cancermine_prep <- cancermine %>% 
-  filter(citation_count >= 3) %>% 
   mutate(symbol = gene_normalized,
          cm_cite = citation_count,
          cm_og = role == "Oncogene",
          cm_ts = role == "Tumor_Suppressor",
          cm_driver = role == "Driver") %>% 
+  filter(citation_count >= 3 | symbol == "SMURF1") %>% 
   dplyr::select(symbol, starts_with("cm_")) %>% 
   group_by(symbol) %>% 
   summarise(sources = "cancermine",
@@ -200,11 +200,11 @@ genes_sum <- genes_hmf %>%
   ) %>% 
   select(-ends_with("_og"), -ends_with("_ts"), -starts_with("ngc_"))
 
-genes_sum %>% filter(symbol == "TP53")
+genes_hmf %>% filter(symbol %>% str_detect("SMU"))
 ```
 
 ```{r compare_to_previous}
-prev = read_tsv("umccr_cancer_genes.2019-01-22.tsv")
+prev = read_tsv("umccr_cancer_genes.2019-02-16.tsv")
 
 (added   <- genes_sum %>% filter(key, !symbol %in% prev$symbol))
 (removed <- genes_sum %>% filter(symbol %in% prev$symbol, !key))
