@@ -93,6 +93,9 @@ def main(genome=None, gtf_path=None, all_transcripts=False, principal=False, onl
                     warn(f'Cannot read fields {str(fields)}')
                     raise
 
+                if genome.startswith('hg') and not chrom.startswith('chr'):
+                    chrom = 'chr' + chrom
+
                 if features:
                     if not any(feature == ft for ft in features):
                         continue
