@@ -12,7 +12,7 @@ build:
 
 requirements:
   build:
-    - python ==3.6
+    - python ==3.7
     - numpy
     {% for dep in data.install_requires -%}
     - {{ dep.lower() }}
