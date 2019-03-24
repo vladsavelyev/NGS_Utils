@@ -182,12 +182,12 @@ class BcbioSample(BaseSample):
                 self.bam = bam
             else:
                 input_file = self.sample_info['files']
-                if isinstance(input_file, list):
+                if not isinstance(input_file, str):
                     input_file = input_file[0]
                 if isinstance(input_file, str) and input_file.endswith('.bam'):
-                    debug('Not found BAM file in final, but bcbio was run from BAMs')
+                    debug('Bcbio was run from BAMs input')
                     if not input_file.startswith('/'):
-                        input_file = abspath(join(self.bcbio_project.work_dir, pardir, input_file))
+                        input_file = abspath(join(self.bcbio_project.work_dir, input_file))
                     if verify_file(input_file):
                         debug('Using BAM file from input YAML ' + input_file)
                         self.bam = input_file
@@ -514,8 +514,9 @@ class BcbioProject:
             critical(f'Error: could not parse any batch or samples in the bcbio project. '
                      f'Please check the bcbio YAML file: {self.bcbio_yaml_fpath}')
 
-        if any(not s.bam for s in self.samples):
-            if not self.silent: warn('Warning: for some samples, BAM files not found in the final dir')
+        not_found_samples = [s.name for s in self.samples if not s.bam]
+        if not_found_samples:
+            if not self.silent: warn(f'Warning: no BAM files not found for {len(not_found_samples)}/{len(self.samples)} samples')
 
         self.samples.sort(key=lambda _s: _s.key_to_sort())
         self.batch_by_name = self.update_batches(self.samples, self.silent)
