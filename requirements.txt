@@ -2,9 +2,9 @@ pip
 setuptools
 click
 versionpy
+pyyaml
 # cython
 # numpy
-# pyyaml
 # pysam
 # pybedtools
 # natsort
