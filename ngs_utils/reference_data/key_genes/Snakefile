@@ -43,7 +43,7 @@ rule extract_transcripts:
     params:
         features = lambda wc: 'CDS,stop_codon' if wc.featuretype == 'coding' else 'transcript'
     shell:
-        'generate_bed.py -g GRCh37 --key-genes --features {params.features} --biotypes "" '
+        'generate_bed.py -g {wildcards.genome} --key-genes --features {params.features} --biotypes "" '
         ' | sort -k1,1V -k2,2n'
         ' | bedtools merge -c 4 -o distinct -i -'
         ' > {output.bed}'
