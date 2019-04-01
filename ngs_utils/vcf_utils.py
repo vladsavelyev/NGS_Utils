@@ -75,5 +75,8 @@ def get_sample_ids(vcf_path, return_names=False):
     raise ValueError
 
 
-
+def add_cyvcf2_hdr(vcf, id, number, type, descr, new_header=None):
+    if new_header:
+        new_header.append(f'##INFO=<ID={id},Number={number},Type={type},Description="{descr}">')
+    vcf.add_info_to_header({'ID': id, 'Type': type, 'Number': number, 'Description': descr})
 
