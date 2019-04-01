@@ -106,41 +106,58 @@ def get_key_genes_bed(genome, is_critical=False, coding_only=False):
 ###### Known fusions ########
 
 """
-Bcbio uses simple-sv-annotation to prioritize SVs based on [this list of known fusions](https://github.com/AstraZeneca-NGS/simple_sv_annotation/blob/master/fusion_pairs.txt)
+Known fusions are curated by [Hartwig Medical Foundation](https://nc.hartwigmedicalfoundation.nl/index.php/s/a8lgLsUrZI5gndd?path=%2FHMF-Pipeline-Resources)
 
-We extend the list with known fusions from [Hartwig's resources](https://nc.hartwigmedicalfoundation.nl/index.php/s/a8lgLsUrZI5gndd?path=%2FHMF-Pipeline-Resources) and feed the result into a rerun of `simple-sv-annotation`.
+[Identification of gene fusions](https://www.biorxiv.org/content/biorxiv/early/2018/09/20/415133.full.pdf):
 
-To make the list, first download Hartwig's fusions:
+    For each structural variant, every combination of annotated overlapping transcripts from each breakend
+    was tested to see if it could potentially form an intronic inframe fusion. A list of 411 curated known fusion
+    pairs was sourced by taking the union of known fusions from the following external databases:
+        - Cosmic curated fusions (v83)
+        - OncoKb (download = 01-mar-2018)
+        - CGI (update: 17-jan-2018)
+        - CIViC (download = 01-mar-2018)
+
+    We then also created a list of promiscuous fusion partners, defined as any gene which appears on the same side in more 
+    than 3 of the curated fusion pairs OR is marked as promiscuous in either OncoKb, CGI or CIVIC.
+    
+    For each promiscuous partner we also curated a list of essential domains that must be preserved to form
+    a viable fusion partner.
+    
+    Finally, we report an intronic inframe fusion if it matches an exact fusion from the curated list 
+    OR is intergenic and matches 5’ promiscuous OR matches 3’ promiscuous gene.
+
+Finally, we report an intronic inframe fusion if the following conditions are met:
+    - Matches an exact fusion from the curated list 
+      OR is intergenic and matches 5’ promiscuous 
+      OR matches 3’ promiscuous gene 
+    - Curated domains are preserved
+    - Does not involve the 3’UTR region of either gene
+    - For intragenic fusions, must start and end in coding regions of the gene.
+
+To download HMF fusions:
 
 ```
 wget https://nc.hartwigmedicalfoundation.nl/index.php/s/a8lgLsUrZI5gndd/download?path=%2FHMF-Pipeline-Resources&files=KnownFusions.zip -O hmf.zip
 unzip hmf.zip
+ls
+$ knownFusionPairs.csv
+$ knownPromiscuousFive.csv
+$ knownPromiscuousThree.csv
 ```
-
-Results are:
-
-```
-knownFusionPairs.csv
-knownPromiscuousFive.csv
-knownPromiscuousThree.csv
-```
-
-simple_sv_annotation list is coming from FusionCatcher, so we get it from there to make sure it's most recent (e.g. 11 Feb, 2019 fusioncather has 7866 pairs versus 6527 in simple_sv_annotation):
+    
+There is also a more broad list of fusions from [FusionCatcher](https://github.com/ndaniel/fusioncatcher):
 
 ```
 wget https://raw.githubusercontent.com/ndaniel/fusioncatcher/master/bin/generate_known.py
 grep "        \['" generate_known.py | sed "s#        \['##" | sed "s#','#,#" | sed "s#'\],##" | sed "s#'\]##" | sort -u > fusioncatcher_pairs.txt
 ```
 
-Also we bring cancer genes as we have known fusion genes there:
+There are also known fusion genes in [NGC](http://ncg.kcl.ac.uk/), one of the sources for UMCCR cancer gene list.
 
-```
-cp ../key_genes/umccr_cancer_genes.latest.tsv .
-```
+We compare the lists with `compare.R`. 
 
-We compare lists in `compare.R` and deside that fusionscatcher list is too big and we'll exclude it altogether.
-
-We also compare with NGC or COSMIC Cencus fusion genes in our cancer list, they mostly overlap, so we added remaining 200 into the cancer list.
+The FusionsCatcher list is too big so we assign a lower tier to a matching fusion when prioritizing.
 """
 
 def get_known_fusion_pairs():

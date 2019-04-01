@@ -40,6 +40,7 @@ for (panel in c("PMCC", "TS500", "TEMPUS", "familial_cancer")) {
 ```
 
 ```{r ncg}
+# http://ncg.kcl.ac.uk/
 ngc_tsgonco  <- read_tsv(str_c(folder, "sources/NCG6_tsgoncogene.tsv"))
 genes_ngc <- genes %>% 
   bind_rows(ngc_tsgonco %>% 
