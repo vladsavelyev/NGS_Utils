@@ -157,6 +157,36 @@ class BcbioSample(BaseSample):
         else:
             return None
 
+    def find_bam(self, silent=False):
+        name = self.get_name_for_files()
+
+        to_try = [
+            '-ready.cram',
+            '-ready.bam',
+            '-sort.bam',
+        ]
+        for ext in to_try:
+            fpath = adjust_path(join(self.dirpath, name + ext))
+            if verify_file(fpath):
+                return fpath
+
+        input_file = self.sample_info['files']
+        if not isinstance(input_file, str):
+            input_file = input_file[0]
+        if isinstance(input_file, str) and input_file.endswith('.bam'):
+            debug('Bcbio was run from BAM input')
+            if not input_file.startswith('/'):
+                input_file = abspath(join(self.bcbio_project.work_dir, input_file))
+            if verify_file(input_file):
+                debug('Using BAM file from input YAML ' + input_file)
+                return input_file
+            else:
+                debug('Input BAM file for sample ' + self.name + ' in YAML ' + input_file + ' does not exist')
+
+        if not silent:
+            warn('No BAM or CRAM file found for ' + self.name)
+
+
     def _set_name_and_paths(self, name, variantcallers_data, ensemble=False, silent=False):
         self.raw_name = name
         self.name = self.raw_name.replace('.', '_')
@@ -173,28 +203,7 @@ class BcbioSample(BaseSample):
                 return False
         self.var_dirpath = join(self.dirpath, BcbioProject.var_dir)
 
-        bam = adjust_path(join(self.dirpath, self.get_name_for_files() + '-ready.bam'))
-        if isfile(bam) and verify_bam(bam):
-            self.bam = bam
-        else:
-            bam = adjust_path(join(self.dirpath, self.get_name_for_files() + '-sort.bam'))
-            if isfile(bam) and verify_bam(bam):
-                self.bam = bam
-            else:
-                input_file = self.sample_info['files']
-                if not isinstance(input_file, str):
-                    input_file = input_file[0]
-                if isinstance(input_file, str) and input_file.endswith('.bam'):
-                    debug('Bcbio was run from BAMs input')
-                    if not input_file.startswith('/'):
-                        input_file = abspath(join(self.bcbio_project.work_dir, input_file))
-                    if verify_file(input_file):
-                        debug('Using BAM file from input YAML ' + input_file)
-                        self.bam = input_file
-                    else:
-                        debug('Input BAM file for sample ' + self.name + ' in YAML ' + input_file + ' does not exist')
-        if not self.bam:
-            if not silent: warn('No BAM file found for ' + self.name)
+        self.bam = self.find_bam(silent=silent)
 
         if self.is_rnaseq:
             gene_counts = adjust_path(join(self.dirpath, self.get_name_for_files() + '-ready.counts'))
@@ -203,7 +212,10 @@ class BcbioSample(BaseSample):
             else:
                 if not silent: warn('Counts for ' + self.name + ' not found')
         else:
-            self._set_variant_files(variantcallers_data, ensemble=ensemble)
+            if variantcallers_data:
+                self._set_variant_files(variantcallers_data, ensemble=ensemble)
+            else:
+                if not silent: warn('No variant callers set in config, skipping finding VCF files')
         return True
 
     def _set_variant_files(self, variantcallers_data, ensemble=False):
