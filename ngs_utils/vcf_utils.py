@@ -1,4 +1,6 @@
 import re
+from logging import critical
+
 from ngs_utils.file_utils import open_gzipsafe
 
 
@@ -75,8 +77,13 @@ def get_sample_ids(vcf_path, return_names=False):
     raise ValueError
 
 
-def add_cyvcf2_hdr(vcf, id, number, type, descr, new_header=None):
+def add_cyvcf2_hdr(vcf, id, number, type, descr, new_header=None, hdr='INFO'):
     if new_header:
-        new_header.append(f'##INFO=<ID={id},Number={number},Type={type},Description="{descr}">')
-    vcf.add_info_to_header({'ID': id, 'Type': type, 'Number': number, 'Description': descr})
+        new_header.append(f'##{hdr}=<ID={id},Number={number},Type={type},Description="{descr}">')
+    if hdr == 'INFO':
+        vcf.add_info_to_header({'ID': id, 'Type': type, 'Number': number, 'Description': descr})
+    elif hdr == 'FORMAT':
+        vcf.add_format_to_header({'ID': id, 'Type': type, 'Number': number, 'Description': descr})
+    else:
+        critical(f'Unknown VCF header: {hdr}. Supported: INFO, FORMAT')
 
