@@ -29,9 +29,11 @@ folder = "/Users/vsaveliev/git/NGS_Utils/ngs_utils/reference_data/key_genes/"
 predispose   <- read_tsv(str_c(folder, "sources/pcgr_predispose_genes.txt"), col_names = c('symbol'))
 az300        <- read_tsv(str_c(folder, "sources/az_key_genes.300.txt"), col_names = c('symbol'))
 cacao        <- read_tsv(str_c(folder, "sources/cacao.txt"), col_names = c('symbol'))
-genes <- predispose %>% mutate(sources = "predispose") %>% 
+umccr        <- read_tsv(str_c(folder, "sources/umccr.txt"), col_names = c('symbol'))
+genes <- predispose %>% mutate(sources = "predispose") %>%
   bind_rows(az300 %>% mutate(sources = "AZ300")) %>%
-  bind_rows(cacao %>% mutate(sources = "cacao"))
+  bind_rows(cacao %>% mutate(sources = "cacao")) %>%
+  bind_rows(umccr %>% mutate(sources = "umccr"))
 
 for (panel in c("PMCC", "TS500", "TEMPUS", "familial_cancer")) {
   df <- read_tsv(str_c(folder, "sources/arthur/", panel, '.genes'), col_names = c("symbol"))
@@ -176,6 +178,7 @@ genes_sum <- genes_hmf %>%
     cosm1 = str_detect(sources, "cosmic1"),
     cancermine = str_detect(sources, "cancermine"),
     cacao = str_detect(sources, "cacao"),
+    umccr = str_detect(sources, "umccr"),
     germ = any(cos_germ, na.rm = T) | str_detect(sources, "predispose"),
     
     ngc_ts = any(ngc_ts, na.rm = T),
@@ -199,7 +202,7 @@ genes_sum <- genes_hmf %>%
     fusion = hmf_fu | cos_fu | ngc_fu
   ) %>% 
   mutate(
-    tier1 = ngc | cosm1 | cancermine | cacao | driver | n >= 4,  # well curated cancer genes
+    tier1 = ngc | cosm1 | cancermine | cacao | umccr | driver | n >= 4,  # well curated cancer genes
     key = tier1 | germ | n >= 2       # + not so confident + predisposition + known fusions
   ) %>% 
   select(-ends_with("_og"), -ends_with("_ts"), -starts_with("ngc_"))
