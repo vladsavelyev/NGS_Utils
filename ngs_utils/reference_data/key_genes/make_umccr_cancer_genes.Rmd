@@ -211,7 +211,7 @@ genes_hmf %>% filter(symbol %>% str_detect("SMU"))
 ```
 
 ```{r compare_to_previous}
-prev = read_tsv("umccr_cancer_genes.2019-02-16.tsv")
+prev = read_tsv("umccr_cancer_genes.2019-03-20.tsv")
 
 (added   <- genes_sum %>% filter(key, !symbol %in% prev$symbol))
 (removed <- genes_sum %>% filter(symbol %in% prev$symbol, !key))
