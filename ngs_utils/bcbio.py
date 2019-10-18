@@ -161,8 +161,8 @@ class BcbioSample(BaseSample):
         name = self.get_name_for_files()
 
         to_try = [
-            '-ready.cram',
             '-ready.bam',
+            '-ready.cram',
             '-sort.bam',
         ]
         for ext in to_try:
