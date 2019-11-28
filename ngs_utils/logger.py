@@ -39,8 +39,9 @@ def init(is_debug_=None, log_fpath_=None, save_previous=False, address_=None):
         set_log_path(log_fpath_, save_previous=save_previous)
     info(hostname)
     with open(os.devnull, 'w') as devnull:
-        username = getpass.getuser()
+        username = "NOUSER"
         try:
+            username = getpass.getuser()
             username = check_output('finger $(whoami) | head -n1', shell=True, stderr=devnull).decode("utf-8")
             username = username.strip()
         except:
