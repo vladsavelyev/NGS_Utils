@@ -177,7 +177,7 @@ def adjust_path(path):
     path = abspath(path)
     if path is None: return None
 
-    return path
+    return path.replace('//', '/')
 
 
 code_base_path = abspath(join(dirname(abspath(__file__)), os.path.pardir))
