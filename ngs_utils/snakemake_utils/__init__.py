@@ -1,3 +1,5 @@
+from random import random
+import string
 import os
 import subprocess
 import sys
@@ -43,7 +45,8 @@ def make_cluster_cmdl(log_dir, app_name=''):
 
 def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
                   unlock=False, dryrun=False, target_rules=None, cluster=None, cluster_cmd=None,
-                  log_dir=None, dag=None, report=None, restart_times=None):
+                  log_dir=None, dag=None, report=None, restart_times=None,
+                  tibanna_cfg=None):
 
     conf['total_cores'] = jobs
 
@@ -79,6 +82,15 @@ def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
     if forcerun:
         forcerun = " ".join(forcerun.split(','))
 
+    tibanna_opts = ''
+    if tibanna_cfg:
+        output_s3 = tibanna_cfg['output_s3']
+        output_bucket_name = output_s3.split('/')[0]
+        if ':' in output_bucket_name:
+            output_bucket_name = output_bucket_name.split(':')[1]
+        step_func_name = setup_tibanna(tibanna_cfg['id'], [output_bucket_name])
+        tibanna_opts = f'--tibanna --default-remote-prefix {output_s3} --tibanna-sfn {step_func_name}'
+        
     cmd = (
         f'snakemake '
         f'{" ".join(flatten([target_rules])) if target_rules else ""} ' +
@@ -93,8 +105,9 @@ def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
         f'{f"--restart-times {restart_times} " if restart_times else ""}'
         f'{cluster_param} '
         f'--configfile {conf_f.name} ' +
-        f'{"--dag " if dag else ""}'
-        f'{f"--forcerun {forcerun}" if forcerun else ""}'
+        f'{"--dag " if dag else ""}' +
+        f'{f"--forcerun {forcerun} " if forcerun else ""}' +
+        f'{tibanna_opts}'
     )
 
     #################
@@ -128,3 +141,41 @@ def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
         logger.info(f'Finished. Output directory: {output_dir}')
 
+
+def setup_tibanna(tibanna_id=None, buckets=None):
+    try:
+        subprocess.check_call(f'tibanna --version', shell=True)
+    except subprocess.CalledProcessError:
+        logger.err('Error: tibanna is not installed. Please run `pip install -S tibanna`')
+        sys.exit(1)
+
+    if not tibanna_id:
+        tibanna_id = ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) 
+                             for _ in range(8))
+        assert not check_tibanna_id_exists(tibanna_id), 'Random tibanna ID already exists: ' + tibanna_id
+
+    step_func_name = f'tibanna_unicorn_{tibanna_id}'
+    if not check_tibanna_id_exists(tibanna_id):
+        buckets_str = '' if not buckets else ('-b ' + ','.join(buckets))
+        run_simple(f'tibanna deploy_unicorn -g {step_func_name} {buckets_str} --no-setenv')
+
+    return step_func_name
+
+
+def check_tibanna_id_exists(tibanna_id):
+    step_func_name = f'tibanna_unicorn_{tibanna_id}'
+    try:
+        subprocess.check_call(f'tibanna list_sfns | grep -w {step_func_name}', shell=True)
+    except subprocess.CalledProcessError:
+        return False
+    else:
+        return True
+    
+    
+    
+    
+    
+    
+    
+    
+    

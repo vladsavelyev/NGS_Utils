@@ -2,8 +2,6 @@ import os
 from collections import OrderedDict
 from genericpath import exists
 from os.path import splitext, basename, join, isfile, isdir, abspath, realpath, islink
-from random import random
-import datetime
 
 import re
 from ngs_utils import logger
