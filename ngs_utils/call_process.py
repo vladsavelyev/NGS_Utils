@@ -102,8 +102,8 @@ def _normalize_cmd_args(cmd):
     """
     if isinstance(cmd, str):
         # check for standard or anonymous named pipes
-        if cmd.find(" | ") > 0 or cmd.find(">(") or cmd.find("<("):
-            return "set -o pipefail; " + cmd, True, find_bash()
+        if cmd.find(" | ") > 0 or cmd.find(">(") > 0 or cmd.find("<(") > 0:
+            return "set -o pipefail; " + cmd, True, None
         else:
             return cmd, True, None
     else:
