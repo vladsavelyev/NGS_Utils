@@ -4,22 +4,22 @@ from __future__ import division
 import collections
 import os
 import subprocess
-from os.path import isfile
+from os.path import isfile, exists
 
 from ngs_utils.file_utils import file_transaction, verify_file
 from ngs_utils.logger import info, err, warn
 
 
-def run_simple(cmd, env_vars=None, silent=False):
+def run_simple(cmd, silent=False):
     """Run the provided command, logging details and checking for errors.
     """
-    env = _get_env(env_vars)
-    cmd, shell_arg, executable_arg = _normalize_cmd_args(cmd)
+    # cmd = _normalize_cmd_args(cmd)
     if not silent:
         warn(' '.join(str(x) for x in cmd) if not isinstance(cmd, str) else cmd)
-    subprocess.check_call(cmd, shell=shell_arg, executable=executable_arg, env=env)
+    subprocess.check_call(cmd, shell=True)
 
 
+# Deprecated
 def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputfile=True,
         stdout_tx=True, reuse=False, env_vars=None):
     """Run the provided command, logging details and checking for errors.
@@ -33,6 +33,7 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
             return output_fpath
 
     env = _get_env(env_vars)
+    info('env: ' + str(env))
 
     if checks is None:
         checks = [file_nonempty_check]
@@ -96,27 +97,39 @@ def _get_env(env_vars):
 
 
 def _normalize_cmd_args(cmd):
-    """Normalize subprocess arguments to handle list commands, string and pipes.
+    """
+    Normalize subprocess arguments to handle list commands, string and pipes.
     Piped commands set pipefail and require use of bash to help with debugging
     intermediate errors.
     """
     if isinstance(cmd, str):
-        # check for standard or anonymous named pipes
-        if cmd.find(" | ") > 0 or cmd.find(">(") > 0 or cmd.find("<(") > 0:
-            return "set -o pipefail; " + cmd, True, None
-        else:
-            return cmd, True, None
-    else:
-        return [str(x) for x in cmd], False, None
+        cmd = cmd.split()
+
+    # check for standard or anonymous named pipes
+    # if cmd.find(" | ") > 0 or cmd.find(">(") > 0 or cmd.find("<(") > 0:
+    #     return "set -o pipefail; " + cmd, True, None
+    # else:
+    # not suing pipefail, because:
+    # - Ubuntu /bin/sh points to dash, which doesn't have pipefail
+    # - We don't want to start a separate bash process because it has issues with inheriting the environment
+    #   (might wanna to fix it by setting a breakpoint and inspect os.envion contents
+
+    # using
+
+    return [str(x) for x in cmd]
 
 
+# Deprecated
 def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None):
     """Perform running and check results, raising errors for issues.
     """
-    cmd, shell_arg, executable_arg = _normalize_cmd_args(cmd)
-    s = subprocess.Popen(cmd, shell=shell_arg, executable=executable_arg,
+    cmd = _normalize_cmd_args(cmd)
+    s = subprocess.Popen(cmd,
+                         executable=find_bash(),
                          stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT, close_fds=True, env=env)
+                         stderr=subprocess.STDOUT,
+                         close_fds=True,
+                         env=env)
     debug_stdout = collections.deque(maxlen=100)
     while 1:
         line = s.stdout.readline()

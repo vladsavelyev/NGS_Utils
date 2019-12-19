@@ -6,7 +6,7 @@ from os.path import join, abspath, pardir, splitext, basename, dirname, realpath
 
 from ngs_utils.Sample import BaseSample
 from ngs_utils.bam_utils import verify_bam
-from ngs_utils.call_process import run
+from ngs_utils.call_process import run, run_simple
 from ngs_utils.config import load_yaml_config
 from ngs_utils.file_utils import adjust_path, verify_dir, file_exists, safe_mkdir, verify_file, add_suffix
 from ngs_utils.logger import critical, debug, info, err, warn
@@ -977,8 +977,8 @@ def ungzip_if_needed(cnf, fpath, silent=False):
         fpath = fpath[:-3]
     if not file_exists(fpath) and file_exists(fpath + '.gz'):
         gz_fpath = fpath + '.gz'
-        cmdline = 'gunzip -c {gz_fpath}'.format(**locals())
-        res = run(cmdline, output_fpath=fpath)
+        cmdline = 'gunzip -c {gz_fpath} > {fpath}'.format(**locals())
+        res = run_simple(cmdline)
         if not silent: info()
         if not res:
             return None
