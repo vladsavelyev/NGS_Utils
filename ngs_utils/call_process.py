@@ -71,7 +71,7 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
 
 
 def find_bash():
-    for test_bash in [find_cmd("bash"), "/bin/bash", "/usr/bin/bash", "/usr/local/bin/bash"]:
+    for test_bash in ["/bin/bash", "/usr/bin/bash", "/usr/local/bin/bash"]:
         if test_bash and os.path.exists(test_bash):
             return test_bash
     raise IOError("Could not find bash in any standard location. Needed for unix pipes")
