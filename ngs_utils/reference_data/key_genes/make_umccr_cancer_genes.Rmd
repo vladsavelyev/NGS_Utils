@@ -36,7 +36,7 @@ genes <- predispose %>% mutate(sources = "predispose") %>%
   bind_rows(umccr %>% mutate(sources = "umccr"))
 
 for (panel in c("PMCC", "TS500", "TEMPUS", "familial_cancer")) {
-  df <- read_tsv(str_c(folder, "sources/arthur/", panel, '.genes'), col_names = c("symbol"))
+  df <- read_tsv(str_c(folder, "sources/", panel, '.genes'), col_names = c("symbol"))
   genes <- genes %>% bind_rows(df %>% mutate(sources = panel))
 }
 ```
