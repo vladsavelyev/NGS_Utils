@@ -167,9 +167,15 @@ hmf_fus_genes = union_all(
 
 genes_hmf <- genes_tsg %>% bind_rows(hmf_fus_genes)
 ```
+Counting each source:
+
+```{r}
+all_genes = genes_hmf
+all_genes %>% count(sources)
+```
 
 ```{r summarise}
-genes_sum <- genes_hmf %>%
+genes_sum <- all_genes %>%
   group_by(symbol) %>%
   summarise(
     n = dplyr::n(),
@@ -210,20 +216,49 @@ genes_sum <- genes_hmf %>%
 genes_hmf %>% filter(symbol %>% str_detect("SMU"))
 ```
 
+Annotating with APPRIS canonical transcripts:
+
+```{r add_appris}
+appris_hg19 = read_tsv("~/git/bed_annotation/bed_annotation/ensembl/hg19/appris_data.principal.txt", col_names = c('appris_symbol', 'ensg', 'enst', 'tr_name', 'annotation'))
+appris_hg38 = read_tsv("~/git/bed_annotation/bed_annotation/ensembl/hg38/appris_data.principal.txt", col_names = c('appris_symbol', 'ensg', 'enst', 'tr_name', 'annotation'))
+
+appris_hg19_sum = appris_hg19 %>% 
+  filter(str_detect(annotation, 'PRINCIPAL')) %>% 
+  group_by(appris_symbol) %>% 
+  summarise(PRINCIPAL_hg19 = str_c(enst, collapse = ','))
+
+appris_hg38_sum = appris_hg38 %>% 
+  filter(str_detect(annotation, 'PRINCIPAL')) %>% 
+  group_by(appris_symbol) %>% 
+  summarise(PRINCIPAL_hg38 = str_c(enst, collapse = ','))
+
+genes_sum_appris = genes_sum %>% 
+  left_join(appris_hg19_sum, by = c('symbol' = 'appris_symbol')) %>% 
+  left_join(appris_hg38_sum, by = c('symbol' = 'appris_symbol'))
+
+# checking genes that miss the canonical transcript:
+genes_sum_appris %>% filter(is.na(PRINCIPAL_hg19), is_key)
+# 33 genes
+genes_sum_appris %>% filter(is.na(PRINCIPAL_hg38), is_key)
+# 31 genes
+genes_sum_appris %>% filter(is.na(PRINCIPAL_hg19) & is.na(enst_hg38), is_key)
+# 14 genes
+```
+
 Comparing to the previous version:
 
 ```{r compare_to_previous}
 prev = read_tsv("archive/umccr_cancer_genes.2019-07-31.tsv")
 
-(added   <- genes_sum %>% filter(is_key, !symbol %in% prev$symbol))
-(removed <- genes_sum %>% filter(symbol %in% prev$symbol, !is_key))
+(added   <- genes_sum_appris %>% filter(is_key, !symbol %in% prev$symbol))
+(removed <- genes_sum_appris %>% filter(symbol %in% prev$symbol, !is_key))
 
 # play around:
-genes_sum %>% filter(is_key) %>% filter(tier1)
-genes_sum %>% filter(is_key) %>% filter(cosm1 & cancermine & !ngc)  # 0
-genes_sum %>% filter(is_key) %>% filter(ngc) %>% arrange(desc(n))
-genes_sum %>% filter(is_key & !tumorsuppressor & !oncogene & !fusion & !germ) %>% arrange(desc(n))
-genes_sum %>% filter(cos_fu & !hmf_fu)
+genes_sum_appris %>% filter(is_key) %>% filter(tier1)
+genes_sum_appris %>% filter(is_key) %>% filter(cosm1 & cancermine & !ngc)  # 0
+genes_sum_appris %>% filter(is_key) %>% filter(ngc) %>% arrange(desc(n))
+genes_sum_appris %>% filter(is_key & !tumorsuppressor & !oncogene & !fusion & !germ) %>% arrange(desc(n))
+genes_sum_appris %>% filter(cos_fu & !hmf_fu)
 ```
 
 Writing results to the latest files and to the archive:
@@ -231,14 +266,14 @@ Writing results to the latest files and to the archive:
 ```{r write_results}
 library(lubridate)
 # tsv with metadata:
-genes_sum %>% filter(is_key) %>% select(-is_key) %>% write_tsv(str_c("archive/umccr_cancer_genes.", lubridate::today(), ".tsv", sep = ""))
-genes_sum %>% filter(is_key) %>% select(-is_key) %>% write_tsv(str_c("umccr_cancer_genes.latest.tsv", sep = ""))
+genes_sum_appris %>% filter(is_key) %>% select(-is_key) %>% write_tsv(str_c("archive/umccr_cancer_genes.", lubridate::today(), ".tsv", sep = ""))
+genes_sum_appris %>% filter(is_key) %>% select(-is_key) %>% write_tsv(str_c("umccr_cancer_genes.latest.tsv", sep = ""))
 # plain list of genes:
-genes_sum %>% filter(is_key) %>% .$symbol %>% write_lines(str_c("archive/umccr_cancer_genes.", lubridate::today(), ".genes", sep = ""))
-genes_sum %>% filter(is_key) %>% .$symbol %>% write_lines(str_c("umccr_cancer_genes.latest.genes", sep = ""))
+genes_sum_appris %>% filter(is_key) %>% .$symbol %>% write_lines(str_c("archive/umccr_cancer_genes.", lubridate::today(), ".genes", sep = ""))
+genes_sum_appris %>% filter(is_key) %>% .$symbol %>% write_lines(str_c("umccr_cancer_genes.latest.genes", sep = ""))
 # plain list of only tumor suppressor genes:
-genes_sum %>% filter(tumorsuppressor) %>% .$symbol %>% write_lines(str_c("archive/umccr_cancer_genes.tsgenes.", lubridate::today(), ".genes", sep = ""))
-genes_sum %>% filter(tumorsuppressor) %>% .$symbol %>% write_lines(str_c("mccr_cancer_genes.tsgenes.latest.genes", sep = ""))
+genes_sum_appris %>% filter(tumorsuppressor) %>% .$symbol %>% write_lines(str_c("archive/umccr_cancer_genes.tsgenes.", lubridate::today(), ".genes", sep = ""))
+genes_sum_appris %>% filter(tumorsuppressor) %>% .$symbol %>% write_lines(str_c("umccr_cancer_genes.tsgenes.latest.genes", sep = ""))
 ```
 
 
