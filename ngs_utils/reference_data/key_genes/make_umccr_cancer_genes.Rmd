@@ -241,7 +241,7 @@ genes_sum_appris %>% filter(is.na(PRINCIPAL_hg19), is_key)
 # 33 genes
 genes_sum_appris %>% filter(is.na(PRINCIPAL_hg38), is_key)
 # 31 genes
-genes_sum_appris %>% filter(is.na(PRINCIPAL_hg19) & is.na(enst_hg38), is_key)
+genes_sum_appris %>% filter(is.na(PRINCIPAL_hg19) & is.na(PRINCIPAL_hg38), is_key)
 # 14 genes
 ```
 
