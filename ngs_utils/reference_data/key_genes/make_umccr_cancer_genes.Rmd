@@ -211,7 +211,7 @@ genes_hmf %>% filter(symbol %>% str_detect("SMU"))
 ```
 
 ```{r compare_to_previous}
-prev = read_tsv("umccr_cancer_genes.2019-03-20.tsv")
+prev = read_tsv("archive/umccr_cancer_genes.2019-03-20.tsv")
 
 (added   <- genes_sum %>% filter(key, !symbol %in% prev$symbol))
 (removed <- genes_sum %>% filter(symbol %in% prev$symbol, !key))
@@ -227,14 +227,15 @@ genes_sum %>% filter(cos_fu & !hmf_fu)
 
 ```{r write_results}
 library(lubridate)
-tsv_fp = str_c("umccr_cancer_genes.", lubridate::today(), ".tsv", sep = "")
-genes_sum %>% filter(key) %>% select(-key) %>% write_tsv(tsv_fp)
-
-list_fp = str_c("umccr_cancer_genes.", lubridate::today(), ".genes", sep = "")
-genes_sum %>% filter(key) %>% .$symbol %>% write_lines(list_fp)
-
-tsgenes_fp = str_c("umccr_cancer_genes.tsgenes.", lubridate::today(), ".genes", sep = "")
-genes_sum %>% filter(tumorsuppressor) %>% .$symbol %>% write_lines(tsgenes_fp)
+# tsv with metadata:
+genes_sum %>% filter(key) %>% select(-key) %>% write_tsv(str_c("archive/umccr_cancer_genes.", lubridate::today(), ".tsv", sep = ""))
+genes_sum %>% filter(key) %>% select(-key) %>% write_tsv(str_c("umccr_cancer_genes.latest.tsv", sep = ""))
+# plain list of genes:
+genes_sum %>% filter(key) %>% .$symbol %>% write_lines(str_c("archive/umccr_cancer_genes.", lubridate::today(), ".genes", sep = ""))
+genes_sum %>% filter(key) %>% .$symbol %>% write_lines(str_c("umccr_cancer_genes.latest.genes", sep = ""))
+# plain list of only tumor suppressor genes:
+genes_sum %>% filter(tumorsuppressor) %>% .$symbol %>% write_lines(str_c("archive/mccr_cancer_genes.tsgenes.", lubridate::today(), ".genes", sep = ""))
+genes_sum %>% filter(tumorsuppressor) %>% .$symbol %>% write_lines(str_c("mccr_cancer_genes.tsgenes.latest.genes", sep = ""))
 ```
 
 
