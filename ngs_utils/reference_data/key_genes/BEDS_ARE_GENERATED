@@ -1,5 +1,0 @@
-The bed files are generated from the txt files with Snakefile. Run to re-genereate:
-
-```
-snakemake
-```
