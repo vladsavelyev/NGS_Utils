@@ -16,7 +16,7 @@ def run_simple(cmd, silent=False):
     # cmd = _normalize_cmd_args(cmd)
     if not silent:
         warn(' '.join(str(x) for x in cmd) if not isinstance(cmd, str) else cmd)
-    subprocess.check_call(cmd, shell=True)
+    subprocess.check_call(cmd, shell=True, executable=find_bash())
 
 
 # Deprecated
