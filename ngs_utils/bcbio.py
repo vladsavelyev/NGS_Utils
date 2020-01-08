@@ -4,7 +4,7 @@ import yaml
 from os import listdir
 from os.path import join, abspath, pardir, splitext, basename, dirname, realpath, isdir, isfile, exists
 
-from ngs_utils.Sample import BaseSample, BcbioBatch
+from ngs_utils.Sample import BaseSample, BaseBatch
 from ngs_utils.bam_utils import verify_bam
 from ngs_utils.call_process import run, run_simple
 from ngs_utils.config import load_yaml_config
@@ -275,6 +275,99 @@ class BcbioSample(BaseSample):
         return self.sample_info.get('algorithm', {}).get('mark_duplicates', False)
 
 
+class BcbioBatch(BaseBatch):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def find_somatic_vcf(self, silent=False, caller=None):
+        caller = caller or self.parent_project.somatic_caller
+
+        # in datestamp. cwl-bcbio writes there
+        vcf_cwl_fpath_gz = adjust_path(join(self.parent_project.date_dir, self.name + '-' + caller + '.vcf.gz'))
+        # in datestamp. bcbio before 1.1.6
+        vcf_old_fpath_gz = adjust_path(join(self.parent_project.date_dir, self.name + '-' + caller + '-annotated.vcf.gz'))
+        # in sample dir. starting from bcbio 1.1.6, ~ Dec 2019
+        vcf_fpath_gz = adjust_path(join(self.tumor.dirpath, self.tumor.name + '-' + caller + '.vcf.gz'))
+
+        if isfile(vcf_fpath_gz):
+            verify_file(vcf_fpath_gz, is_critical=True)
+            if not silent: info(f'Found somatic VCF in <final-dir>/<tumor-name>/<tumor-name>-{caller}.vcf.gz (conventional bcbio): ' + vcf_fpath_gz)
+            self.somatic_vcf = vcf_fpath_gz
+
+        elif isfile(vcf_old_fpath_gz):
+            verify_file(vcf_old_fpath_gz, is_critical=True)
+            if not silent: info(f'Found somatic VCF in <date-dir>/<batch>-{caller}-annotated.vcf.gz (bcbio < v1.1.6)): ' + vcf_old_fpath_gz)
+            self.somatic_vcf = vcf_old_fpath_gz
+
+        elif isfile(vcf_cwl_fpath_gz):
+            verify_file(vcf_cwl_fpath_gz, is_critical=True)
+            if not silent: info(f'Found somatic VCF in project/<batch>-{caller}.vcf.gz (CWL bcbio): ' + vcf_cwl_fpath_gz)
+            self.somatic_vcf = vcf_cwl_fpath_gz
+
+        elif not silent:
+            warn(f'Could not find somatic variants files for batch {self.name}, caller {caller} neither as '
+                 f'{self.parent_project.final_dir}/<tumor-name>/<tumor-name>-{caller}.vcf.gz (conventional bcbio), nor as '
+                 f'{self.parent_project.date_dir}/<batch>-{caller}-annotated.vcf.gz (bcbio < v1.1.6), nor as '
+                 f'project/<batch>-{caller}.vcf.gz (CWL bcbio).')
+
+    def find_germline_vcf(self, silent=False, caller=None):
+        caller = caller or self.parent_project.germline_caller
+
+        # in sample dir. starting from bcbio 1.1.6, ~ Dec 2019
+        vcf_fpath_gz = adjust_path(join(self.parent_project.date_dir, f'{self.normal.name}-germline-{caller}.vcf.gz'))
+        # in datestamp. bcbio before 1.1.6
+        vcf_old_fpath_gz = adjust_path(join(self.parent_project.date_dir, f'{self.normal.name}-germline-{caller}-annotated.vcf.gz'))
+
+        if isfile(vcf_fpath_gz):
+            verify_file(vcf_fpath_gz, is_critical=True)
+            if not silent: info(f'Found germline VCF in <date-dir>/<normal-name>-germline-{caller}.vcf.gz: ' + vcf_fpath_gz)
+            self.germline_vcf = vcf_fpath_gz
+
+        elif isfile(vcf_old_fpath_gz):
+            verify_file(vcf_old_fpath_gz, is_critical=True)
+            if not silent: info(f'Found germline VCF in <date-dir>/<normal-name>-germline-{caller}-annotated.vcf.gz (bcbio < v1.1.6)): ' + vcf_old_fpath_gz)
+            self.germline_vcf = vcf_old_fpath_gz
+
+        elif not silent:
+            warn(f'Could not find germline variants files for batch {self.name}, caller {caller} neither as '
+                 f'<date-dir>/<normal-name>-germline-{caller}.vcf.gz, nor as '
+                 f'<date-dir>/<normal-name>-germline-{caller}-annotated.vcf.gz (bcbio < v1.1.6)')
+
+    def find_sv_vcf(self, silent=False, caller=False):
+        caller = caller or self.parent_project.sv_caller
+
+        sv_prio   = join(self.tumor.dirpath, f'{self.name}-sv-prioritize-{caller}.vcf.gz')
+        sv_unprio = join(self.tumor.dirpath, f'{self.name}-{caller}.vcf.gz')
+        # CWL?
+        sv_cwl_prio   = join(self.parent_project.date_dir, f'{self.tumor.name}-{caller}-prioritized.vcf.gz')
+        sv_cwl_unprio = join(self.parent_project.date_dir, f'{self.tumor.name}-{caller}.vcf.gz')
+
+        if isfile(sv_prio):
+            verify_file(sv_prio, is_critical=True)
+            if not silent: info(f'Found SV VCF in <tumor>/<batch>-sv-prioritize-{caller}.vcf.gz: ' + sv_prio)
+            self.sv_vcf = sv_prio
+
+        if isfile(sv_unprio):
+            verify_file(sv_unprio, is_critical=True)
+            if not silent: info(f'Found SV VCF in <tumor>/<batch>-{caller}.vcf.gz: ' + sv_unprio)
+            self.sv_vcf = sv_unprio
+
+        if isfile(sv_cwl_prio):
+            verify_file(sv_cwl_prio, is_critical=True)
+            if not silent: info(f'Found SV VCF in <date-dir>/<tumor-name>-{caller}-prioritized.vcf.gz: ' + sv_cwl_prio)
+            self.sv_cwl_prio = sv_cwl_prio
+
+        if isfile(sv_cwl_unprio):
+            verify_file(sv_cwl_unprio, is_critical=True)
+            if not silent: info(f'Found SV VCF in <date-dir>/<tumor-name>-{caller}.vcf.gz: ' + sv_cwl_prio)
+            self.sv_vcf = sv_cwl_unprio
+
+        elif not silent:
+            warn(f'Could not find SV VCF file for batch {self.name}, caller {caller} neither under sample folder as '
+                 f'<tumor>/<batch>(-sv-prioritize)-{caller}.vcf.gz (conventional bcbio), '
+                 f'nor in the project folder as project/<tumor>-{caller}(-prioritized).vcf.gz (CWL bcbio).')
+
+
 class NoConfigDirException(Exception):
     pass
 class NoDateStampsException(Exception):
@@ -327,6 +420,7 @@ class BcbioProject:
         self.samples_by_caller = defaultdict(list)  # (caller, is_germline) -> [samples]
         self.somatic_caller = 'ensemble'
         self.germline_caller = 'ensemble'
+        self.sv_caller = 'manta'
 
         self.variant_regions_bed = None
         self.sv_regions_bed = None          # "sv_regions" or "variant_regions"
@@ -542,6 +636,7 @@ class BcbioProject:
 
     def update_batches(self, samples, silent=False):
         batch_by_name = {bn: BcbioBatch(name=bn, parent_project=self) for bn in list(set([b for s in samples for b in s.batch_names]))}
+
         for sample in samples:
             for bn in sample.batch_names:
                 batch_by_name[bn].name = bn
@@ -553,22 +648,28 @@ class BcbioProject:
                 else:
                     batch_by_name[bn].tumor = sample
 
-        for batch in batch_by_name.values():
-            if batch.normal and not batch.tumor:
-                if not silent: info('Batch ' + batch.name + ' contains only normal, treating sample ' + batch.normal.name + ' as tumor')
-                batch.normal.phenotype = 'tumor'
-                batch.normal.batch = batch
-                batch.tumor = batch.normal
-                batch.normal = None
+        # import pdb; pdb.set_trace()
+
+        # for batch in batch_by_name.values():
+        #     if batch.normal and not batch.tumor:
+        #         if not silent: info('Batch ' + batch.name + ' contains only normal, treating sample ' + batch.normal.name + ' as tumor')
+        #         batch.normal.phenotype = 'tumor'
+        #         batch.normal.batch = batch
+        #         batch.tumor = batch.normal
+        #         batch.normal = None
 
         # setting up batch properties
         for b in batch_by_name.values():
-            b.tumor.normal_match = b.normal
+            if b.tumor:
+                b.tumor.normal_match = b.normal
 
         # finding vcfs
         for b in batch_by_name.values():
-            b.find_somatic_vcf(silent=silent)
-            b.find_germline_vcf(silent=silent)
+            if b.tumor:
+                b.find_somatic_vcf(silent=silent)
+                b.find_sv_vcf(silent=silent)
+            if b.normal:
+                b.find_germline_vcf(silent=silent)
 
         return batch_by_name
 
