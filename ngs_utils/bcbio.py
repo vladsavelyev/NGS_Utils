@@ -4,7 +4,7 @@ import yaml
 from os import listdir
 from os.path import join, abspath, pardir, splitext, basename, dirname, realpath, isdir, isfile, exists
 
-from ngs_utils.Sample import BaseSample, BaseBatch
+from ngs_utils.Sample import BaseSample, BaseBatch, BaseProject
 from ngs_utils.bam_utils import verify_bam
 from ngs_utils.call_process import run, run_simple
 from ngs_utils.config import load_yaml_config
@@ -376,7 +376,7 @@ class MultipleDateStampsException(Exception):
     pass
 
 
-class BcbioProject:
+class BcbioProject(BaseProject):
     varfilter_dir = 'varFilter'
     varannotate_dir = 'varAnnotate'
     cnv_dir = 'cnv'
@@ -398,8 +398,9 @@ class BcbioProject:
     multiqc_report_name = 'report.html'
     call_vis_name = 'call_vis.html'
 
-    def __init__(self, input_dir=None, project_name=None, proc_name='postproc',
-                 exclude_samples=None, include_samples=None, silent=False):
+    def __init__(self, input_dir=None, project_name=None, proc_name='postproc', exclude_samples=None,
+                 include_samples=None, silent=False, **kwargs):
+        super().__init__(input_dir, **kwargs)
         self.config_dir = None
         self.final_dir = None
         self.date_dir = None
@@ -415,8 +416,6 @@ class BcbioProject:
         self.versions = None
         self.programs = None
 
-        self.samples = []
-        self.batch_by_name = dict()
         self.samples_by_caller = defaultdict(list)  # (caller, is_germline) -> [samples]
         self.somatic_caller = 'ensemble'
         self.germline_caller = 'ensemble'
@@ -427,8 +426,6 @@ class BcbioProject:
         self.original_coverage_bed = None
         self.coverage_bed = None            # "coverage" or "sv_regions" or "variant_regions"
 
-        self.project_name = None
-        self.genome_build = None
         self.coverage_interval = None  # amplicon, regional, genome
         self.min_allele_fraction = None
         self.is_wgs = None

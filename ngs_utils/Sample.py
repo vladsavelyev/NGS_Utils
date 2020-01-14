@@ -1,15 +1,21 @@
-from os.path import join, isfile
-
 from natsort import natsort_keygen
 
-from ngs_utils.file_utils import adjust_path, verify_file
-from ngs_utils.logger import info, warn
+
+class BaseProject:
+    def __init__(self, input_dir=None, **kwargs):
+        self.input_dir = input_dir
+        self.project_name = None
+        self.samples = []
+        self.somatic_caller = None
+        self.germline_caller = None
+        self.genome_build = None
+        self.batch_by_name = dict()
 
 
 class BaseSample:
     natsort_key = natsort_keygen()
 
-    def __init__(self, name=None, dirpath=None, work_dir=None, bam=None, bed=None, vcf=None, genome=None,
+    def __init__(self, name=None, dirpath=None, work_dir=None, bam=None, bed=None, genome=None,
                  targqc_dirpath=None, clinical_report_dirpath=None,
                  normal_match=None, sv_fpath=None, sv_bed=None,
                  l_fpath=None, r_fpath=None, phenotype=None, parent_project=None, **kwargs):
@@ -21,7 +27,6 @@ class BaseSample:
         self.l_fpath = l_fpath
         self.r_fpath = r_fpath
         self.is_wgs = False
-        self.vcf = vcf
         self.phenotype = phenotype
         self.gender = None
         self.genome = genome
@@ -87,13 +92,13 @@ class BaseBatch:
     def __str__(self):
         return self.name
 
-    def find_somatic_vcf(self):
+    def find_somatic_vcf(self, silent=False):
         pass
 
-    def find_germline_vcf(self):
+    def find_germline_vcf(self, silent=False):
         pass
 
-    def find_sv_vcf(self):
+    def find_sv_vcf(self, silent=False):
         pass
 
 
