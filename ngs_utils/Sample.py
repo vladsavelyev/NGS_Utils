@@ -3,13 +3,15 @@ from natsort import natsort_keygen
 
 class BaseProject:
     def __init__(self, input_dir=None, **kwargs):
-        self.input_dir = input_dir
+        self.dir = input_dir
         self.project_name = None
         self.samples = []
         self.somatic_caller = None
         self.germline_caller = None
         self.genome_build = None
         self.batch_by_name = dict()
+        self.is_rnaseq = False
+        self.is_wgs = True
 
 
 class BaseSample:
