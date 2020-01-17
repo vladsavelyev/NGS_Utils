@@ -18,7 +18,7 @@ class BaseSample:
     def __init__(self, name=None, dirpath=None, work_dir=None, bam=None, bed=None, genome=None,
                  targqc_dirpath=None, clinical_report_dirpath=None,
                  normal_match=None, sv_fpath=None, sv_bed=None,
-                 l_fpath=None, r_fpath=None, phenotype=None, parent_project=None, **kwargs):
+                 l_fpath=None, r_fpath=None, phenotype=None, batch=None, **kwargs):
         self.name = name
         self.dirpath = dirpath
         self.work_dir = work_dir
@@ -37,7 +37,9 @@ class BaseSample:
         self.targqc_dirpath = targqc_dirpath
         self.clinical_html = None
 
-        self.parent_project = parent_project
+        self.batch = batch
+        self.batch_names = []
+        self.phenotype = None
         self.is_rnaseq = None
         self.is_wgs = None
 
@@ -45,10 +47,6 @@ class BaseSample:
         self.coverage_interval = None
         self.variant_regions_bed = None
         self.coverage_bed = None
-
-        self.batch = None
-        self.batch_names = []
-        self.phenotype = None
 
         for k, v in kwargs.items():
             self.__dict__[k] = v
