@@ -45,7 +45,7 @@ def make_cluster_cmdl(log_dir, app_name=''):
 
 def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
                   unlock=False, dryrun=False, target_rules=None, cluster=None, cluster_cmd=None,
-                  log_dir=None, dag=None, report=None, restart_times=None,
+                  log_dir=None, dag=None, report=None, restart_times=1,
                   tibanna_cfg=None):
 
     conf['total_cores'] = jobs
