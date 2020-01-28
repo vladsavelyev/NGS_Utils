@@ -65,7 +65,7 @@ class DragenProject(BaseProject):
                 continue
             batch = self.add_batch(batch_name)
             batch.add_tumor(batch_name)
-            batch.add_normal(batch_name + '_normal')
+            batch.add_normal(batch_name + ' normal')
             if exclude_samples and batch.normal.name in exclude_samples:
                 continue
             self.samples.extend([batch.tumor, batch.normal])
@@ -114,7 +114,7 @@ class DragenProject(BaseProject):
                   f'{len(batch.normal.qc_files)} normal QC files')
 
         if len(self.batch_by_name) == 1:
-            self.project_name = list(self.batch_by_name.values())[0]
+            self.project_name = list(self.batch_by_name.values())[0].name
         else:
             self.project_name = basename(input_dir)
 
