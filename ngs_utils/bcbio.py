@@ -347,17 +347,17 @@ class BcbioBatch(BaseBatch):
             if not silent: info(f'Found SV VCF in <tumor>/<batch>-sv-prioritize-{caller}.vcf.gz: ' + sv_prio)
             self.sv_vcf = sv_prio
 
-        if isfile(sv_unprio):
+        elif isfile(sv_unprio):
             verify_file(sv_unprio, is_critical=True)
             if not silent: info(f'Found SV VCF in <tumor>/<batch>-{caller}.vcf.gz: ' + sv_unprio)
             self.sv_vcf = sv_unprio
 
-        if isfile(sv_cwl_prio):
+        elif isfile(sv_cwl_prio):
             verify_file(sv_cwl_prio, is_critical=True)
             if not silent: info(f'Found SV VCF in <date-dir>/<tumor-name>-{caller}-prioritized.vcf.gz: ' + sv_cwl_prio)
             self.sv_cwl_prio = sv_cwl_prio
 
-        if isfile(sv_cwl_unprio):
+        elif isfile(sv_cwl_unprio):
             verify_file(sv_cwl_unprio, is_critical=True)
             if not silent: info(f'Found SV VCF in <date-dir>/<tumor-name>-{caller}.vcf.gz: ' + sv_cwl_prio)
             self.sv_vcf = sv_cwl_unprio
