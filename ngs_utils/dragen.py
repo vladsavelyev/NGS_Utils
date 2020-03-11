@@ -34,6 +34,12 @@ class DragenProject(BaseProject):
                 if not silent:
                     info(f'Found somatic VCF in <dragen-dir>/<tumor-name>-hard-filtered.vcf.gz: ' + self.somatic_vcf)
 
+        def find_sv_vcf(self, silent=False):
+            if isfile(self.sv_vcf):
+                verify_file(self.sv_vcf, is_critical=True)
+                if not silent:
+                    info(f'Found SV VCF in <dragen-dir>/<tumor-name>.sv.vcf.gz: ' + self.sv_vcf)
+
         def all_qc_files(self):
             return self.batch_qc_files + self.tumor.qc_files + self.normal.qc_files
 
@@ -64,8 +70,36 @@ class DragenProject(BaseProject):
             if exclude_samples and batch_name in exclude_samples:
                 continue
             batch = self.add_batch(batch_name)
-            batch.add_tumor(batch_name)
-            batch.add_normal(batch_name + ' normal')
+
+            # Reading bam_list.csv to get the sample names. Typical DRAGEN usage includes setting
+            # the parameters --RGID and --RGSM-tumor, e.g.:
+            # --RGID P025_N --RGSM P025_N --RGID-tumor P025_T --RGSM-tumor P025_T
+            # --output-directory /output/P025 --output-file-prefix P025
+            # Those values are used inside the VCF files:
+            # #CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  P025_N  P025_T
+            # And the VCF files themselves, like all other output files, are prefixed with the --output-file-prefix
+            # parameter e.g. P025.hard-filtered.vcf.gz and P025.sv.vcf.gz. The only way to get the RGSM values
+            # is from the bam_list.csv file which is not prefixed with P025 and thus can be accidentally
+            # overriden. Taking this risk and reading that file:
+            # RGID,SampleID,Library,Lane,BamFile
+            # P025_N,0x55d4760,0x55d87b0,0x55d87d0,/output/P025/P025.bam
+            # P025_T,0x55d4768,0x55d87b8,0x55d87d8,/output/P025/P025_tumor.bam
+            bam_list_csv = join(self.dir, 'bam_list.csv')
+            tumor_name = None
+            normal_name = None
+            with open(bam_list_csv) as f:
+                for i, l in enumerate(f):
+                    if i > 0:
+                        sn, _, _, _, bam_path = l.strip().split(',')
+                        if basename(bam_path) == batch_name + '_tumor.bam':
+                            tumor_name = sn
+                        if basename(bam_path) == batch_name + '.bam':
+                            normal_name = sn
+            assert tumor_name, f'Cannot find tumor sample name in {bam_list_csv}'
+            assert normal_name, f'Cannot find normal sample name in {bam_list_csv}'
+
+            batch.add_tumor(tumor_name)
+            batch.add_normal(normal_name)
             if exclude_samples and batch.normal.name in exclude_samples:
                 continue
             self.samples.extend([batch.tumor, batch.normal])
@@ -75,6 +109,7 @@ class DragenProject(BaseProject):
 
             batch.find_somatic_vcf(silent=silent)
             batch.find_germline_vcf(silent=silent)
+            batch.find_sv_vcf(silent=silent)
 
             # populating qc files for multiqc:
             for suffix in [
