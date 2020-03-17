@@ -63,6 +63,7 @@ class DragenProject(BaseProject):
         self.germline_caller = 'dragen'
         self.genome_build = 'hg38'
 
+        self.bam_list_csv = join(self.dir, 'bam_list.csv')
         debug(f'Parsing project {input_dir}')
         for replay_file in glob.glob(join(self.dir, '*-replay.json')):
             batch_name = basename(replay_file.split('-replay.json')[0])
@@ -84,10 +85,9 @@ class DragenProject(BaseProject):
             # RGID,SampleID,Library,Lane,BamFile
             # P025_N,0x55d4760,0x55d87b0,0x55d87d0,/output/P025/P025.bam
             # P025_T,0x55d4768,0x55d87b8,0x55d87d8,/output/P025/P025_tumor.bam
-            bam_list_csv = join(self.dir, 'bam_list.csv')
             tumor_name = None
             normal_name = None
-            with open(bam_list_csv) as f:
+            with open(self.bam_list_csv) as f:
                 for i, l in enumerate(f):
                     if i > 0:
                         sn, _, _, _, bam_path = l.strip().split(',')
@@ -95,8 +95,8 @@ class DragenProject(BaseProject):
                             tumor_name = sn
                         if basename(bam_path) == batch_name + '.bam':
                             normal_name = sn
-            assert tumor_name, f'Cannot find tumor sample name in {bam_list_csv}'
-            assert normal_name, f'Cannot find normal sample name in {bam_list_csv}'
+            assert tumor_name, f'Cannot find tumor sample name in {self.bam_list_csv}'
+            assert normal_name, f'Cannot find normal sample name in {self.bam_list_csv}'
 
             batch.add_tumor(tumor_name)
             batch.add_normal(normal_name)
