@@ -43,15 +43,15 @@ class DragenProject(BaseProject):
         def all_qc_files(self):
             return self.batch_qc_files + self.tumor.qc_files + self.normal.qc_files
 
-        def add_tumor(self, name):
-            sample = DragenProject.DragenSample(name=name, phenotype='tumor', batch=self)
+        def add_tumor(self, name, rgid=None):
+            sample = DragenProject.DragenSample(name=name, phenotype='tumor', batch=self, rgid=rgid)
             sample.bam = join(self.parent_project.dir, self.name + '_tumor.bam')
             self.tumor = sample
             self.parent_project.samples.append(sample)
             return sample
 
-        def add_normal(self, name):
-            sample = DragenProject.DragenSample(name=name, phenotype='normal', batch=self)
+        def add_normal(self, name, rgid=None):
+            sample = DragenProject.DragenSample(name=name, phenotype='normal', batch=self, rgid=rgid)
             sample.bam = join(self.parent_project.dir, self.name + '.bam')
             self.normal = sample
             self.parent_project.samples.append(sample)
@@ -85,21 +85,21 @@ class DragenProject(BaseProject):
             # RGID,SampleID,Library,Lane,BamFile
             # P025_N,0x55d4760,0x55d87b0,0x55d87d0,/output/P025/P025.bam
             # P025_T,0x55d4768,0x55d87b8,0x55d87d8,/output/P025/P025_tumor.bam
-            tumor_name = None
-            normal_name = None
+            tumor_rgid = None
+            normal_rgid = None
             with open(self.bam_list_csv) as f:
                 for i, l in enumerate(f):
                     if i > 0:
                         sn, _, _, _, bam_path = l.strip().split(',')
                         if basename(bam_path) == batch_name + '_tumor.bam':
-                            tumor_name = sn
+                            tumor_rgid = sn
                         if basename(bam_path) == batch_name + '.bam':
-                            normal_name = sn
-            assert tumor_name, f'Cannot find tumor sample name in {self.bam_list_csv}'
-            assert normal_name, f'Cannot find normal sample name in {self.bam_list_csv}'
+                            normal_rgid = sn
+            assert tumor_rgid, f'Cannot find tumor sample rgid in {self.bam_list_csv}'
+            assert normal_rgid, f'Cannot find normal sample rgid in {self.bam_list_csv}'
 
-            batch.add_tumor(tumor_name)
-            batch.add_normal(normal_name)
+            batch.add_tumor(batch_name, rgid=tumor_rgid)
+            batch.add_normal(batch_name + '_normal', rgid=normal_rgid)
             if exclude_samples and batch.normal.name in exclude_samples:
                 continue
             self.samples.extend([batch.tumor, batch.normal])
