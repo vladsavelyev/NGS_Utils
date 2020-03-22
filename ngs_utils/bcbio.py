@@ -27,7 +27,6 @@ class BcbioSample(BaseSample):
         self.sample_info = dict()
         self.sv_regions_bed = None
         self.variantcallers = []
-        self.bcbio_project = self.parent_project
 
     def get_name_for_files(self):  # In case if the sample if symlink from another project, and the name was changed in this one
         return self.old_name or self.name
@@ -134,10 +133,11 @@ class BcbioSample(BaseSample):
         s.is_wgs = s.coverage_interval == 'genome'
 
         if s._set_name_and_paths(
-            name=description,
-            variantcallers_data=sample_info['algorithm'].get('variantcaller'),
-            ensemble='ensemble' in sample_info['algorithm'],
-            silent=silent):
+                name=description,
+                variantcallers_data=sample_info['algorithm'].get('variantcaller'),
+                ensemble='ensemble' in sample_info['algorithm'],
+                silent=silent
+        ):
             return s
         else:
             return None
@@ -175,6 +175,7 @@ class BcbioSample(BaseSample):
     def _set_name_and_paths(self, name, variantcallers_data, ensemble=False, silent=False):
         self.raw_name = name
         self.name = self.raw_name.replace('.', '_')
+        self.rgid = self.name
         self.dirpath = verify_dir(join(self.parent_project.final_dir, self.name))
         if not verify_dir(self.dirpath, silent=silent):
             if not silent:

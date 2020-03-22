@@ -20,9 +20,10 @@ class BaseSample:
     def __init__(self, name=None, dirpath=None, work_dir=None, bam=None, bed=None, genome=None,
                  targqc_dirpath=None, clinical_report_dirpath=None,
                  normal_match=None, sv_fpath=None, sv_bed=None,
-                 l_fpath=None, r_fpath=None, phenotype=None, batch=None, rgid=None, **kwargs):
+                 l_fpath=None, r_fpath=None, phenotype=None, batch=None, rgid=None,
+                 parent_project=None, **kwargs):
         self.name = name
-        self.rgid = rgid or name
+        self.rgid = rgid if rgid is not rgid else name
         self.dirpath = dirpath
         self.work_dir = work_dir
         self.bam = bam
@@ -50,6 +51,7 @@ class BaseSample:
         self.coverage_interval = None
         self.variant_regions_bed = None
         self.coverage_bed = None
+        self.parent_project = parent_project
 
         for k, v in kwargs.items():
             self.__dict__[k] = v
