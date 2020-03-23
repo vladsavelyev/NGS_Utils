@@ -4,76 +4,164 @@ from logging import critical
 from ngs_utils.file_utils import open_gzipsafe
 
 
-def get_sample_names(vcf_path):
-    return get_sample_ids(vcf_path, return_names=True)
+def get_sample_names(
+        vcf_path,
+        provided_tumor_name=None,
+        provided_normal_name=None):
+    return get_sample_ids(
+        vcf_path,
+        provided_t_name=provided_tumor_name,
+        provided_n_name=provided_normal_name,
+        return_names=True
+    )
 
 
-def get_tumor_sample_name(vcf_path):
-    return get_sample_ids(vcf_path, return_names=True)[0]
+def get_tumor_sample_name(
+        vcf_path,
+        provided_tumor_name=None,
+        provided_normal_name=None):
+    return get_sample_ids(
+        vcf_path,
+        provided_t_name=provided_tumor_name,
+        provided_n_name=provided_normal_name,
+        return_names=True)[0]
 
 
-def get_normal_sample_name(vcf_path):
-    return get_sample_ids(vcf_path, return_names=True)[1]
+def get_normal_sample_name(
+        vcf_path,
+        provided_tumor_name=None,
+        provided_normal_name=None):
+    return get_sample_ids(
+        vcf_path,
+        provided_t_name=provided_tumor_name,
+        provided_n_name=provided_normal_name,
+        return_names=True)[1]
 
 
-def get_tumor_sample_id(vcf_path):
-    return get_sample_ids(vcf_path)[0]
+def get_tumor_sample_id(
+        vcf_path,
+        provided_tumor_name=None,
+        provided_normal_name=None):
+    return get_sample_ids(
+        vcf_path,
+        provided_t_name=provided_tumor_name,
+        provided_n_name=provided_normal_name)[0]
 
 
-def get_normal_sample_id(vcf_path):
-    return get_sample_ids(vcf_path)[1]
+def get_normal_sample_id(
+        vcf_path,
+        provided_tumor_name=None,
+        provided_normal_name=None):
+    return get_sample_ids(
+        vcf_path,
+        provided_t_name=provided_tumor_name,
+        provided_n_name=provided_normal_name)[1]
 
 
-def get_sample_ids(vcf_path, return_names=False):
+def get_sample_ids(
+        vcf_path,
+        provided_t_name=None,
+        provided_n_name=None,
+        return_names=False):
+
+    guessed_t_name, guessed_n_name, guessed_t_id, guessed_n_id = \
+        guess_sample_names_and_ids(vcf_path)
+    sample_names = [guessed_t_name, guessed_n_name]
+    sample_ids = [guessed_t_id, guessed_n_id]
+
+    t_name, n_name = None, None
+
+    if provided_t_name:
+        t_name = provided_t_name
+        # guessing normal if only provided tumor name:
+        if not provided_n_name and len(sample_names) >= 2:
+            n_name = [sn for sn in sample_names if sn != t_name][0]
+    elif not t_name:
+        t_name = guessed_t_name
+
+    if provided_n_name:
+        n_name = provided_n_name
+        # guessing tumor if only provided tumor name:
+        if not provided_t_name and len(sample_names) >= 2:
+            t_name = [sn for sn in sample_names if sn != n_name][0]
+    elif not n_name:
+        n_name = guessed_n_name
+
+    n_id = None
+    if n_name:
+        assert n_name in sample_names, 'n_name: ' + str(n_name) + ', sample_names: ' + str(sample_names)
+        n_id = sample_ids[sample_names.index(n_name)]
+    assert t_name in sample_names, 't_name: ' + str(t_name) + ', sample_names: ' + str(sample_names)
+    t_id = sample_ids[sample_names.index(t_name)]
+
+    if return_names:
+        return t_name, n_name
+    else:
+        return t_id, n_id
+
+
+def guess_sample_names_and_ids(vcf_path):
     """ Finds tumor and control sample names/ids from a bcbio-derived VCF,
         and returns a tuple (tumor, control)
 
         1. If ##SAMPLE header field is found, use that for the name.
         2. Otherwise, return the first (for tumor) and second (for normal)
-           sample in #CHROM header.
+           sample in #CHROM header. It would usually be wrong, so better rely
+           on setting them explicitly (see -tn and -nn options and provided_tumor_name
+           and provided_normal_name in get_sample_ids).
+
+        Returns: tumor_name, normal_name, tumor_id, normal_id
     """
-    tumor_name, control_name = None, None
+    tumor_name, normal_name = None, None
 
     with open_gzipsafe(vcf_path) as f:
         for line in f:
+            # bcbio?
             m = re.match(r'^##SAMPLE=<ID=(?P<name>\S+),Genomes=Tumor>$', line)
             if m:
                 tumor_name = m.group('name')
             m = re.match(r'^##SAMPLE=<ID=(?P<name>\S+),Genomes=Germline>$', line)
             if m:
-                control_name = m.group('name')
+                normal_name = m.group('name')
 
-            if tumor_name and control_name and return_names:
-                return tumor_name, control_name
+            # dragen?
+            m = re.match(r'^##DRAGENCommandLine=<ID=dragen,.*'
+                         r'--RGID\s+(?P<n_name>\S+)\s+.*'
+                         r'--RGID-tumor\s+(?P<t_name>\S+)\s+.*', line)
+            if m:
+                tumor_name = m.group('t_name')
+                normal_name = m.group('n_name')
+            else: # dragen single-sample?
+                m = re.match(r'^##DRAGENCommandLine=<ID=dragen,.*'
+                             r'--RGID\s+(?P<s_name>\S+)\s+.*', line)
+                if m:
+                    tumor_name = m.group('s_name')
 
             if line.startswith('#CHROM'):
                 samples = line.strip().split('\t')[9:]
-                tumor_id, control_id = None, None
+                tumor_id, normal_id = None, None
                 if tumor_name:
                     tumor_id = samples.index(tumor_name)
-                if control_name and control_name in samples:
-                    control_id = samples.index(control_name)
+                if normal_name and normal_name in samples:
+                    normal_id = samples.index(normal_name)
 
-                if tumor_id is None and control_id is not None:
-                    tumor_id = 1 if control_id == 0 else 0
+                if tumor_id is None and normal_id is not None:
+                    tumor_id = 1 if normal_id == 0 else 0
 
-                elif control_id is None and tumor_id is not None and len(samples) > 1:
-                    control_id = 1 if tumor_id == 0 else 0
+                elif normal_id is None and tumor_id is not None and len(samples) > 1:
+                    normal_id = 1 if tumor_id == 0 else 0
 
-                elif control_id is None and tumor_id is None:
+                elif normal_id is None and tumor_id is None:
                     tumor_id = 0
                     if len(samples) > 1:
-                        control_id = 1
+                        normal_id = 1
 
                 if tumor_name is None:
                     tumor_name = samples[tumor_id]
-                if control_name is None and len(samples) > 1:
-                    control_name = samples[control_id]
+                if normal_name is None and len(samples) > 1:
+                    normal_name = samples[normal_id]
 
-                if return_names:
-                    return tumor_name, control_name
-                else:
-                    return tumor_id, control_id
+                return tumor_name, normal_name, tumor_id, normal_id
     raise ValueError
 
 
