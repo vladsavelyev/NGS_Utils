@@ -23,7 +23,7 @@ class BaseSample:
                  l_fpath=None, r_fpath=None, phenotype=None, batch=None, rgid=None,
                  parent_project=None, **kwargs):
         self.name = name
-        self.rgid = rgid if rgid is not rgid else name
+        self.rgid = rgid if rgid is not None else name
         self.dirpath = dirpath
         self.work_dir = work_dir
         self.bam = bam

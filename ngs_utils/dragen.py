@@ -102,7 +102,6 @@ class DragenProject(BaseProject):
             batch.add_normal(batch_name + '_normal', rgid=normal_rgid)
             if exclude_samples and batch.normal.name in exclude_samples:
                 continue
-            self.samples.extend([batch.tumor, batch.normal])
             batch.tumor.bam = join(self.dir, batch_name + '_tumor.bam')
             batch.normal.bam = join(self.dir, batch_name + '.bam')
             self.batch_by_name[batch_name] = batch
