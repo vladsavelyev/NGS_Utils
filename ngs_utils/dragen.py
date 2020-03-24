@@ -47,14 +47,16 @@ class DragenProject(BaseProject):
             sample = DragenProject.DragenSample(name=name, phenotype='tumor', batch=self, rgid=rgid)
             sample.bam = join(self.parent_project.dir, self.name + '_tumor.bam')
             self.tumor = sample
-            self.parent_project.samples.append(sample)
+            if sample.name not in [s.name for s in self.parent_project.samples]:
+                self.parent_project.samples.append(sample)
             return sample
 
         def add_normal(self, name, rgid=None):
             sample = DragenProject.DragenSample(name=name, phenotype='normal', batch=self, rgid=rgid)
             sample.bam = join(self.parent_project.dir, self.name + '.bam')
             self.normal = sample
-            self.parent_project.samples.append(sample)
+            if sample.name not in [s.name for s in self.parent_project.samples]:
+                self.parent_project.samples.append(sample)
             return sample
 
     def __init__(self, input_dir=None, silent=False, exclude_samples=None, **kwargs):
