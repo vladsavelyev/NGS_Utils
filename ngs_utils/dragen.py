@@ -1,4 +1,6 @@
+import csv
 import glob
+import json
 import re
 from collections import defaultdict
 import yaml
@@ -65,7 +67,6 @@ class DragenProject(BaseProject):
         self.germline_caller = 'dragen'
         self.genome_build = 'hg38'
 
-        self.bam_list_csv = join(self.dir, 'bam_list.csv')
         debug(f'Parsing project {input_dir}')
         for replay_file in glob.glob(join(self.dir, '*-replay.json')):
             batch_name = basename(replay_file.split('-replay.json')[0])
@@ -74,34 +75,104 @@ class DragenProject(BaseProject):
                 continue
             batch = self.add_batch(batch_name)
 
-            # Reading bam_list.csv to get the sample names. Typical DRAGEN usage includes setting
-            # the parameters --RGID and --RGSM-tumor, e.g.:
-            # --RGID P025_N --RGSM P025_N --RGID-tumor P025_T --RGSM-tumor P025_T
-            # --output-directory /output/P025 --output-file-prefix P025
-            # Those values are used inside the VCF files:
+            # Reading *-replay.json to get the VCF sample names.
+            # When DRAGEN is run with fastq inputs specificed directly with -1 -2 --tumor-fastq1 --tumor-fastq2,
+            # user also must set the parameters --RGSM --RGSM-tumor, e.g.:
+            # --RGSM P025_N --RGSM-tumor P025_T --output-directory /output/P025 --output-file-prefix P025
+            # Those RGSM end up inside the output VCFs:
             # #CHROM  POS     ID      REF     ALT     QUAL    FILTER  INFO    FORMAT  P025_N  P025_T
             # And the VCF files themselves, like all other output files, are prefixed with the --output-file-prefix
-            # parameter e.g. P025.hard-filtered.vcf.gz and P025.sv.vcf.gz. The only way to get the RGSM values
-            # is from the bam_list.csv file which is not prefixed with P025 and thus can be accidentally
-            # overriden. Taking this risk and reading that file:
-            # RGID,SampleID,Library,Lane,BamFile
-            # P025_N,0x55d4760,0x55d87b0,0x55d87d0,/output/P025/P025.bam
-            # P025_T,0x55d4768,0x55d87b8,0x55d87d8,/output/P025/P025_tumor.bam
-            tumor_rgid = None
-            normal_rgid = None
-            with open(self.bam_list_csv) as f:
-                for i, l in enumerate(f):
-                    if i > 0:
-                        sn, _, _, _, bam_path = l.strip().split(',')
-                        if basename(bam_path) == batch_name + '_tumor.bam':
-                            tumor_rgid = sn
-                        if basename(bam_path) == batch_name + '.bam':
-                            normal_rgid = sn
-            assert tumor_rgid, f'Cannot find tumor sample rgid in {self.bam_list_csv}'
-            assert normal_rgid, f'Cannot find normal sample rgid in {self.bam_list_csv}'
+            # parameter e.g. P025.hard-filtered.vcf.gz and P025.sv.vcf.gz. The way to get the RGSM values
+            # seems to be from the *-replay.json file:
+            # {
+            #   "dragen_config": [
+            #     {
+            #        "name": "RGSM",
+            #        "value": "P025_N"
+            #     },
+            #     {
+            #        "name": "RGSM-tumor",
+            #        "value": "P025_T"
+            #     },
+            #   ]
+            # }
+            with open(replay_file) as f:
+                replay_data = json.load(f)
+            dragen_conf = {rec.get('name'): rec.get('value') for rec in replay_data['dragen_config']
+                           if 'name' in rec and 'value' in rec}
+            if 'RGSM' in dragen_conf:
+                rgsm_n = dragen_conf['RGSM']
+                rgsm_t = dragen_conf['RGSM-tumor']
+                info(f'Normal RGSM as read from the replay file: {rgsm_n}')
+                info(f'Tumour RGSM as read from the replay file: {rgsm_t}')
+            else:
+                # However if the FastQ input was in a form of a CSV file-lists files, e.g.:
+                # --fastq-list inputs_normal.csv --tumor-fastq-list inputs_tumor.csv
+                # then --RGSM(-tumor) will not be specificed and thus won't be reflected in "dragen_config", but instead
+                # "dragen_config" will have:
+                # {
+                #   "dragen_config": [
+                #     {
+                #        "name": "tumor-fastq-list",
+                #        "value": "\/data\/LIST\/fastqs_tumor.csv"
+                #     },
+                #     {
+                #        "name": "fastq-list",
+                #        "value": "\/data\/LIST\/fastqs_normal.csv"
+                #     },
+                #   ]
+                # }
+                # And the RGSM values will be present in the CSV files like the following:
+                # RGID,RGSM,RGLB,Lane,Read1File,Read2File
+                # TCTCTACT.CGCGGTTC.2,MDX190230_L1901041,UnknownLibrary,2,/data/FASTQ/191220_A00130_0127_BHMCNVDSXX/MDX190230_L1901041_S13_L002_R1_001.fastq.gz,/data/FASTQ/191220_A00130_0127_BHMCNVDSXX/MDX190230_L1901041_S13_L002_R2_001.fastq.gz
+                #
+                # Unfortunately those "\/data\/LIST\/fastqs_tumor.csv" paths are internal for a DRAGEN container and
+                # don't correpond to a real file paths and even file names.
+                #
+                # Fortunately for the UMCCR ISL workflow, we know that those files are named as <output-prefix>-tumor.csv
+                # and <output-prefix>-normal.csv:
+                # https://github.com/umccr-illumina/stratus/blob/master/showcase/wfv.json#L276
+                # And hopefully put into the DRAGEN output folder. Otherwise, we can't do much and will error out.
+                #
+                if 'tumor-fastq-list' not in dragen_conf or 'fastq-list' not in dragen_conf:
+                    critical(f'Cannot find RGSM values: no RGSM(-tumor) nor (tumor-)fastq-list values '
+                             f'found in {replay_file}')
 
-            batch.add_tumor(batch_name, rgid=tumor_rgid)
-            batch.add_normal(batch_name + '_normal', rgid=normal_rgid)
+                n_fastqs_fpath = join(input_dir, batch_name + '-normal.csv')
+                t_fastqs_fpath = join(input_dir, batch_name + '-tumor.csv')
+                if not verify_file(n_fastqs_fpath) or not verify_file(t_fastqs_fpath):
+                    critical(f'Files {n_fastqs_fpath} or {t_fastqs_fpath} corresponding to (tumor-)fastq-list entries '
+                             f'in {replay_file} are not found in the DRAGEN output folder {input_dir}. We expect the '
+                             f'UMCCR ISL workflow to copy them there. If it did not happen, it means an issue with '
+                             f'the workflow or that the run was not run with the UMCCR workflow at all. If the latter, '
+                             f'please copy the fastq lists files manually into {input_dir} as <output-prefix>-tumor.csv>'
+                             f'and <output-prefix>-normal.csv, or run with direct fastq inputs and RGSM specified:'
+                             f' -1 -2 --tumor-fastq1 --tumor-fastq2 --RGSM --RGSM-tumor.')
+
+                with open(n_fastqs_fpath) as f:
+                    try:
+                        rec = next(csv.DictReader(f))
+                    except StopIteration:
+                        critical(f'No lines in the fastqs input file {n_fastqs_fpath}; cannot read RGSM.')
+                    else:
+                        if 'RGSM' not in rec:
+                            critical(f'Cannot find RGSM value in {n_fastqs_fpath}')
+                        rgsm_n = rec['RGSM']
+                with open(t_fastqs_fpath) as f:
+                    try:
+                        rec = next(csv.DictReader(f))
+                    except StopIteration:
+                        critical(f'No lines in the fastqs input file {n_fastqs_fpath}; cannot read RGSM.')
+                    else:
+                        if 'RGSM' not in rec:
+                            critical(f'Cannot find RGSM value in {n_fastqs_fpath}')
+                        rgsm_t = rec['RGSM']
+
+                info(f'Normal RGSM: {rgsm_n} as read from {n_fastqs_fpath}')
+                info(f'Tumour RGSM: {rgsm_t} as read from {t_fastqs_fpath}')
+
+            batch.add_tumor(batch_name, rgid=rgsm_n)
+            batch.add_normal(batch_name + '_normal', rgid=rgsm_t)
             if exclude_samples and batch.normal.name in exclude_samples:
                 continue
             batch.tumor.bam = join(self.dir, batch_name + '_tumor.bam')
