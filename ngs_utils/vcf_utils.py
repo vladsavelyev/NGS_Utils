@@ -1,6 +1,6 @@
 import re
 from logging import critical
-
+from cyvcf2 import VCF
 from ngs_utils.file_utils import open_gzipsafe
 
 
@@ -64,35 +64,30 @@ def get_sample_ids(
         provided_n_name=None,
         return_names=False):
 
-    guessed_t_name, guessed_n_name, guessed_t_id, guessed_n_id = \
-        guess_sample_names_and_ids(vcf_path)
-    sample_names = [guessed_t_name, guessed_n_name]
-    sample_ids = [guessed_t_id, guessed_n_id]
-
+    t_id, n_id = None, None
     t_name, n_name = None, None
 
-    if provided_t_name:
-        t_name = provided_t_name
-        # guessing normal if only provided tumor name:
-        if not provided_n_name and len(sample_names) >= 2:
-            n_name = [sn for sn in sample_names if sn != t_name][0]
-    elif not t_name:
-        t_name = guessed_t_name
+    vcf_samples = VCF(vcf_path).samples
 
-    if provided_n_name:
-        n_name = provided_n_name
-        # guessing tumor if only provided tumor name:
-        if not provided_t_name and len(sample_names) >= 2:
-            t_name = [sn for sn in sample_names if sn != n_name][0]
-    elif not n_name:
+    if provided_t_name:
+        assert provided_t_name in vcf_samples,\
+            f'Tumor sample name {provided_t_name} is not in VCF {vcf_path}. Found: {vcf_samples}'
+        t_name = provided_t_name
+        if provided_n_name:
+            assert provided_n_name in vcf_samples,\
+                f'Normal sample name {provided_n_name} is not in VCF {vcf_path}. Found: {vcf_samples}'
+            n_name = provided_n_name
+    else:
+        guessed_t_name, guessed_n_name = guess_sample_names(vcf_path)
+        if not guessed_t_name:
+            critical(f'Can\'t guess sample names from the VCF {vcf_path}')
+        t_name = guessed_t_name
         n_name = guessed_n_name
 
-    n_id = None
-    if n_name:
-        assert n_name in sample_names, 'n_name: ' + str(n_name) + ', sample_names: ' + str(sample_names)
-        n_id = sample_ids[sample_names.index(n_name)]
-    assert t_name in sample_names, 't_name: ' + str(t_name) + ', sample_names: ' + str(sample_names)
-    t_id = sample_ids[sample_names.index(t_name)]
+
+    t_id = vcf_samples.index(t_name)
+    if len(vcf_samples) >= 2:
+        n_id = vcf_samples.index(n_name)
 
     if return_names:
         return t_name, n_name
@@ -100,17 +95,17 @@ def get_sample_ids(
         return t_id, n_id
 
 
-def guess_sample_names_and_ids(vcf_path):
-    """ Finds tumor and control sample names/ids from a bcbio-derived VCF,
+def guess_sample_names(vcf_path):
+    """ Finds tumor and control sample names from a bcbio-derived VCF,
         and returns a tuple (tumor, control)
 
-        1. If ##SAMPLE header field is found, use that for the name.
-        2. Otherwise, return the first (for tumor) and second (for normal)
-           sample in #CHROM header. It would usually be wrong, so better rely
-           on setting them explicitly (see -tn and -nn options and provided_tumor_name
-           and provided_normal_name in get_sample_ids).
+        1. If ##SAMPLE header field is found, use that for the names
+        2. If ##DRAGENCommandLine is found, with --RGSM parameters, use them
+        3. Otherwise, we don't guess and rathe rely on setting them explicitly
+           (see -tn and -nn options in scripts and provided_tumor_name and
+           provided_normal_name in get_sample_ids).
 
-        Returns: tumor_name, normal_name, tumor_id, normal_id
+        Returns: tumor_name, normal_name
     """
     t_name, n_name = None, None
 
@@ -137,33 +132,7 @@ def guess_sample_names_and_ids(vcf_path):
                 if m:
                     t_name = m.group('s_name')
 
-            if line.startswith('#CHROM'):
-                samples = line.strip().split('\t')[9:]
-                tumor_id, normal_id = None, None
-                if t_name:
-                    tumor_id = samples.index(t_name)
-                if n_name and n_name in samples:
-                    normal_id = samples.index(n_name)
-
-                if tumor_id is None and normal_id is not None:
-                    tumor_id = 1 if normal_id == 0 else 0
-
-                elif normal_id is None and tumor_id is not None and len(samples) > 1:
-                    normal_id = 1 if tumor_id == 0 else 0
-
-                elif normal_id is None and tumor_id is None:
-                    if len(samples) == 1:
-                        tumor_id = 0
-                    else:
-                        raise ValueError(f'Can\'t guess sample names from the VCF {vcf_path}')
-
-                if t_name is None:
-                    t_name = samples[tumor_id]
-                if n_name is None and len(samples) > 1:
-                    n_name = samples[normal_id]
-
-                return t_name, n_name, tumor_id, normal_id
-    raise ValueError(f'Can\'t guess sample names from the VCF {vcf_path}')
+    return t_name, n_name
 
 
 def add_cyvcf2_hdr(vcf, id, number, type, descr, new_header=None, hdr='INFO'):
