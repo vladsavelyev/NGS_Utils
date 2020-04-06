@@ -171,8 +171,8 @@ class DragenProject(BaseProject):
                 info(f'Normal RGSM: {rgsm_n} as read from {n_fastqs_fpath}')
                 info(f'Tumour RGSM: {rgsm_t} as read from {t_fastqs_fpath}')
 
-            batch.add_tumor(batch_name, rgid=rgsm_n)
-            batch.add_normal(batch_name + '_normal', rgid=rgsm_t)
+            batch.add_tumor(batch_name, rgid=rgsm_t)
+            batch.add_normal(batch_name + '_normal', rgid=rgsm_n)
             if exclude_samples and batch.normal.name in exclude_samples:
                 continue
             batch.tumor.bam = join(self.dir, batch_name + '_tumor.bam')
