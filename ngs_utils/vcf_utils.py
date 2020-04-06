@@ -112,38 +112,38 @@ def guess_sample_names_and_ids(vcf_path):
 
         Returns: tumor_name, normal_name, tumor_id, normal_id
     """
-    tumor_name, normal_name = None, None
+    t_name, n_name = None, None
 
     with open_gzipsafe(vcf_path) as f:
         for line in f:
             # bcbio?
             m = re.match(r'^##SAMPLE=<ID=(?P<name>\S+),Genomes=Tumor>$', line)
             if m:
-                tumor_name = m.group('name')
+                t_name = m.group('name')
             m = re.match(r'^##SAMPLE=<ID=(?P<name>\S+),Genomes=Germline>$', line)
             if m:
-                normal_name = m.group('name')
+                n_name = m.group('name')
 
             # dragen?
             m = re.match(r'^##DRAGENCommandLine=<ID=dragen,.*'
-                         r'--RGID\s+(?P<n_name>\S+)\s+.*'
-                         r'--RGID-tumor\s+(?P<t_name>\S+)\s+.*', line)
+                         r'--RGSM\s+(?P<n_name>\S+)\s+.*'
+                         r'--RGSM-tumor\s+(?P<t_name>\S+)\s+.*', line)
             if m:
-                tumor_name = m.group('t_name')
-                normal_name = m.group('n_name')
+                t_name = m.group('t_name')
+                n_name = m.group('n_name')
             else: # dragen single-sample?
                 m = re.match(r'^##DRAGENCommandLine=<ID=dragen,.*'
-                             r'--RGID\s+(?P<s_name>\S+)\s+.*', line)
+                             r'--RGSM\s+(?P<s_name>\S+)\s+.*', line)
                 if m:
-                    tumor_name = m.group('s_name')
+                    t_name = m.group('s_name')
 
             if line.startswith('#CHROM'):
                 samples = line.strip().split('\t')[9:]
                 tumor_id, normal_id = None, None
-                if tumor_name:
-                    tumor_id = samples.index(tumor_name)
-                if normal_name and normal_name in samples:
-                    normal_id = samples.index(normal_name)
+                if t_name:
+                    tumor_id = samples.index(t_name)
+                if n_name and n_name in samples:
+                    normal_id = samples.index(n_name)
 
                 if tumor_id is None and normal_id is not None:
                     tumor_id = 1 if normal_id == 0 else 0
@@ -152,17 +152,18 @@ def guess_sample_names_and_ids(vcf_path):
                     normal_id = 1 if tumor_id == 0 else 0
 
                 elif normal_id is None and tumor_id is None:
-                    tumor_id = 0
-                    if len(samples) > 1:
-                        normal_id = 1
+                    if len(samples) == 1:
+                        tumor_id = 0
+                    else:
+                        raise ValueError(f'Can\'t guess sample names from the VCF {vcf_path}')
 
-                if tumor_name is None:
-                    tumor_name = samples[tumor_id]
-                if normal_name is None and len(samples) > 1:
-                    normal_name = samples[normal_id]
+                if t_name is None:
+                    t_name = samples[tumor_id]
+                if n_name is None and len(samples) > 1:
+                    n_name = samples[normal_id]
 
-                return tumor_name, normal_name, tumor_id, normal_id
-    raise ValueError
+                return t_name, n_name, tumor_id, normal_id
+    raise ValueError(f'Can\'t guess sample names from the VCF {vcf_path}')
 
 
 def add_cyvcf2_hdr(vcf, id, number, type, descr, new_header=None, hdr='INFO'):
