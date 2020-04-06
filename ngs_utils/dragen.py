@@ -138,8 +138,8 @@ class DragenProject(BaseProject):
                     critical(f'Cannot find RGSM values: no RGSM(-tumor) nor (tumor-)fastq-list values '
                              f'found in {replay_file}')
 
-                n_fastqs_fpath = join(input_dir, batch_name + '-normal.csv')
-                t_fastqs_fpath = join(input_dir, batch_name + '-tumor.csv')
+                n_fastqs_fpath = join(input_dir, batch_name + '_normal.csv')
+                t_fastqs_fpath = join(input_dir, batch_name + '_tumor.csv')
                 if not verify_file(n_fastqs_fpath) or not verify_file(t_fastqs_fpath):
                     critical(f'Files {n_fastqs_fpath} or {t_fastqs_fpath} corresponding to (tumor-)fastq-list entries '
                              f'in {replay_file} are not found in the DRAGEN output folder {input_dir}. We expect the '
