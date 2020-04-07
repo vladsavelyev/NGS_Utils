@@ -112,12 +112,17 @@ def guess_sample_names(vcf_path):
     with open_gzipsafe(vcf_path) as f:
         for line in f:
             # bcbio?
-            m = re.match(r'^##SAMPLE=<ID=(?P<name>\S+),Genomes=Tumor>$', line)
+            m = re.match(r'^##PEDIGREE=<Derived=(?P<t_name>\S+),Original=(?P<n_name>\S+)>$', line)
             if m:
-                t_name = m.group('name')
-            m = re.match(r'^##SAMPLE=<ID=(?P<name>\S+),Genomes=Germline>$', line)
-            if m:
-                n_name = m.group('name')
+                t_name = m.group('t_name')
+                n_name = m.group('n_name')
+            else:
+                m = re.match(r'^##SAMPLE=<ID=(?P<name>\S+),Genomes=Tumor>$', line)
+                if m:
+                    t_name = m.group('name')
+                m = re.match(r'^##SAMPLE=<ID=(?P<name>\S+),Genomes=Germline>$', line)
+                if m:
+                    n_name = m.group('name')
 
             # dragen?
             m = re.match(r'^##DRAGENCommandLine=<ID=dragen,.*'
