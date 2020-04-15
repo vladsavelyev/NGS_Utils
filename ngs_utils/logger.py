@@ -243,10 +243,7 @@ def _log(out, msg='', ending='\n', print_date=True, severity=None):
     t_msg_e_b = t_msg_e.encode(encoding='ascii', errors='replace').decode(encoding='ascii')
 
     # Finally, logging to stdout
-    if is_debug:
-        out.write(t_msg_e_b if print_date else msg_e_b)
-    elif severity != 'debug':
-        out.write(msg_e_b)
+    out.write(t_msg_e_b if print_date else msg_e_b)
 
     # For messages to appear in a correct order in output
     sys.stdout.flush()
