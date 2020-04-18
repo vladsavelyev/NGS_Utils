@@ -88,7 +88,7 @@ def main(genome=None, gtf_path=None, all_transcripts=False, principal=False, onl
                 lines_cnt += 1
                 fields = l.strip().split('\t')
                 try:
-                    chrom, _, feature, start, end, _, _, _, annotations = fields
+                    chrom, _, feature, start, end, _, strand, _, annotations = fields
                 except:
                     warn(f'Cannot read fields {str(fields)}')
                     raise
@@ -125,7 +125,7 @@ def main(genome=None, gtf_path=None, all_transcripts=False, principal=False, onl
                 start = int(start) - 1
                 end = int(end)
                 if end - start >= 3:
-                    out.write('\t'.join([chrom, str(start), str(end), gene_name]) + '\n')
+                    out.write('\t'.join([chrom, str(start), str(end), gene_name, '.', strand]) + '\n')
                     genes_set.add(gene_name)
                     region_cnt += 1
 
