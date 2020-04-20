@@ -1,7 +1,7 @@
 from os.path import join, splitext, isfile, basename
 from pybedtools import BedTool
 from ngs_utils.logger import info
-from ngs_utils.reference_data import get_key_genes_set
+from ngs_utils.reference_data import get_key_genes_set, get_predispose_genes_txt
 from ngs_utils.key_genes_utils import get_genes_from_file
 
 
@@ -23,6 +23,7 @@ rule all:
     input:
         expand(output_bed, genome=GENOMES, featuretype=['transcript', 'coding']),
         input_tsv.replace('.tsv', '.genes'),
+        expand('predispose_genes.{genome}.coding.bed', genome=GENOMES),
 
 
 rule make_gene_list:
@@ -45,3 +46,12 @@ rule extract_transcripts:
         'generate_bed.py -g {wildcards.genome} --key-genes --features {params.features} --biotypes "" '
         ' | sort -k1,1V -k2,2n'
         ' > {output.bed}'
+
+
+rule predispose_bed:
+    input:
+        gene_list = get_predispose_genes_txt()
+    output:
+        bed = 'predispose_genes.{genome}.coding.bed'
+    shell:
+        'generate_bed.py -g hg38 --features CDS,stop_codon --genes {input.gene_list} -o {output.bed}'

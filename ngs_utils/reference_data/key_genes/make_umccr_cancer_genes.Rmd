@@ -26,7 +26,7 @@ folder = "/Users/vsaveliev/git/NGS_Utils/ngs_utils/reference_data/key_genes/"
 #   filter(sources != 'AZ800') %>% 
 #   bind_rows(az300 %>% mutate(sources = "AZ300"))
 
-predispose   <- read_tsv(str_c(folder, "sources/pcgr_predispose_genes.txt"), col_names = c('symbol'))
+predispose   <- read_tsv(str_c(folder, "sources/predispose_genes.txt"), col_names = c('symbol'))
 az300        <- read_tsv(str_c(folder, "sources/az_key_genes.300.txt"), col_names = c('symbol'))
 cacao        <- read_tsv(str_c(folder, "sources/cacao.txt"), col_names = c('symbol'))
 umccr        <- read_tsv(str_c(folder, "sources/umccr.txt"), col_names = c('symbol'))

@@ -102,6 +102,13 @@ def get_key_genes_bed(genome, is_critical=False, coding_only=False):
     return _get(f'key_genes/umccr_cancer_genes.{genome}.{"transcript" if not coding_only else "coding"}.bed',
                 is_critical=is_critical)
 
+def get_predispose_genes_txt():
+    return _get('key_genes/sources/predispose_genes.txt')
+
+def get_predispose_genes_bed(genome):
+    return _get(f'key_genes/predispose_genes.{genome}.coding.bed')
+
+
 #############################
 ###### Known fusions ########
 
