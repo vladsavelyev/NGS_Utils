@@ -10,10 +10,12 @@ if gene_list_file is None:
     gene_names = get_key_genes_set()
     input_tsv = 'umccr_cancer_genes.latest.tsv'
     output_bed = 'umccr_cancer_genes.{genome}.{featuretype}.bed'
+    predispose_bed = 'predispose_genes.{genome}.{featuretype}.bed'
 else:
     gene_names = get_genes_from_file(gene_list_file)
     input_tsv = gene_list_file
     output_bed = basename(splitext(gene_list_file)[0]) + '.{genome}.{featuretype}.bed'
+    predispose_bed = []
 
 
 GENOMES = ['GRCh37', 'hg38']
@@ -22,8 +24,8 @@ GENOMES = ['GRCh37', 'hg38']
 rule all:
     input:
         expand(output_bed, genome=GENOMES, featuretype=['transcript', 'coding']),
+        expand(predispose_bed, genome=GENOMES, featuretype=['transcript', 'coding']),
         input_tsv.replace('.tsv', '.genes'),
-        expand('predispose_genes.{genome}.coding.bed', genome=GENOMES),
 
 
 rule make_gene_list:
@@ -48,10 +50,14 @@ rule extract_transcripts:
         ' > {output.bed}'
 
 
-rule predispose_bed:
+rule make_predispose_bed:
     input:
         gene_list = get_predispose_genes_txt()
     output:
-        bed = 'predispose_genes.{genome}.coding.bed'
+        bed = predispose_bed
+    params:
+        features = lambda wc: 'CDS,stop_codon' if wc.featuretype == 'coding' else 'transcript'
     shell:
-        'generate_bed.py -g hg38 --features CDS,stop_codon --genes {input.gene_list} -o {output.bed}'
+        'generate_bed.py -g hg38 --genes {input.gene_list} --features {params.features} --biotypes "" '
+        ' | sort -k1,1V -k2,2n'
+        ' > {output.bed}'
