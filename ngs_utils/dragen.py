@@ -13,67 +13,71 @@ from ngs_utils.Sample import BaseSample, BaseBatch, BaseProject
 from natsort import natsort_keygen
 
 
-class DragenProject(BaseProject):
-    class DragenSample(BaseSample):
-        natsort_key = natsort_keygen()
+class DragenSample(BaseSample):
+    natsort_key = natsort_keygen()
 
-        def __init__(self, **kwargs):
-            BaseSample.__init__(self, **kwargs)  # name, dirpath, work_dir, bam, vcf, phenotype, normal_match
-            self.qc_files = []
-            self.bam = None
+    def __init__(self, **kwargs):
+        BaseSample.__init__(self, **kwargs)  # name, dirpath, work_dir, bam, vcf, phenotype, normal_match
+        self.qc_files = []
+        self.bam = None
 
-    class DragenBatch(BaseBatch):
-        def __init__(self, **kwargs):
-            BaseBatch.__init__(self, **kwargs)
-            self.batch_qc_files = []
-            self.somatic_vcf = join(self.parent_project.dir, self.name + '.hard-filtered.vcf.gz')
-            self.sv_vcf = join(self.parent_project.dir, self.name + '.sv.vcf.gz')
-            self.replay_file = join(self.parent_project.dir, self.name + '-replay.json')
 
-        def find_somatic_vcf(self, silent=False):
-            if isfile(self.somatic_vcf):
-                verify_file(self.somatic_vcf, is_critical=True)
-                if not silent:
-                    info(f'Found somatic VCF in <dragen-dir>/<tumor-name>-hard-filtered.vcf.gz: ' + self.somatic_vcf)
-
-        def find_sv_vcf(self, silent=False):
-            if isfile(self.sv_vcf):
-                verify_file(self.sv_vcf, is_critical=True)
-                if not silent:
-                    info(f'Found SV VCF in <dragen-dir>/<tumor-name>.sv.vcf.gz: ' + self.sv_vcf)
-
-        def all_qc_files(self):
-            return self.batch_qc_files + self.tumor.qc_files + self.normal.qc_files
-
-        def add_tumor(self, name, rgid=None):
-            sample = DragenProject.DragenSample(name=name, phenotype='tumor', batch=self, rgid=rgid)
-            sample.bam = join(self.parent_project.dir, self.name + '_tumor.bam')
-            self.tumor = sample
-            if sample.name not in [s.name for s in self.parent_project.samples]:
-                self.parent_project.samples.append(sample)
-            return sample
-
-        def add_normal(self, name, rgid=None):
-            sample = DragenProject.DragenSample(name=name, phenotype='normal', batch=self, rgid=rgid)
-            sample.bam = join(self.parent_project.dir, self.name + '.bam')
-            self.normal = sample
-            if sample.name not in [s.name for s in self.parent_project.samples]:
-                self.parent_project.samples.append(sample)
-            return sample
-
-    def __init__(self, input_dir=None, silent=False, exclude_samples=None, **kwargs):
-        BaseProject.__init__(self, input_dir=input_dir, **kwargs)
+class DragenBatch(BaseBatch):
+    def __init__(self, **kwargs):
+        BaseBatch.__init__(self, **kwargs)
         self.somatic_caller = 'dragen'
         self.germline_caller = 'dragen'
-        self.genome_build = 'hg38'
+        self.sv_caller = 'dragen'
+        self.batch_qc_files = []
+        self.somatic_vcf = join(self.parent_project.dir, self.name + '.hard-filtered.vcf.gz')
+        self.sv_vcf = join(self.parent_project.dir, self.name + '.sv.vcf.gz')
+        self.replay_file = join(self.parent_project.dir, self.name + '-replay.json')
 
-        debug(f'Parsing project {input_dir}')
-        for replay_file in glob.glob(join(self.dir, '*-replay.json')):
+    def find_somatic_vcf(self, silent=False):
+        if isfile(self.somatic_vcf):
+            verify_file(self.somatic_vcf, is_critical=True)
+            if not silent:
+                info(f'Found somatic VCF in <dragen-dir>/<tumor-name>-hard-filtered.vcf.gz: ' + self.somatic_vcf)
+
+    def find_sv_vcf(self, silent=False):
+        if isfile(self.sv_vcf):
+            verify_file(self.sv_vcf, is_critical=True)
+            if not silent:
+                info(f'Found SV VCF in <dragen-dir>/<tumor-name>.sv.vcf.gz: ' + self.sv_vcf)
+
+    def all_qc_files(self):
+        return self.batch_qc_files + self.tumor.qc_files + self.normal.qc_files
+
+    def add_tumor(self, name, rgid=None):
+        sample = DragenSample(name=name, phenotype='tumor', batch=self, rgid=rgid)
+        sample.bam = join(self.parent_project.dir, self.name + '_tumor.bam')
+        self.tumor = sample
+        if sample.name not in [s.name for s in self.parent_project.samples]:
+            self.parent_project.samples.append(sample)
+        return sample
+
+    def add_normal(self, name, rgid=None):
+        sample = DragenSample(name=name, phenotype='normal', batch=self, rgid=rgid)
+        sample.bam = join(self.parent_project.dir, self.name + '.bam')
+        self.normal = sample
+        if sample.name not in [s.name for s in self.parent_project.samples]:
+            self.parent_project.samples.append(sample)
+        return sample
+
+
+class DragenProject(BaseProject):
+    @staticmethod
+    def find_batches(input_dir, silent=False, exclude_samples=None, parent_project=None):
+        batch_by_name = dict()
+
+        for replay_file in glob.glob(join(input_dir, '*-replay.json')):
             batch_name = basename(replay_file.split('-replay.json')[0])
             debug(f'Found somatic variants for batch {batch_name}')
             if exclude_samples and batch_name in exclude_samples:
                 continue
-            batch = self.add_batch(batch_name)
+
+            batch = DragenBatch(name=batch_name, parent_project=parent_project)
+            batch_by_name[batch_name] = batch
 
             # Reading *-replay.json to get the VCF sample names.
             # When DRAGEN is run with fastq inputs specificed directly with -1 -2 --tumor-fastq1 --tumor-fastq2,
@@ -175,9 +179,9 @@ class DragenProject(BaseProject):
             batch.add_normal(batch_name + '_normal', rgid=rgsm_n)
             if exclude_samples and batch.normal.name in exclude_samples:
                 continue
-            batch.tumor.bam = join(self.dir, batch_name + '_tumor.bam')
-            batch.normal.bam = join(self.dir, batch_name + '.bam')
-            self.batch_by_name[batch_name] = batch
+            batch.tumor.bam = join(input_dir, batch_name + '_tumor.bam')
+            batch.normal.bam = join(input_dir, batch_name + '.bam')
+            batch_by_name[batch_name] = batch
 
             batch.find_somatic_vcf(silent=silent)
             batch.find_germline_vcf(silent=silent)
@@ -192,7 +196,7 @@ class DragenProject(BaseProject):
                 '.vc_metrics.csv',
                 '.sv_metrics.csv',
             ]:
-                qc_fpath = join(self.dir, f'{batch_name}{suffix}')
+                qc_fpath = join(input_dir, f'{batch_name}{suffix}')
                 if isfile(qc_fpath):
                     debug(f'Found QC file for batch {qc_fpath}')
                     batch.batch_qc_files.append(qc_fpath)
@@ -204,7 +208,7 @@ class DragenProject(BaseProject):
                 '.wgs_coverage_metrics_{phenotype}.csv',
                 '.wgs_fine_hist_{phenotype}.csv',
             ]:
-                qc_fpath = join(self.dir, f'{batch_name}{suffix}')
+                qc_fpath = join(input_dir, f'{batch_name}{suffix}')
                 if isfile(qc_fpath.format(phenotype="normal")):
                     debug(f'Found QC file for normal sample {qc_fpath}')
                     batch.normal.qc_files.append(qc_fpath.format(phenotype="normal"))
@@ -219,6 +223,15 @@ class DragenProject(BaseProject):
             debug(f'Found {len(batch.batch_qc_files)} batch QC files, '
                   f'{len(batch.tumor.qc_files)} tumor QC files, '
                   f'{len(batch.normal.qc_files)} normal QC files')
+        return batch_by_name
+
+    def __init__(self, input_dir=None, silent=False, exclude_samples=None, **kwargs):
+        BaseProject.__init__(self, input_dir=input_dir, **kwargs)
+        self.genome_build = 'hg38'
+
+        debug(f'Parsing project {input_dir}')
+        self.batch_by_name = DragenProject.find_batches(self.dir, silent=silent,
+            exclude_samples=exclude_samples, parent_project=self)
 
         if len(self.batch_by_name) == 1:
             self.project_name = list(self.batch_by_name.values())[0].name
@@ -226,7 +239,7 @@ class DragenProject(BaseProject):
             self.project_name = basename(input_dir)
 
     def add_batch(self, batch_name):
-        batch = DragenProject.DragenBatch(name=batch_name, parent_project=self)
+        batch = DragenBatch(name=batch_name, parent_project=self)
         self.batch_by_name[batch_name] = batch
         return batch
 

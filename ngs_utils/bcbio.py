@@ -11,7 +11,6 @@ from ngs_utils.config import load_yaml_config
 from ngs_utils.file_utils import adjust_path, verify_dir, file_exists, safe_mkdir, verify_file, add_suffix
 from ngs_utils.logger import critical, debug, info, err, warn
 from ngs_utils.key_genes_utils import get_target_genes, is_small_target
-import ngs_utils.variant_filtering as vf
 
 
 CALLER_PRIORITY = ['ensemble', 'strelka2', 'vardict', 'gatk-haplotype']
@@ -187,7 +186,6 @@ class BcbioSample(BaseSample):
                          f'from consideration, if you are sure that missing folders are expected.')
             else:
                 return False
-        self.var_dirpath = join(self.dirpath, BcbioProject.var_dir)
 
         self.bam = self.find_bam(silent=silent)
 
@@ -230,13 +228,8 @@ class BcbioSample(BaseSample):
         return self.find_cnv_file(self.name + '-manta.vcf.gz') or \
                self.find_cnv_file(self.name + '-lumpy.vcf.gz')
 
-    def find_sv_tsv(self):
-        return self.find_cnv_file(self.name + '-sv-prioritize.tsv') or \
-              (self.find_cnv_file(self.batch.name + '-sv-prioritize.tsv') if self.batch else None)
-
     def find_cnv_file(self, fname):
-        for fpath in [join(self.dirpath, fname),
-                      join(self.dirpath, BcbioProject.cnv_dir, fname)]:
+        for fpath in [join(self.dirpath, fname)]:
             if isfile(fpath):
                 return verify_file(fpath, silent=True)
 
@@ -279,9 +272,12 @@ class BcbioSample(BaseSample):
 class BcbioBatch(BaseBatch):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.somatic_caller = 'ensemble'
+        self.germline_caller = 'ensemble'
+        self.sv_caller = 'manta'
 
     def find_somatic_vcf(self, silent=False, caller=None):
-        caller = caller or self.parent_project.somatic_caller
+        caller = caller or self.somatic_caller
 
         # in datestamp. cwl-bcbio writes there
         vcf_cwl_fpath_gz = adjust_path(join(self.parent_project.date_dir, self.name + '-' + caller + '.vcf.gz'))
@@ -312,7 +308,7 @@ class BcbioBatch(BaseBatch):
                  f'project/<batch>-{caller}.vcf.gz (CWL bcbio).')
 
     def find_germline_vcf(self, silent=False, caller=None):
-        caller = caller or self.parent_project.germline_caller
+        caller = caller or self.germline_caller
 
         # in sample dir. starting from bcbio 1.1.6, ~ Dec 2019
         vcf_fpath_gz = adjust_path(join(self.parent_project.date_dir, f'{self.normal.name}-germline-{caller}.vcf.gz'))
@@ -335,7 +331,7 @@ class BcbioBatch(BaseBatch):
                  f'<date-dir>/<normal-name>-germline-{caller}-annotated.vcf.gz (bcbio < v1.1.6)')
 
     def find_sv_vcf(self, silent=False, caller=False):
-        caller = caller or self.parent_project.sv_caller
+        caller = caller or self.sv_caller
 
         sv_prio   = join(self.tumor.dirpath, f'{self.name}-sv-prioritize-{caller}.vcf.gz')
         sv_unprio = join(self.tumor.dirpath, f'{self.name}-{caller}.vcf.gz')
@@ -378,27 +374,6 @@ class MultipleDateStampsException(Exception):
 
 
 class BcbioProject(BaseProject):
-    varfilter_dir = 'varFilter'
-    varannotate_dir = 'varAnnotate'
-    cnv_dir = 'cnv'
-    var_dir = 'var'
-    ngs_report_name = 'ngs_report'
-    reports_dir = 'reports'
-    anno_vcf_ending = '.anno.vcf'
-    filt_vcf_ending = '.anno.filt.vcf'
-    pass_filt_vcf_ending = '.anno.filt.' + vf.mut_pass_suffix + '.vcf'
-    seq2c_fname = 'seq2c.tsv'
-    cnvkit_fname = 'cnvkit.tsv'
-    evaluate_panel_dir = 'eval_panel'
-    oncoprints_dir = 'oncoprints'
-
-    ## RNAseq
-    counts_names = []
-    expression_dir = 'expression'
-
-    multiqc_report_name = 'report.html'
-    call_vis_name = 'call_vis.html'
-
     def __init__(self, input_dir=None, project_name=None, proc_name='postproc', exclude_samples=None,
                  include_samples=None, silent=False, **kwargs):
         super().__init__(input_dir, **kwargs)
@@ -410,17 +385,10 @@ class BcbioProject(BaseProject):
         self.work_dir = None
         self.bcbio_yaml_fpath = None
 
-        self.var_dir = None
-        self.raw_var_dir = None
-        self.expression_dir = None
-
         self.versions = None
         self.programs = None
 
         self.samples_by_caller = defaultdict(list)  # (caller, is_germline) -> [samples]
-        self.somatic_caller = 'ensemble'
-        self.germline_caller = 'ensemble'
-        self.sv_caller = 'manta'
 
         self.variant_regions_bed = None
         self.sv_regions_bed = None          # "sv_regions" or "variant_regions"
@@ -436,8 +404,9 @@ class BcbioProject(BaseProject):
         self.silent = silent
 
         if input_dir:
-            self.load_from_bcbio_dir(input_dir, project_name, proc_name,
-                                     exclude_samples=exclude_samples, include_samples=include_samples)
+            self.load_from_bcbio_dir(
+                input_dir, project_name, proc_name,
+                exclude_samples=exclude_samples, include_samples=include_samples)
 
     def set_project_level_dirs(self, bcbio_cnf, config_dir, project_name=None, final_dir=None, date_dir=None,
                                create_dirs=False, proc_name='postproc'):
@@ -454,10 +423,6 @@ class BcbioProject(BaseProject):
         self.log_dir = join(self.date_dir, 'log')
         self.postproc_log_dir = join(self.log_dir, proc_name)
         if create_dirs: safe_mkdir(self.postproc_log_dir)
-
-        self.var_dir = join(self.date_dir, BcbioProject.var_dir)
-        self.raw_var_dir = join(self.var_dir, 'raw')
-        self.expression_dir = join(self.date_dir, BcbioProject.expression_dir)
 
         self.versions = verify_file(join(self.date_dir, 'data_versions.txt'), silent=True)
         self.programs = verify_file(join(self.date_dir, 'programs.txt'), silent=True)
@@ -673,7 +638,6 @@ class BcbioProject(BaseProject):
 
     def find_multiqc_report(self):
         for fpath in [
-            join(self.date_dir, BcbioProject.multiqc_report_name),
             join(self.date_dir, 'multiqc_postproc', 'multiqc_report.html'),
         ]:
             if verify_file(fpath, silent=True):
@@ -798,34 +762,3 @@ def ungzip_if_needed(cnf, fpath, silent=False):
             return None
     return fpath
 
- 
-# def _parse_coveragre_interval(bcbio_project, sample_name):
-#     interval = None
-#     target_info_file = join(bcbio_project.date_dir, 'multiqc', 'report', 'metrics', 'target_info.yaml')
-#     if not isfile(target_info_file):
-#         target_info_file = join(bcbio_project.date_dir, 'log', 'multiqc_bcbio', 'report', 'metrics', 'target_info.yaml')
-#     if isfile(target_info_file):
-#         debug('Parsing ' + target_info_file + ' for coverage_interval')
-#         with open(target_info_file) as f:
-#             d = yaml.load(f)
-#             if 'coverage_interval' in d:
-#                 interval = d['coverage_interval']
-#             else:
-#                 debug('Not found coverage_interval in ' + target_info_file)
-#
-#     if not interval:
-#         bcbio_log = bcbio_project.find_in_log('bcbio-nextgen.log', silent=False)
-#         if not bcbio_log:
-#             debug('Not found bcbio-nextgen.log')
-#         else:
-#             debug('Parsing coverage_interval from log')
-#             pattern = r'.* (?P<sample>.+): Assigned coverage as \'(?P<interval>.+)\''
-#             with open(bcbio_log) as f:
-#                 for l in f:
-#                     m = re.match(pattern, l)
-#                     if m and len(m.groups()) == 2:
-#                         if m.group('sample') == sample_name:
-#                             interval = m.group('interval')
-#             if not interval:
-#                 err('Coverage interval info is not found in ' + bcbio_log)
-#     return interval

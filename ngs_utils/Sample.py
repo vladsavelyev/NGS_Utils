@@ -86,6 +86,10 @@ class BaseBatch:
         self.germline_vcf = None
         self.sv_vcf = None
 
+        self.somatic_caller = None
+        self.germline_caller = None
+        self.sv_caller = None
+
     def is_paired(self):
         return self.normal and self.tumor
 
