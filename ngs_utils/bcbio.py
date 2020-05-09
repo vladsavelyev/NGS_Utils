@@ -45,8 +45,9 @@ class BcbioSample(BaseSample):
         return description, batch_names
 
     @staticmethod
-    def load_from_sample_info(sample_info, bcbio_project, exclude_samples=None,
-                              include_samples=None, extra_batches=None, silent=False):
+    def load_from_sample_info(sample_info, bcbio_project,
+                              include_samples=None, exclude_samples=None,
+                              extra_batches=None, silent=False):
         # Get sample and batch names and exclude/include based on exclude_samples and include_samples
         description = str(sample_info['description']).replace('.', '_')
 
@@ -374,8 +375,8 @@ class MultipleDateStampsException(Exception):
 
 
 class BcbioProject(BaseProject):
-    def __init__(self, input_dir=None, project_name=None, proc_name='postproc', exclude_samples=None,
-                 include_samples=None, silent=False, **kwargs):
+    def __init__(self, input_dir=None, project_name=None, proc_name='postproc',
+                 include_samples=None, exclude_samples=None, silent=False, **kwargs):
         super().__init__(input_dir, **kwargs)
         self.config_dir = None
         self.final_dir = None
@@ -406,7 +407,7 @@ class BcbioProject(BaseProject):
         if input_dir:
             self.load_from_bcbio_dir(
                 input_dir, project_name, proc_name,
-                exclude_samples=exclude_samples, include_samples=include_samples)
+                include_samples=include_samples, exclude_samples=exclude_samples)
 
     def set_project_level_dirs(self, bcbio_cnf, config_dir, project_name=None, final_dir=None, date_dir=None,
                                create_dirs=False, proc_name='postproc'):
@@ -428,7 +429,7 @@ class BcbioProject(BaseProject):
         self.programs = verify_file(join(self.date_dir, 'programs.txt'), silent=True)
 
     def load_from_bcbio_dir(self, input_dir, project_name=None, proc_name='postproc',
-                            exclude_samples=None, include_samples=None):
+                            include_samples=None, exclude_samples=None):
         """
         Analyses existing bcbio folder.
         input_dir: root bcbio folder, or any other directory inside it
@@ -437,12 +438,12 @@ class BcbioProject(BaseProject):
         bcbio_cnf, self.bcbio_yaml_fpath = load_bcbio_cnf(self.config_dir, silent=self.silent)
         self.set_project_level_dirs(bcbio_cnf, self.config_dir, project_name=project_name, final_dir=self.final_dir,
                                     date_dir=self.date_dir, proc_name=proc_name)
-        self.set_samples(bcbio_cnf, exclude_samples=exclude_samples, include_samples=include_samples)
+        self.set_samples(bcbio_cnf, include_samples=include_samples, exclude_samples=exclude_samples)
         self._load_bcbio_summary()
         # self._load_target_info()
         return self
 
-    def set_samples(self, bcbio_cnf, exclude_samples=None, include_samples=None):
+    def set_samples(self, bcbio_cnf, include_samples=None, exclude_samples=None):
         debug('Reading sample details...')
         exclude_samples = [s.replace('.', '_') for s in exclude_samples] if exclude_samples else None
         include_samples = [s.replace('.', '_') for s in include_samples] if include_samples else None
@@ -462,8 +463,8 @@ class BcbioProject(BaseProject):
             s = BcbioSample.load_from_sample_info(
                 sample_info,
                 bcbio_project=self,
-                exclude_samples=exclude_samples,
                 include_samples=include_samples,
+                exclude_samples=exclude_samples,
                 extra_batches=extra_batches,
                 silent=self.silent)
             if s:

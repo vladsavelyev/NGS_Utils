@@ -67,17 +67,18 @@ class DragenBatch(BaseBatch):
 
 class DragenProject(BaseProject):
     @staticmethod
-    def find_batches(input_dir, silent=False, exclude_samples=None, parent_project=None):
+    def find_batches(input_dir, silent=False, include_samples=None, exclude_samples=None, parent_project=None):
         batch_by_name = dict()
 
         for replay_file in glob.glob(join(input_dir, '*-replay.json')):
             batch_name = basename(replay_file.split('-replay.json')[0])
             debug(f'Found somatic variants for batch {batch_name}')
+
+            # Excluding/including based on batch name
             if exclude_samples and batch_name in exclude_samples:
                 continue
-
-            batch = DragenBatch(name=batch_name, parent_project=parent_project)
-            batch_by_name[batch_name] = batch
+            if include_samples and batch_name not in include_samples:
+                continue
 
             # Reading *-replay.json to get the VCF sample names.
             # When DRAGEN is run with fastq inputs specificed directly with -1 -2 --tumor-fastq1 --tumor-fastq2,
@@ -175,6 +176,14 @@ class DragenProject(BaseProject):
                 info(f'Normal RGSM: {rgsm_n} as read from {n_fastqs_fpath}')
                 info(f'Tumour RGSM: {rgsm_t} as read from {t_fastqs_fpath}')
 
+            # Excluding/including based on RG id
+            if exclude_samples and (rgsm_t in exclude_samples or rgsm_n in exclude_samples):
+                continue
+            if include_samples and not (rgsm_t in include_samples or rgsm_n in include_samples):
+                continue
+
+            batch = DragenBatch(name=batch_name, parent_project=parent_project)
+            batch_by_name[batch_name] = batch
             batch.add_tumor(batch_name, rgid=rgsm_t)
             batch.add_normal(batch_name + '_normal', rgid=rgsm_n)
             if exclude_samples and batch.normal.name in exclude_samples:
@@ -225,13 +234,13 @@ class DragenProject(BaseProject):
                   f'{len(batch.normal.qc_files)} normal QC files')
         return batch_by_name
 
-    def __init__(self, input_dir=None, silent=False, exclude_samples=None, **kwargs):
+    def __init__(self, input_dir=None, silent=False, include_samples=None, exclude_samples=None, **kwargs):
         BaseProject.__init__(self, input_dir=input_dir, **kwargs)
         self.genome_build = 'hg38'
 
         debug(f'Parsing project {input_dir}')
         self.batch_by_name = DragenProject.find_batches(self.dir, silent=silent,
-            exclude_samples=exclude_samples, parent_project=self)
+            include_samples=include_samples, exclude_samples=exclude_samples, parent_project=self)
 
         if len(self.batch_by_name) == 1:
             self.project_name = list(self.batch_by_name.values())[0].name
