@@ -77,20 +77,22 @@ def get_sample_ids(
         assert provided_t_name in vcf_samples,\
             f'Tumor sample name {provided_t_name} is not in VCF {vcf_path}. Found: {vcf_samples}'
         t_name = provided_t_name
-        if provided_n_name:
-            assert provided_n_name in vcf_samples,\
-                f'Normal sample name {provided_n_name} is not in VCF {vcf_path}. Found: {vcf_samples}'
-            n_name = provided_n_name
-    else:
-        guessed_t_name, guessed_n_name = guess_sample_names(vcf_path)
+    if provided_n_name:
+        assert provided_n_name in vcf_samples,\
+            f'Normal sample name {provided_n_name} is not in VCF {vcf_path}. Found: {vcf_samples}'
+        n_name = provided_n_name
+    guessed_t_name, guessed_n_name = guess_sample_names(vcf_path)
+    if not t_name:
         if not guessed_t_name:
-            critical(f'Can\'t guess sample names from the VCF {vcf_path}')
+            critical(f'Can\'t guess tumor sample name from the VCF {vcf_path}')
         t_name = guessed_t_name
+    if not n_name:
+        if not guessed_n_name:
+            critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
         n_name = guessed_n_name
 
-
     t_id = vcf_samples.index(t_name)
-    if len(vcf_samples) >= 2:
+    if n_name and len(vcf_samples) >= 2:
         n_id = vcf_samples.index(n_name)
 
     if return_names:
