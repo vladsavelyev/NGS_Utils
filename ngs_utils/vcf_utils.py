@@ -88,8 +88,17 @@ def get_sample_ids(
         t_name = guessed_t_name
     if not n_name:
         if not guessed_n_name:
-            critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
-        n_name = guessed_n_name
+            if t_name:
+                try:
+                    n_name = [s for s in vcf_samples if s != t_name][0]
+                except:
+                    critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
+                else:
+                    pass
+            else:
+                critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
+        else:
+            n_name = guessed_n_name
 
     t_id = vcf_samples.index(t_name)
     if n_name and len(vcf_samples) >= 2:
