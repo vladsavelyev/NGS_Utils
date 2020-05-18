@@ -47,9 +47,9 @@ def main(genome=None, gtf_path=None, all_transcripts=False, principal=False, onl
             critical('GTF file is needed. Either install hpc_utils, or provide GTF with --gtf')
         else:
             if genome == 'GRCh37':
-                gtf_path = os.path.join(hpc.get_ref_file(key='pyensembl_data'), 'GRCh37/ensembl75/Homo_sapiens.GRCh37.75.gtf.gz')
+                gtf_path = os.path.join(hpc.get_ref_file(genome, key='pyensembl_data'), 'GRCh37/ensembl75/Homo_sapiens.GRCh37.75.gtf.gz')
             else:
-                gtf_path = os.path.join(hpc.get_ref_file(key='pyensembl_data'), 'GRCh38/ensembl95/Homo_sapiens.GRCh38.95.gtf.gz')
+                gtf_path = os.path.join(hpc.get_ref_file(genome, key='pyensembl_data'), 'GRCh38/ensembl95/Homo_sapiens.GRCh38.95.gtf.gz')
 
     # Genes
     key_genes = None
