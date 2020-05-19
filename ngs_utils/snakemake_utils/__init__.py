@@ -24,16 +24,16 @@ def get_submit_script():
 def make_cluster_cmdl(log_dir, app_name=''):
     """ Generates cluster command line parameters for snakemake
     """
-    from hpc_utils import hpc
-    if not hpc.cluster_cmd:
-        logger.critical(f'Automatic cluster submission is not supported for the machine "{hpc.name or hpc.hostname}"')
+    from reference_data import api as refdata
+    if not refdata.cluster_cmd:
+        logger.critical(f'Automatic cluster submission is not supported for the machine "{refdata.name}"')
 
     cluster_submitter = get_submit_script()
     timestamp = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
     cluster_cmdl = f' --cluster "{cluster_submitter} {timestamp} {log_dir} {app_name}"'
 
     # Also overriding jobscript?
-    jobscript = hpc.cluster_jobscript
+    jobscript = refdata.cluster_jobscript
     if jobscript:
         jobscript_file = join(log_dir, 'jobscript.sh')
         with open(jobscript_file, 'w') as f_out:

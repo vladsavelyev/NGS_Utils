@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-from hpc_utils import hpc
+from reference_data import api as refdata
 from snakemake.utils import read_job_properties
 
 
@@ -14,10 +14,10 @@ app_name = args[2] if len(args) >= 4 else 'snakemake'
 wrapper_sh = sys.argv[-1].strip()
 assert ' ' not in wrapper_sh, wrapper_sh
 
-# Get submit command from hpc_utils/hpc.py
+# Get submit command from reference_data/api.py
 submit_cmd = ''
-if hpc.cluster_cmd:
-    submit_cmd = hpc.cluster_cmd
+if refdata.cluster_cmd:
+    submit_cmd = refdata.cluster_cmd
 
 # Replace submit command wildcards with current job properties
 job_properties = read_job_properties(wrapper_sh)
