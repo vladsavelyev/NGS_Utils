@@ -1,3 +1,4 @@
+import math
 from random import random
 import string
 import os
@@ -43,12 +44,18 @@ def make_cluster_cmdl(log_dir, app_name=''):
     return cluster_cmdl
 
 
-def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
+def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
                   unlock=False, dryrun=False, target_rules=None, cluster=None, cluster_cmd=None,
                   log_dir=None, dag=None, report=None, restart_times=1,
                   tibanna_cfg=None):
 
-    conf['total_cores'] = jobs
+    ncpus_requested = cores
+    try:
+        ncpus_on_a_machine = len(os.sched_getaffinity(0))
+    except:
+        ncpus_on_a_machine = os.cpu_count()
+    ncpus_available = min(ncpus_on_a_machine, ncpus_requested or math.inf)
+    conf['total_cores'] = ncpus_available
 
     #########################
     #### Setting cluster ####
@@ -90,7 +97,7 @@ def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
             output_bucket_name = output_bucket_name.split(':')[1]
         step_func_name = setup_tibanna(tibanna_cfg['id'], [output_bucket_name])
         tibanna_opts = f'--tibanna --default-remote-prefix {output_s3} --tibanna-sfn {step_func_name}'
-        
+
     cmd = (
         f'snakemake '
         f'{" ".join(flatten([target_rules])) if target_rules else ""} ' +
@@ -100,7 +107,7 @@ def run_snakemake(snakefile, conf, jobs=None, output_dir=None, forcerun=None,
         f'{"--dag " if dag else ""}'
         f'{f"--report {report} " if report else ""}'
         f'{f"--directory {output_dir} " if output_dir else ""}'
-        f'{f"-j {jobs} " if jobs else ""}'
+        f'--cores {ncpus_available} '
         f'--rerun-incomplete '
         f'{f"--restart-times {restart_times - 1}" if restart_times > 1 else ""}'
         f'{cluster_param} '
