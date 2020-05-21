@@ -234,9 +234,10 @@ class DragenProject(BaseProject):
                   f'{len(batch.normal.qc_files)} normal QC files')
         return batch_by_name
 
-    def __init__(self, input_dir=None, silent=False, include_samples=None, exclude_samples=None, **kwargs):
+    def __init__(self, input_dir=None, silent=False, include_samples=None, exclude_samples=None,
+                 genome_build=None, **kwargs):
         BaseProject.__init__(self, input_dir=input_dir, **kwargs)
-        self.genome_build = 'hg38'
+        self.genome_build = genome_build
 
         debug(f'Parsing project {input_dir}')
         self.batch_by_name = DragenProject.find_batches(self.dir, silent=silent,
