@@ -1,4 +1,6 @@
 import re
+import shutil
+import tarfile
 from collections import defaultdict
 import yaml
 from os import listdir
@@ -365,6 +367,63 @@ class BcbioBatch(BaseBatch):
                  f'<tumor>/<batch>(-sv-prioritize)-{caller}.vcf.gz (conventional bcbio), '
                  f'nor in the project folder as project/<tumor>-{caller}(-prioritized).vcf.gz (CWL bcbio).')
 
+    def find_qc_files(self, dst_dir, exclude_files=None, include_files=None):
+        """
+        Parses bcbio MultiQC file list and collects all QC files belonging to this batch
+
+        :param dst_dir: destination directory where the QC files will be copied to
+        :param exclude_files: not include files matching these patterns
+        :param include_files: only include files matching these patterns
+        :return: list of file paths copied into `new_mq_data_dir`
+        """
+
+        mq_dir = join(self.parent_project.date_dir, 'multiqc')
+        mq_filelist = join(mq_dir, 'list_files_final.txt')
+        verify_file(mq_filelist, is_critical=True)
+
+        # Cromwell?
+        cwl_targz = join(mq_dir, 'multiqc-inputs.tar.gz')
+        tar_f_by_fp = dict()
+        if isfile(cwl_targz):
+            info(f'Found CWL MultiQC output {cwl_targz}, extracting required QC files from the archive')
+            if cwl_targz:
+                tar = tarfile.open(cwl_targz)
+                for member in tar.getmembers():
+                    rel_fp = member.name
+                    if 'call-multiqc_summary/execution/qc/multiqc/' in rel_fp:
+                        rel_fp = rel_fp.split('call-multiqc_summary/execution/qc/multiqc/')[1]
+                    tar_f_by_fp[rel_fp] = tar.extractfile(member)
+
+        qc_files_not_found = []
+        qc_files_found = []
+        with open(mq_filelist) as inp:
+            for fp in [l.strip() for l in inp if l.strip()]:
+                if fp == 'trimmed' or fp.endswith('/trimmed'):
+                    continue  # back-compatibility with bcbio
+                if exclude_files:
+                    if isinstance(exclude_files, str):
+                        exclude_files = [exclude_files]
+                    if any(re.search(ptn, fp) for ptn in exclude_files):
+                        continue
+                if include_files:
+                    if isinstance(include_files, str):
+                        include_files = [include_files]
+                    if not any(re.search(ptn, fp) for ptn in include_files):
+                        continue
+
+                new_fp = _extract_qc_file(fp, dst_dir, self.parent_project.final_dir, tar_f_by_fp)
+                if not new_fp:
+                    qc_files_not_found.append(fp)
+                    continue
+                else:
+                    qc_files_found.append(new_fp)
+
+        if qc_files_not_found:
+            warn('-')
+            warn(f'Some QC files from list {mq_filelist} were not found:' +
+                ''.join('\n  ' + fpath for fpath in qc_files_not_found))
+        return qc_files_found
+
 
 class NoConfigDirException(Exception):
     pass
@@ -637,13 +696,6 @@ class BcbioProject(BaseProject):
 
         return batch_by_name
 
-    def find_multiqc_report(self):
-        for fpath in [
-            join(self.date_dir, 'multiqc_postproc', 'multiqc_report.html'),
-        ]:
-            if verify_file(fpath, silent=True):
-                return fpath
-
     def find_in_log(self, fname, is_critical=False, silent=True):
         options = [join(self.log_dir, fname),
                    join(self.date_dir, fname)]
@@ -661,6 +713,28 @@ class BcbioProject(BaseProject):
 
     def is_small_target(self):
         return is_small_target(self.coverage_bed)
+
+
+def _extract_qc_file(fp, new_mq_data_dir, final_dir, f_by_fp=None):
+    """ Extracts QC file `fp` either by copying from `final_dir` (native bcbio),
+        or from tar.gz file `tar_path` (CWL bcbio). Writes into a new file at new_mq_data_dir
+    """
+    if fp.startswith('report/metrics/'):
+        fp = fp.replace('report/metrics/', 'project/multiqc/')  # for CWL _bcbio.txt files
+
+    dst_fp = join(new_mq_data_dir, fp)
+
+    fp_in_final = join(final_dir, fp)
+    if isfile(fp_in_final):
+        safe_mkdir(dirname(dst_fp))
+        shutil.copy2(fp_in_final, dst_fp)
+        return dst_fp
+
+    elif f_by_fp and fp in f_by_fp:
+        safe_mkdir(dirname(dst_fp))
+        with open(dst_fp, 'wb') as out:
+            out.write(f_by_fp[fp].read())
+        return dst_fp
 
 
 def detect_bcbio_dir(input_dir, silent=False):
