@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-import sys
 from os.path import join
 from setuptools import setup
 import versionpy
-
 import ngs_utils
 package_name = ngs_utils.__name__
-
 version = versionpy.get_version(package_name)
 
 setup(
