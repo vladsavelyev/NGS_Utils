@@ -100,8 +100,10 @@ def get_sample_ids(
         else:
             n_name = guessed_n_name
 
-    t_id = vcf_samples.index(t_name)
-    if n_name and len(vcf_samples) >= 2:
+    if t_name is not None:
+        assert t_name in vcf_samples, f't_name: {t_name}, vcf_samples: {vcf_samples}'
+        t_id = vcf_samples.index(t_name)
+    if n_name is not None and len(vcf_samples) >= 2:
         n_id = vcf_samples.index(n_name)
 
     if return_names:
