@@ -31,13 +31,12 @@ f''' * Examples *
 @click.option('--gtf', 'gtf_path', help='Path to GTF to extract features. Default is by reference_data')
 @click.option('--all-transcripts', 'all_transcripts', is_flag=True, help='Use all transcripts (default is principal+alternative by APPRIS)')
 @click.option('-p', '--principal', 'principal', is_flag=True, help='Use only principal transcripts (by APPRIS)')
-@click.option('-k', '--key-genes', 'only_key_genes', is_flag=True, help='Use UMCCR key cancer genes only')
 @click.option('--genes', 'gene_list', help='Use genes from the list only')
 @click.option('--biotypes', 'biotypes', default='protein_coding,decay', help='Feature types to extract')
 @click.option('--features', 'features', default='CDS,stop_codon', help='Feature types to extract')
 
-def main(genome=None, input_genomes_url=None, gtf_path=None, all_transcripts=False, principal=False, only_key_genes=False, gene_list=None,
-         biotypes='', features=''):
+def main(genome=None, input_genomes_url=None, gtf_path=None, all_transcripts=False, principal=False,
+         gene_list=None, biotypes='', features=''):
     out = sys.stdout
 
     # GTF
@@ -55,9 +54,7 @@ def main(genome=None, input_genomes_url=None, gtf_path=None, all_transcripts=Fal
 
     # Genes
     key_genes = None
-    if only_key_genes:
-        key_genes = get_key_genes_set()
-    elif gene_list:
+    if gene_list:
         key_genes = get_genes_from_file(gene_list)
 
     # Transcripts
@@ -106,7 +103,7 @@ def main(genome=None, input_genomes_url=None, gtf_path=None, all_transcripts=Fal
                                    kv.split()[1].strip().strip('"')
                                for kv in annotations.split('; ')}
                 gene_name = annotations['gene_name']
-                if only_key_genes and gene_name not in key_genes:
+                if key_genes and gene_name not in key_genes:
                     continue
 
                 if biotypes:
