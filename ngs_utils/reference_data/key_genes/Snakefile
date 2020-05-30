@@ -39,13 +39,13 @@ rule make_gene_list:
 
 rule extract_transcripts:
     input:
-        genes_file = input_tsv,
+        genes_list = rules.make_gene_list.output[0],
     output:
         bed = output_bed,
     params:
         features = lambda wc: 'CDS,stop_codon' if wc.featuretype == 'coding' else 'transcript'
     shell:
-        'generate_bed.py -g {wildcards.genome} --key-genes --features {params.features} --biotypes "" '
+        'generate_bed.py -g {wildcards.genome} --genes {input.genes_list} --features {params.features} --biotypes "" '
         ' | sort -k1,1V -k2,2n'
         ' > {output.bed}'
 
