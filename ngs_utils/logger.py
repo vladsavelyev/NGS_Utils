@@ -220,6 +220,8 @@ class CriticalError(Exception):
 def _log(out, msg='', ending='\n', print_date=True, severity=None):
     if is_silent:
         return
+    if severity == 'debug' and not is_debug:
+        return
 
     # Keeping track of all severe log messages
     if severity == 'critical':
