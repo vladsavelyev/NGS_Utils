@@ -29,6 +29,9 @@ class BcbioSample(BaseSample):
         self.sv_regions_bed = None
         self.variantcallers = []
 
+        self.germline_caller = None
+        self.somatic_caller = None
+
     def get_name_for_files(self):  # In case if the sample if symlink from another project, and the name was changed in this one
         return self.old_name or self.name
 
@@ -173,7 +176,6 @@ class BcbioSample(BaseSample):
         if not silent:
             warn('No BAM or CRAM file found for ' + self.name)
 
-
     def _set_name_and_paths(self, name, variantcallers_data, ensemble=False, silent=False):
         self.raw_name = name
         self.name = self.raw_name.replace('.', '_')
@@ -221,11 +223,11 @@ class BcbioSample(BaseSample):
             self.variantcallers = ['ensemble'] + self.variantcallers
 
         if self.phenotype != 'germline' and self.phenotype != 'normal':
-            self.parent_project.somatic_caller = next((c for c in CALLER_PRIORITY if c in self.variantcallers),
-                                                     self.variantcallers[0])
+            self.somatic_caller = next((c for c in CALLER_PRIORITY if c in self.variantcallers),
+                                       self.variantcallers[0])
         else:
-            self.parent_project.germline_caller = next((c for c in CALLER_PRIORITY if c in self.variantcallers),
-                                                      self.variantcallers[0])
+            self.germline_caller = next((c for c in CALLER_PRIORITY if c in self.variantcallers),
+                                        self.variantcallers[0])
 
     def find_sv_vcf(self):
         return self.find_cnv_file(self.name + '-manta.vcf.gz') or \
@@ -281,6 +283,10 @@ class BcbioBatch(BaseBatch):
 
     def find_somatic_vcf(self, silent=False, caller=None):
         caller = caller or self.somatic_caller
+        if not caller:
+            if not silent:
+                warn(f'Batch {self.name} have no variant caler info assigned, skipping finding somatic VCF')
+                return
 
         # in datestamp. cwl-bcbio writes there
         vcf_cwl_fpath_gz = adjust_path(join(self.parent_project.date_dir, self.name + '-' + caller + '.vcf.gz'))
@@ -312,6 +318,10 @@ class BcbioBatch(BaseBatch):
 
     def find_germline_vcf(self, silent=False, caller=None):
         caller = caller or self.germline_caller
+        if not caller:
+            if not silent:
+                warn(f'Batch {self.name} have no variant caler info assigned, skipping finding germline VCF')
+                return
 
         # in sample dir. starting from bcbio 1.1.6, ~ Dec 2019
         vcf_fpath_gz = adjust_path(join(self.parent_project.date_dir, f'{self.normal.name}-germline-{caller}.vcf.gz'))
@@ -658,7 +668,8 @@ class BcbioProject(BaseProject):
         return final_dir
 
     def update_batches(self, samples, silent=False):
-        batch_by_name = {bn: BcbioBatch(name=bn, parent_project=self) for bn in list(set([b for s in samples for b in s.batch_names]))}
+        batch_by_name = {bn: BcbioBatch(name=bn, parent_project=self)
+                         for bn in list(set([b for s in samples for b in s.batch_names]))}
 
         for sample in samples:
             for bn in sample.batch_names:
@@ -685,6 +696,17 @@ class BcbioProject(BaseProject):
         for b in batch_by_name.values():
             if b.tumor:
                 b.tumor.normal_match = b.normal
+
+        # setting variant caller names for batches
+        for b in batch_by_name.values():
+            s = b.tumor or b.normal
+            if s.somatic_caller is None:
+                if not silent:
+                    warn(f'Sample {s} doesn\'t have variant callers info, skip assinging '
+                         f'variant callers to batch {b.name}')
+            else:
+                b.somatic_caller = s.somatic_caller
+            b.germline_caller = s.germline_caller
 
         # finding vcfs
         for b in batch_by_name.values():
