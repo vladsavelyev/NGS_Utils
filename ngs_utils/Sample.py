@@ -20,7 +20,7 @@ class BaseSample:
     def __init__(self, name=None, dirpath=None, work_dir=None, bam=None, bed=None, genome=None,
                  targqc_dirpath=None, clinical_report_dirpath=None,
                  normal_match=None, sv_fpath=None, sv_bed=None,
-                 l_fpath=None, r_fpath=None, phenotype=None, batch=None, rgid=None,
+                 l_fpath=None, r_fpath=None, phenotype=None, rgid=None,
                  parent_project=None, **kwargs):
         self.name = name
         self.rgid = rgid if rgid is not None else name
@@ -41,7 +41,7 @@ class BaseSample:
         self.targqc_dirpath = targqc_dirpath
         self.clinical_html = None
 
-        self.batch = batch
+        self.batches = []
         self.batch_names = []
         self.phenotype = None
         self.is_rnaseq = None

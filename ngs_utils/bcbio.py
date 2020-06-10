@@ -321,7 +321,8 @@ class BcbioBatch(BaseBatch):
         if not caller:
             if not silent:
                 warn(f'Batch {self.name} have no variant caler info assigned, skipping finding germline VCF')
-                return
+            return
+        assert caller
 
         # in sample dir. starting from bcbio 1.1.6, ~ Dec 2019
         vcf_fpath_gz = adjust_path(join(self.parent_project.date_dir, f'{self.normal.name}-germline-{caller}.vcf.gz'))
@@ -674,7 +675,7 @@ class BcbioProject(BaseProject):
         for sample in samples:
             for bn in sample.batch_names:
                 batch_by_name[bn].name = bn
-                sample.batch = batch_by_name[bn]
+                sample.batches.append(batch_by_name[bn])
                 if sample.phenotype == 'normal':
                     if batch_by_name[bn].normal:
                         critical('Multiple normal samples for batch ' + bn)
@@ -682,7 +683,8 @@ class BcbioProject(BaseProject):
                 else:
                     batch_by_name[bn].tumor = sample
 
-        # import pdb; pdb.set_trace()
+        # Removing batches that do not have matching tumor samples
+        batch_by_name = {bn: b for bn, b in batch_by_name.items() if b.tumor}
 
         # for batch in batch_by_name.values():
         #     if batch.normal and not batch.tumor:
@@ -699,14 +701,19 @@ class BcbioProject(BaseProject):
 
         # setting variant caller names for batches
         for b in batch_by_name.values():
-            s = b.tumor or b.normal
-            if s.somatic_caller is None:
+            if b.tumor.somatic_caller is None:
                 if not silent:
-                    warn(f'Sample {s} doesn\'t have variant callers info, skip assinging '
-                         f'variant callers to batch {b.name}')
+                    warn(f'Sample {b.tumor} doesn\'t have somatic variant callers info, skip assinging '
+                         f'variant caller to batch {b.name}')
             else:
-                b.somatic_caller = s.somatic_caller
-            b.germline_caller = s.germline_caller
+                b.somatic_caller = b.tumor.somatic_caller
+            if b.normal:
+                if b.normal.germline_caller is None:
+                    if not silent:
+                        warn(f'Sample {b.tumor} doesn\'t have germline variant callers info, skip assinging '
+                             f'germline variant caller to batch {b.name}')
+                else:
+                    b.germline_caller = b.normal.germline_caller
 
         # finding vcfs
         for b in batch_by_name.values():
