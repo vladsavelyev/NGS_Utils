@@ -1,18 +1,22 @@
 from contextlib import contextmanager
 from traceback import format_exc
+import yaml
 
 from ngs_utils.logger import info, err, critical, debug, warn
 from ngs_utils.file_utils import verify_file
-
-from yaml import load as load_yaml
-
 from ngs_utils.utils import update_dict
+
+
+def _load_yaml(fname):
+    with open(fname) as in_handle:
+        config = yaml.load(in_handle, Loader=yaml.FullLoader)
+    return config
 
 
 def load_yaml_config(fpath):
     verify_file(fpath, is_critical=True)
     try:
-        dic = load_yaml(open(fpath))
+        dic = _load_yaml(fpath)
     except Exception:
         err(format_exc())
         critical('Could not parse bcbio YAML ' + fpath)
@@ -52,12 +56,8 @@ def with_cnf(cnf, **kwargs):
 def merge_config_files(fnames):
     """Merge configuration files, preferring definitions in latter files.
     """
-    import yaml
-    def _load_yaml(fname):
-        with open(fname) as in_handle:
-            config = yaml.load(in_handle)
-        return config
     out = _load_yaml(fnames[0])
     for fname in fnames[1:]:
         update_dict(to_update=out, updates=_load_yaml(fname))
     return out
+
