@@ -218,7 +218,7 @@ class CriticalError(Exception):
 
 
 def _log(out, msg='', ending='\n', print_date=True, severity=None):
-    if is_silent:
+    if is_silent and severity != 'critical' and severity != 'error':
         return
     if severity == 'debug' and not is_debug:
         return
