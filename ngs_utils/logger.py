@@ -107,11 +107,6 @@ error = err
 def critical(msg=''):
     if isinstance(msg, str):
         err(f'ERROR: {msg}', severity='critical')
-    else:
-        if not msg:
-            return
-        for m in msg:
-            err(f'ERROR: {m}', severity='critical')
     raise CriticalError(msg)
 
 
