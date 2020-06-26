@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import os
+import re
+
 import sys
 from bed_annotation import canon_transcript_per_gene
 from ngs_utils.file_utils import open_gzipsafe
@@ -34,9 +36,10 @@ f''' * Examples *
 @click.option('--genes', 'gene_list', help='Use genes from the list only')
 @click.option('--biotypes', 'biotypes', default='protein_coding,decay', help='Feature types to extract')
 @click.option('--features', 'features', default='CDS,stop_codon', help='Feature types to extract')
+@click.option('--gene-contains', 'gene_contains', help='Gene name must contain')
 
 def main(genome=None, input_genomes_url=None, gtf_path=None, all_transcripts=False, principal=False,
-         gene_list=None, biotypes='', features=''):
+         gene_list=None, biotypes='', features='', gene_contains=None):
     out = sys.stdout
 
     # GTF
@@ -53,9 +56,9 @@ def main(genome=None, input_genomes_url=None, gtf_path=None, all_transcripts=Fal
                 gtf_path = os.path.join(refdata.get_ref_file(genome, key='pyensembl_data'), 'GRCh38/ensembl95/Homo_sapiens.GRCh38.95.gtf.gz')
 
     # Genes
-    key_genes = None
+    target_genes = None
     if gene_list:
-        key_genes = get_genes_from_file(gene_list)
+        target_genes = get_genes_from_file(gene_list)
 
     # Transcripts
     transcripts_by_gid = None
@@ -103,7 +106,9 @@ def main(genome=None, input_genomes_url=None, gtf_path=None, all_transcripts=Fal
                                    kv.split()[1].strip().strip('"')
                                for kv in annotations.split('; ')}
                 gene_name = annotations['gene_name']
-                if key_genes and gene_name not in key_genes:
+                if target_genes and gene_name not in target_genes:
+                    continue
+                if gene_contains is not None and gene_contains not in gene_name:
                     continue
 
                 if biotypes:
@@ -118,7 +123,7 @@ def main(genome=None, input_genomes_url=None, gtf_path=None, all_transcripts=Fal
                     if not canon_transcript_ids:
                         genes_without_canon.add(gene_name)
                         continue
-                    if not transcript_id in canon_transcript_ids:
+                    if transcript_id not in canon_transcript_ids:
                         continue
 
                 start = int(start) - 1
