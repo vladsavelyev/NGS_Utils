@@ -22,10 +22,9 @@ def get_submit_script():
     return 'python ' + join(package_path(), 'submit')
 
 
-def make_cluster_cmdl(log_dir, app_name=''):
+def make_cluster_cmdl(log_dir, refdata, app_name=''):
     """ Generates cluster command line parameters for snakemake
     """
-    from reference_data import api as refdata
     if not refdata.cluster_cmd:
         logger.critical(f'Automatic cluster submission is not supported for the machine "{refdata.name}"')
 
@@ -36,6 +35,7 @@ def make_cluster_cmdl(log_dir, app_name=''):
     # Also overriding jobscript?
     jobscript = refdata.cluster_jobscript
     if jobscript:
+        safe_mkdir(log_dir)
         jobscript_file = join(log_dir, 'jobscript.sh')
         with open(jobscript_file, 'w') as f_out:
             f_out.write(jobscript.replace('{path}', os.environ["PATH"]))
@@ -44,36 +44,34 @@ def make_cluster_cmdl(log_dir, app_name=''):
     return cluster_cmdl
 
 
+DEFAULT_RESTART_TIMES = 2
+
 def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
-                  unlock=False, dryrun=False, target_rules=None, cluster=None, cluster_cmd=None,
+                  unlock=False, dryrun=False, target_rules=None, debug=False,
                   log_dir=None, dag=None, report=None, restart_times=1,
-                  tibanna_cfg=None):
-
-    ncpus_requested = cores
-    try:
-        ncpus_on_a_machine = len(os.sched_getaffinity(0))
-    except:
-        ncpus_on_a_machine = os.cpu_count()
-    ncpus_available = min(ncpus_on_a_machine, ncpus_requested or math.inf)
-    conf['total_cores'] = ncpus_available
-
-    #########################
-    #### Setting cluster ####
-    #########################
-
-    cluster_param = ''
-    cluster_log_dir = ''
-    if cluster or cluster_cmd:
-        assert log_dir, 'For cluster run, must also specify log_dir'
-        if cluster_cmd:
-            cluster_param = f' --cluster "{cluster_cmd}"'
-        else:
-            cluster_log_dir = safe_mkdir(join(log_dir, 'cluster'))
-            cluster_param = make_cluster_cmdl(cluster_log_dir, 'umccrise')
+                  tibanna_cfg=None,
+                  resources=None, cluster_param=None, cluster_log_dir=None,
+                  local_cores=None, ncpus_per_batch=None, ncpus_per_sample=None,
+                  tmp_dirs=[]):
 
     ##########################
     #### Preparing config ####
     ##########################
+
+    if unlock: conf['unlock'] = 'yes'
+
+    if debug:
+        conf['debug'] = 'yes'
+        if restart_times is None:
+            restart_times = 0
+    if restart_times is None:
+        restart_times = DEFAULT_RESTART_TIMES
+    restart_times = int(restart_times)
+
+    if ncpus_per_batch:
+        conf['threads_per_batch'] = ncpus_per_batch
+    if ncpus_per_sample:
+        conf['threads_per_sample'] = ncpus_per_sample
 
     if log_dir:
         safe_mkdir(log_dir)
@@ -86,6 +84,7 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
     ###############################
     #### Building command line ####
     ###############################
+
     if forcerun:
         forcerun = " ".join(forcerun.split(','))
 
@@ -104,16 +103,17 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
         f'--snakefile {snakefile} '
         f'--printshellcmds '
         f'{"--dryrun " if dryrun else ""}'
+        f'--rerun-incomplete '
         f'{"--dag " if dag else ""}'
         f'{f"--report {report} " if report else ""}'
         f'{f"--directory {output_dir} " if output_dir else ""}'
-        f'--cores {ncpus_available} '
-        f'--rerun-incomplete '
-        f'{f"--restart-times {restart_times - 1}" if restart_times > 1 else ""}'
-        f'{cluster_param} '
+        f'--cores {cores} '
+        f'{f"--local-cores {local_cores} " if local_cores else ""}'
+        f'{f"--restart-times {restart_times - 1} " if restart_times > 1 else ""}'
+        f'{cluster_param if cluster_param else ""} '
         f'--configfile {conf_f.name} ' +
-        f'{"--dag " if dag else ""}' +
         f'{f"--forcerun {forcerun} " if forcerun else ""}' +
+        f'{f"--resources {resources} " if resources else ""} '
         f'{tibanna_opts}'
     )
 
@@ -134,6 +134,7 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
         if cluster_log_dir:
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
             logger.error(f'Review cluster job logs in {cluster_log_dir}')
+        for tmp_dir in tmp_dirs: tmp_dir.cleanup()
         sys.exit(1)
     except KeyboardInterrupt:
         logger.error('--------')
@@ -141,12 +142,106 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
         if cluster_log_dir:
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
             logger.error(f'Review cluster job logs in {cluster_log_dir}')
+        for tmp_dir in tmp_dirs: tmp_dir.cleanup()
         sys.exit(1)
     else:
         logger.info('--------')
         if cluster_log_dir:
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
         logger.info(f'Finished. Output directory: {output_dir}')
+        for tmp_dir in tmp_dirs: tmp_dir.cleanup()
+
+
+def prep_resources(num_batches=None, num_samples=None,
+                   ncpus_requested=None, is_cluster=False, is_silent=False,
+                   ncpus_per_node=None
+                   ):
+    """ Determines the number of cpus used by a job and the total number of cpus
+        available to snakemake scheduler.
+        :returns ncpus_per_batch, ncpus_per_sample, ncpus_available, ncpus_per_node=None
+    """
+    # Checking presets for known HPC clusters, otherwise assuming a for single-machine AWS or local run
+    # and just taking the number of available CPUs:
+
+    class Resources:
+        def __init__(self):
+            self.ncpus_per_batch = None
+            self.ncpus_per_sample = None
+            self.ncpus_available = None
+            self.ncpus_per_node = None
+            self.ncpus_local = None
+
+    resources = Resources()
+
+    if is_cluster:
+        # we are not resticted to one machine, so can submit many jobs and let the scheduler figure out the queue
+        resources.ncpus_available = ncpus_requested or ncpus_per_node
+        resources.ncpus_per_node = ncpus_per_node
+        if ncpus_per_node:
+            logger.info(f'Number of CPUs on a cluster node: {ncpus_per_node}')
+        resources.ncpus_local = 1
+    else:
+        try:
+            ncpus_on_this_machine = len(os.sched_getaffinity(0))
+        except:
+            ncpus_on_this_machine = os.cpu_count()
+        if ncpus_on_this_machine:
+            logger.info(f'Number of CPUs on this machine : {ncpus_on_this_machine}')
+        # scheduling is on Snakemake, so restricting to the number of available cpus on this machine
+        resources.ncpus_available = min(ncpus_on_this_machine, ncpus_requested or math.inf)
+        resources.ncpus_per_node = None
+        resources.ncpus_local = ncpus_on_this_machine
+
+    def adjust_ncpus_per_job(ncpus, max_ncpus_per_job=10, msg=''):
+        """ Adjusting the number of cpus to a number below <max_ncpus_per_job>.
+            Say, if we have more than 20 cpus on a node and only 1 batch, we should adjust
+            to use only half of that for a batch, so that 2 different jobs (say, AMBER and COBALT)
+            can be run in parallel, because using 20 cpus per one job is a waste.
+        """
+        if ncpus > max_ncpus_per_job:
+            # new_ncpus = ncpus
+            factor = math.ceil(ncpus / max_ncpus_per_job)
+            new_ncpus = ncpus // factor
+            # while True:
+            #     factor += 1
+            #     new_ncpus = ncpus // factor
+            #     print(f'ncpus: {ncpus}, factor: {factor}, new_ncpus: {new_ncpus}')
+            #     if new_ncpus < max_ncpus_per_job:
+            #         print(f'breaking')
+            #         break
+            if not is_silent:
+                logger.info(
+                    (msg if msg else 'The number of cpus per batch is ') + f'{ncpus} >{max_ncpus_per_job}. '
+                    f'This is usually wasteful, so we are adjusting it '
+                    f'to the number <={max_ncpus_per_job}: {new_ncpus} = {ncpus} // {factor}, so '
+                    f'{factor} different rules can be run in parallel (say, AMBER and COBALT '
+                    f'at the same time).')
+            ncpus = new_ncpus
+        return ncpus
+
+    if num_batches:
+        ncpus_per_batch = max(1, resources.ncpus_available // num_batches)
+        resources.ncpus_per_batch = adjust_ncpus_per_job(ncpus_per_batch, max_ncpus_per_job=14, msg=
+            f'The number of cpus available is {resources.ncpus_available}, and the number of batches is {num_batches}, '
+            f'so the number of cpus per batch would be ')
+    if num_samples:
+        ncpus_per_sample = max(1, resources.ncpus_available // num_samples)
+        resources.ncpus_per_sample = adjust_ncpus_per_job(ncpus_per_sample, max_ncpus_per_job=14, msg=
+            f'The number of cpus available is {resources.ncpus_available}, and the number of samples is {num_samples}, '
+            f'so the number of cpus per sample would be ')
+
+    if not is_silent:
+        if resources.ncpus_local:
+            logger.info(f'Local CPUs: {resources.ncpus_local}')
+        if ncpus_requested:
+            logger.info(f'Total CPUs requested by `umccrise --cores`: {ncpus_requested}')
+        logger.info(f'The pipeline can use {resources.ncpus_available} CPUs total.')
+        if num_batches:
+            logger.info(f'Batches found: {num_batches}, using {resources.ncpus_per_batch} cpus per batch.')
+        if num_samples:
+            logger.info(f'Samples found: {num_samples}, using {resources.ncpus_per_sample} cpus per sample.')
+
+    return resources
 
 
 def setup_tibanna(tibanna_id=None, buckets=None):
@@ -179,10 +274,5 @@ def check_tibanna_id_exists(tibanna_id):
         return True
     
     
-    
-    
-    
-    
-    
-    
+
     
