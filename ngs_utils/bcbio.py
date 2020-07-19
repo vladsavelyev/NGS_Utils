@@ -53,15 +53,9 @@ class BcbioSample(BaseSample):
     def load_from_sample_info(sample_info, bcbio_project,
                               include_samples=None, exclude_samples=None,
                               extra_batches=None, silent=False):
-        # Get sample and batch names and exclude/include based on exclude_samples and include_samples
-        description = str(sample_info['description']).replace('.', '_')
-
-        batch_names = sample_info.get('metadata', dict()).get('batch')
-        if isinstance(batch_names, int) or isinstance(batch_names, float):
-            batch_names = str(batch_names)
-        if isinstance(batch_names, str):
-            batch_names = [batch_names]
-        batch_names = [b.replace('.', '_') for b in batch_names if b]
+        """ Get sample and batch names and exclude/include based on exclude_samples and include_samples
+        """
+        description, batch_names = BcbioSample.parse_sample_ids(sample_info)
 
         if exclude_samples:
             # Sample name
@@ -137,15 +131,12 @@ class BcbioSample(BaseSample):
             s.coverage_interval = 'regional'
         s.is_wgs = s.coverage_interval == 'genome'
 
-        if s._set_name_and_paths(
-                name=description,
-                variantcallers_data=sample_info['algorithm'].get('variantcaller'),
-                ensemble='ensemble' in sample_info['algorithm'],
-                silent=silent
-        ):
-            return s
-        else:
-            return None
+        s._set_name_and_paths(
+            name=description,
+            variantcallers_data=sample_info['algorithm'].get('variantcaller'),
+            ensemble='ensemble' in sample_info['algorithm'],
+            silent=silent)
+        return s
 
     def find_bam(self, silent=False):
         name = self.get_name_for_files()
@@ -182,15 +173,12 @@ class BcbioSample(BaseSample):
         self.rgid = self.name
         self.dirpath = verify_dir(join(self.parent_project.final_dir, self.name))
         if not verify_dir(self.dirpath, silent=silent):
-            if not silent:
-                critical(f'Sample "{self.name}" specified in bcbio YAML is not found in the final directory '
-                         f'{self.parent_project.final_dir}. Please check consistency between the YAML '
-                         f'{self.parent_project.bcbio_yaml_fpath} and the directories in `final`: '
-                         f'to every "description" value in YAML, there should be a corresponding folder with the '
-                         f'same name in `final`. You can use `-e` option to exclude samples (comma-separated) '
-                         f'from consideration, if you are sure that missing folders are expected.')
-            else:
-                return False
+            critical(f'Sample "{self.name}" specified in bcbio YAML is not found in the final directory '
+                     f'{self.parent_project.final_dir}. Please check consistency between the YAML '
+                     f'{self.parent_project.bcbio_yaml_fpath} and the directories in `final`: '
+                     f'to every "description" value in YAML, there should be a corresponding folder with the '
+                     f'same name in `final`. You can use `-e` option to exclude samples (comma-separated) '
+                     f'from consideration, if you are sure that missing folders are expected.')
 
         self.bam = self.find_bam(silent=silent)
 
@@ -205,7 +193,6 @@ class BcbioSample(BaseSample):
                 self._set_variant_callers(variantcallers_data, ensemble=ensemble)
             else:
                 if not silent: warn('No variant callers set in config, skipping finding VCF files')
-        return True
 
     def _set_variant_callers(self, variantcallers_data, ensemble=False):
         if isinstance(variantcallers_data, dict):
@@ -520,9 +507,13 @@ class BcbioProject(BaseProject):
 
         # First pass - just to get extra batch IDs that we need to include to have batches consistent
         extra_batches = set()
+        all_sample_names = set()
+        all_batch_names = set()
         if include_samples:
             for sample_info in bcbio_cnf['details']:
                 sname, batch_names = BcbioSample.parse_sample_ids(sample_info)
+                all_sample_names.add(sname)
+                all_batch_names |= set(batch_names)
                 if sname in include_samples:
                     for b in batch_names:
                         if b not in (include_samples or []) and b not in (exclude_samples or []):
@@ -542,11 +533,15 @@ class BcbioProject(BaseProject):
 
         if not self.samples:
             if exclude_samples:
-                critical(f'Error: no samples left with the exclusion of batch/sample name(s): {", ".join(exclude_samples)}.'
-                         f'Check the YAML file for available options: {self.bcbio_yaml_fpath}.')
+                critical(f'Error: no samples left with the exclusion of '
+                         f'batch/sample name(s): {", ".join(exclude_samples)}\n'
+                         f'Available samples from the YAML file {self.bcbio_yaml_fpath}:\n'
+                         f'{", ".join(all_sample_names)}\nbatches: {", ".join(all_batch_names)}')
             if include_samples:
-                critical(f'Error: could not find a batch or a sample with the name(s): {", ".join(include_samples)}. '
-                         f'Check the YAML file for available options: {self.bcbio_yaml_fpath}')
+                critical(f'Error: could not find a batch or a sample with the name(s): '
+                         f'{", ".join(include_samples)}\n'
+                         f'Available samples from the YAML file {self.bcbio_yaml_fpath}:\n'
+                         f'{", ".join(all_sample_names)}\nbatches: {", ".join(all_batch_names)}')
             critical(f'Error: could not parse any batch or samples in the bcbio project. '
                      f'Please check the bcbio YAML file: {self.bcbio_yaml_fpath}')
 
