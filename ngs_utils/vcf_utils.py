@@ -3,7 +3,6 @@ import subprocess
 import sys
 from logging import critical
 from ngs_utils.file_utils import open_gzipsafe
-from cyvcf2 import VCF, Writer
 from ngs_utils.call_process import run_simple
 from ngs_utils.file_utils import get_ungz_gz
 
@@ -71,6 +70,7 @@ def get_sample_ids(
     t_id, n_id = None, None
     t_name, n_name = None, None
 
+    from cyvcf2 import VCF
     vcf_samples = VCF(vcf_path).samples
 
     if provided_t_name:
@@ -179,6 +179,7 @@ def count_vars(vcf_path, filter_col=None, bcftools_filter_expr=None):
 
 
 def vcf_contains_field(vcf_path, field, col=None):
+    from cyvcf2 import VCF
     # col is FILTER, FORMAT, INFO, or None (=any of three)
     if col is None and '/' in field:
         col, field = field.split('/')
@@ -196,6 +197,7 @@ def iter_vcf(input_file, output_file, proc_rec, proc_hdr=None, postproc_hdr=None
     :param postproc_hdr: a function to postprocess finalized header string (vcf.rawheader), e.g. in order to remove values
     :param kwargs: any paramters to pass directly into proc_rec
     """
+    from cyvcf2 import VCF
     vcf = VCF(input_file, gts012=True)
     if proc_hdr is not None:
         proc_hdr(vcf)
