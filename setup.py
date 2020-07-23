@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 from os.path import join
 from setuptools import setup
 
@@ -13,7 +14,6 @@ except ImportError:
         raise
     os.system('pip install versionpy')
     import versionpy
-
 
 version = versionpy.get_version(package_name)
 package_data = {
