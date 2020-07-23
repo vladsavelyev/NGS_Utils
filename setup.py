@@ -15,7 +15,7 @@ else:
     package_data = {
         package_name: versionpy.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
     }
-print('package_data:', package_data)
+print('package_data is None:', package_data is None)
 
 
 setup(

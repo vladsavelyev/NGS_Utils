@@ -14,9 +14,6 @@ build:
 requirements:
   build:
     - python
-    {% for dep in data.get("setup_requires", []) -%}
-    - {{ dep.lower() }}
-    {% endfor %}
     {% for dep in data.get("install_requires", []) -%}
     - {{ dep.lower() }}
     {% endfor %}
