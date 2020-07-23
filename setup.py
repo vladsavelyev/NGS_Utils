@@ -32,7 +32,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=['click'],
-    setup_requires=['numpy'],
     scripts=[path for path in
          [join('scripts', fn) for fn in [
              'standardize_bed.py',
