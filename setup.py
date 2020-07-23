@@ -5,17 +5,20 @@ from setuptools import setup
 import ngs_utils
 package_name = ngs_utils.__name__
 
-package_data = None
 try:
     import versionpy
 except ImportError:
-    version = 'dev'
-else:
-    version = versionpy.get_version(package_name)
-    package_data = {
-        package_name: versionpy.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
-    }
-print('package_data is None:', package_data is None)
+    res = input('Installation requires versionpy. Install it now? [Y/n]')
+    if res.lower().startswith('n'):
+        raise
+    os.system('pip install versionpy')
+    import versionpy
+
+
+version = versionpy.get_version(package_name)
+package_data = {
+    package_name: versionpy.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
+}
 
 
 setup(
@@ -31,7 +34,7 @@ setup(
     package_data=package_data,
     include_package_data=True,
     zip_safe=False,
-    install_requires=['click'],
+    install_requires=['click', 'versionpy'],
     scripts=[path for path in
          [join('scripts', fn) for fn in [
              'standardize_bed.py',
