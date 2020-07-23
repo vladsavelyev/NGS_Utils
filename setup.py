@@ -3,8 +3,7 @@ import os
 from os.path import join
 from setuptools import setup
 
-import ngs_utils
-package_name = ngs_utils.__name__
+pkg = 'ngs_utils'
 
 try:
     import versionpy
@@ -15,22 +14,22 @@ except ImportError:
     os.system('pip install versionpy')
     import versionpy
 
-version = versionpy.get_version(package_name)
+version = versionpy.get_version(pkg)
 package_data = {
-    package_name: versionpy.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
+    pkg: versionpy.find_package_files('', pkg, skip_exts=['.sass', '.coffee'])
 }
 
 
 setup(
-    name=package_name,
+    name=pkg,
     version=version,
     author='Vlad Savelyev',
     author_email='vladislav.sav@gmail.com',
     description='Python utilities for bioinformatics tools and pipelines',
-    keywords='bioinformatics',
+    long_description=open('README.md').read(),
     url='https://github.com/vladsaveliev/NGS_Utils',
     license='GPLv3',
-    packages=[package_name],
+    packages=[pkg],
     package_data=package_data,
     include_package_data=True,
     zip_safe=False,
@@ -47,6 +46,7 @@ setup(
              'hg19_addchr.py',
              'generate_bed.py',
          ]]],
+    keywords='bioinformatics',
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Science/Research',
