@@ -22,7 +22,7 @@ jobs:
           conda install -c conda-forge mamba
           mamba update conda
           conda config --add channels vladsaveliev --add channels bioconda --add channels conda-forge
-          mamba install python==${{ matrix.python-version }} pip versionpy conda-build conda-verify anaconda-client
+          mamba install pip versionpy conda-build conda-verify anaconda-client
 
       - name: Build package
         run: mamba build conda/$(basename $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
