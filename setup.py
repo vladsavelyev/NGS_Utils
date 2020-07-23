@@ -24,9 +24,9 @@ package_data = {
 setup(
     name=package_name,
     version=version,
-    author='Vlad Saveliev',
+    author='Vlad Savelyev',
     author_email='vladislav.sav@gmail.com',
-    description='Utils for NGS pipelines by Vlad Saveliev',
+    description='Python utilities for bioinformatics tools and pipelines',
     keywords='bioinformatics',
     url='https://github.com/vladsaveliev/NGS_Utils',
     license='GPLv3',
