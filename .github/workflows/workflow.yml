@@ -26,11 +26,11 @@ jobs:
           mamba install pip versionpy conda-build conda-verify anaconda-client
 
       - name: Build package
-        run: mamba build conda/$(basename $GITHUB_REPOSITORY)
+        run: mamba build conda/$(basename $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
 
       - name: Install
         if: "!startsWith(github.ref, 'refs/tags/')"
-        run: mamba install --use-local $(basename $GITHUB_REPOSITORY)
+        run: mamba install --use-local $(basename $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
 
       - name: Test
         if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
