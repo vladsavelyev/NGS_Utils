@@ -1,10 +1,21 @@
 #!/usr/bin/env python
 from os.path import join
 from setuptools import setup
-import versionpy
+
 import ngs_utils
 package_name = ngs_utils.__name__
-version = versionpy.get_version(package_name)
+
+try:
+    import versionpy
+except ImportError:
+    version = 'dev'
+    package_data = []
+else:
+    version = versionpy.get_version(package_name)
+    package_data = {
+        package_name: versionpy.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
+    }
+
 
 setup(
     name=package_name,
@@ -15,15 +26,11 @@ setup(
     keywords='bioinformatics',
     url='https://github.com/vladsaveliev/NGS_Utils',
     license='GPLv3',
-    packages=[
-        package_name,
-    ],
-    package_data={
-        package_name: versionpy.find_package_files('', package_name, skip_exts=['.sass', '.coffee'])
-    },
+    packages=[package_name],
+    package_data=package_data,
     include_package_data=True,
     zip_safe=False,
-    install_requires=versionpy.get_reqs(),
+    install_requires=['click'],
     setup_requires=['numpy'],
     scripts=[path for path in
          [join('scripts', fn) for fn in [
@@ -39,7 +46,6 @@ setup(
          ]]],
     classifiers=[
         'Environment :: Console',
-        'Environment :: Web Environment',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',

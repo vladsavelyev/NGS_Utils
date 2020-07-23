@@ -8,18 +8,21 @@ source:
   path: ../../
 
 build:
+  noarch: python
   number: 0
 
 requirements:
   build:
-    - python ==3.7.*
-    - numpy
-    {% for dep in data.install_requires -%}
+    - python
+    {% for dep in data.get("setup_requires", []) -%}
+    - {{ dep.lower() }}
+    {% endfor %}
+    {% for dep in data.get("install_requires", []) -%}
     - {{ dep.lower() }}
     {% endfor %}
   run:
-    - python ==3.7.*
-    {% for dep in data.install_requires -%}
+    - python
+    {% for dep in data.get("install_requires", []) -%}
     - {{ dep.lower() }}
     {% endfor %}
     # All dependencies are optional, depending on functionality you'd want:
@@ -44,7 +47,6 @@ test:
     - ngs_utils.reference_data
 
 about:
-  home: "{{ data.url }}"
-  license: "GNU General Public License v3 (GPLv3)"
-  license_family: GPL3
-  summary: "{{ data.description }}"
+  home: {{ data['url'] }}
+  license: {{ data['license'] }}
+  summary: {{ data['description'] }}

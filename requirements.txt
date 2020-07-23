@@ -1,16 +1,14 @@
-pip
-setuptools
-click
 versionpy
+click
 pyyaml
-# cython
-# numpy
-# pysam
-# pybedtools
-# natsort
-# pandas
-# jinja2                  # for reporting
-# beautifulsoup4          # for html2base64
-# lxml                    # for html2base64
-# joblib                  # for parallelization
-# ipython-cluster-helper  # for parallelization
+cython
+numpy
+pysam
+pybedtools
+natsort
+pandas
+jinja2                  # for reporting
+beautifulsoup4          # for html2base64
+lxml                    # for html2base64
+joblib                  # for parallelization
+ipython-cluster-helper  # for parallelization
