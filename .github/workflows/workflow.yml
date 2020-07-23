@@ -21,13 +21,11 @@ jobs:
           conda config --set always_yes yes --set changeps1 no
           conda install -c conda-forge mamba
           mamba update conda
-          conda config --add channels defaults --add channels vladsaveliev \
-            --add channels bioconda --add channels conda-forge
-          mamba install pip versionpy conda-build conda-verify anaconda-client
+          conda config --add channels vladsaveliev --add channels bioconda --add channels conda-forge
+          mamba install python==${{ matrix.python-version }} pip versionpy conda-build conda-verify anaconda-client
 
       - name: Build package
-        run: |
-          mamba build conda/$(basename $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
+        run: mamba build conda/$(basename $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
 
       - name: Install
         if: "!startsWith(github.ref, 'refs/tags/')"
@@ -42,6 +40,4 @@ jobs:
       - name: Upload to anaconda
         if: "startsWith(github.ref, 'refs/tags/')"
         run: |
-          conda convert --platform osx-64 ${HOME}/miniconda3/conda-bld/linux-64/*.tar.bz2 \
-                             --output-dir ${HOME}/miniconda3/conda-bld/ &&
           anaconda -t ${{ secrets.ANACONDA_TOKEN }} upload ${HOME}/miniconda3/conda-bld/**/*.tar.bz2
