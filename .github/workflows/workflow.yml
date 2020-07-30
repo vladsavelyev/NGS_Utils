@@ -32,7 +32,7 @@ jobs:
         run: mamba install --use-local $(basename $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')
 
       - name: Test
-        if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
+        if: "!startsWith(github.ref, 'refs/tags/')"
         run: |
           python -c "from ngs_utils import file_utils"
           python -c "from ngs_utils import reference_data"
