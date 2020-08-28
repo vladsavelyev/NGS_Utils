@@ -1,7 +1,7 @@
 import re
 import subprocess
 import sys
-from logging import critical
+from ngs_utils.logger import critical
 from ngs_utils.file_utils import open_gzipsafe
 from ngs_utils.call_process import run_simple
 from ngs_utils.file_utils import get_ungz_gz
@@ -67,30 +67,31 @@ def get_sample_ids(
         provided_n_name=None,
         return_names=False):
 
-    t_id, n_id = None, None
-    t_name, n_name = None, None
+    t_ids, n_id = [], None
+    t_names, n_name = [], None
 
     from cyvcf2 import VCF
     vcf_samples = VCF(vcf_path).samples
 
     if provided_t_name:
-        assert provided_t_name in vcf_samples,\
-            f'Tumor sample name {provided_t_name} is not in VCF {vcf_path}. Found: {vcf_samples}'
-        t_name = provided_t_name
+        for tn in provided_t_name.split(','):
+            assert tn in vcf_samples,\
+                f'Tumor sample name {tn} is not in VCF {vcf_path}. Found: {vcf_samples}'
+            t_names.append(tn)
     if provided_n_name:
         assert provided_n_name in vcf_samples,\
             f'Normal sample name {provided_n_name} is not in VCF {vcf_path}. Found: {vcf_samples}'
         n_name = provided_n_name
     guessed_t_name, guessed_n_name = guess_sample_names(vcf_path)
-    if not t_name:
+    if not t_names:
         if not guessed_t_name:
             critical(f'Can\'t guess tumor sample name from the VCF {vcf_path}')
-        t_name = guessed_t_name
+        t_names = [guessed_t_name]
     if not n_name:
         if not guessed_n_name:
-            if t_name:
+            if t_names:
                 try:
-                    n_name = [s for s in vcf_samples if s != t_name][0]
+                    n_name = [s for s in vcf_samples if s not in t_names][0]
                 except:
                     critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
                 else:
@@ -100,16 +101,22 @@ def get_sample_ids(
         else:
             n_name = guessed_n_name
 
-    if t_name is not None:
-        assert t_name in vcf_samples, f't_name: {t_name}, vcf_samples: {vcf_samples}'
-        t_id = vcf_samples.index(t_name)
+    if t_names:
+        assert set(t_names) & set(vcf_samples), f't_names: {t_names}, vcf_samples: {vcf_samples}'
+        t_ids = [vcf_samples.index(tn) for tn in t_names]
     if n_name is not None and len(vcf_samples) >= 2:
         n_id = vcf_samples.index(n_name)
 
     if return_names:
-        return t_name, n_name
+        if len(t_names) == 1:
+            return t_names[0], n_name
+        else:
+            return t_names, n_name
     else:
-        return t_id, n_id
+        if len(t_names) == 1:
+            return t_ids[0], n_id
+        else:
+            return t_ids, n_id
 
 
 def guess_sample_names(vcf_path):
