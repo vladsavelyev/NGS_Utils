@@ -19,8 +19,7 @@ def run_simple(cmd, silent=False):
     subprocess.check_call(cmd, shell=True, executable=find_bash())
 
 
-# Deprecated
-def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputfile=True,
+def run(cmd, output_fpath=None, input_fpaths=None, checks=None, stdout_to_outputfile=True,
         stdout_tx=True, reuse=False, env_vars=None):
     """Run the provided command, logging details and checking for errors.
     """
@@ -32,16 +31,22 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
             info(output_fpath + '.gz exists, reusing')
             return output_fpath
 
+    if input_fpaths is not None:
+        if isinstance(input_fpaths, str):
+            input_fpaths = [input_fpaths]
+        for fpath in input_fpaths:
+            verify_file(fpath, is_critical=True)
+
     env = _get_env(env_vars)
-    info('env: ' + str(env))
+    # info('env: ' + str(env))
 
     if checks is None:
         checks = [file_nonempty_check]
 
-    def _try_run(_cmd, _output_fpath, _input_fpath):
+    def _try_run(_cmd, _output_fpath, _input_fpaths):
         try:
             info(' '.join(str(x) for x in _cmd) if not isinstance(_cmd, str) else _cmd)
-            _do_run(_cmd, checks, env, _output_fpath, _input_fpath)
+            _do_run(_cmd, checks, env, _output_fpath, _input_fpaths)
         except:
             raise
 
@@ -62,12 +67,12 @@ def run(cmd, output_fpath=None, input_fpath=None, checks=None, stdout_to_outputf
                              .replace(' "' + output_fpath + '"\n', ' ' + tx_out_file + '"') \
                              .replace(' \'' + output_fpath + '\'\n', ' ' + tx_out_file + '\'') \
                              .replace('\n', '')
-                _try_run(cmd, tx_out_file, input_fpath)
+                _try_run(cmd, tx_out_file, input_fpaths)
         else:
-            _try_run(cmd, output_fpath, input_fpath)
+            _try_run(cmd, output_fpath, input_fpaths)
 
     else:
-        _try_run(cmd, None, input_fpath)
+        _try_run(cmd, None, input_fpaths)
 
 
 def find_bash():
@@ -119,17 +124,17 @@ def _normalize_cmd_args(cmd):
     return [str(x) for x in cmd]
 
 
-# Deprecated
-def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None):
+def _do_run(cmd, checks, env=None, output_fpath=None, input_fpaths=None):
     """Perform running and check results, raising errors for issues.
     """
-    cmd = _normalize_cmd_args(cmd)
+    # cmd = _normalize_cmd_args(cmd)
     s = subprocess.Popen(cmd,
                          executable=find_bash(),
                          stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT,
                          close_fds=True,
-                         env=env)
+                         env=env,
+                         shell=True)
     debug_stdout = collections.deque(maxlen=100)
     while 1:
         line = s.stdout.readline()
@@ -156,48 +161,48 @@ def _do_run(cmd, checks, env=None, output_fpath=None, input_fpath=None):
     # Check for problems not identified by shell return codes
     if checks:
         for check in checks:
-            if not check(output_fpath, input_fpath):
+            if not check(output_fpath, input_fpaths):
                 raise IOError("External command failed")
         # except subprocess.CalledProcessError as e:
         #     e.returncode
         #     e.cmd
 
 
-def file_nonempty_check(output_fpath=None, input_fpath=None):
+def file_nonempty_check(output_fpath=None, input_fpaths=None):
     if output_fpath is None:
         return True
-    ok = file_exists_check(output_fpath)
+    ok = verify_file(output_fpath)
     if not ok:
-        err("Did not find non-empty output file {0}".format(output_fpath))
+        err(f'Did not find non-empty output file {output_fpath}')
     return ok
 
 
-def file_exists_check(output_fpath=None, input_fpath=None):
+def file_exists_check(output_fpath=None, input_fpaths=None):
     if output_fpath is None:
         return True
     ok = os.path.exists(output_fpath)
     if not ok:
-        err("Did not find output file {0}".format(output_fpath))
+        err('Did not find output file {output_fpath}')
     return ok
 
 
-def file_reasonable_size(output_fpath, input_fpath):
-    ok = file_exists_check(output_fpath)
+def file_reasonable_size(output_fpath, input_fpaths):
+    ok = file_nonempty_check(output_fpath)
     if not ok:
         return ok
     # named pipes -- we can't calculate size
-    if input_fpath.strip().startswith("<("):
+    if input_fpaths[0].strip().startswith("<("):
         return True
-    if input_fpath.endswith((".bam", ".gz")):
+    if input_fpaths[0].endswith((".bam", ".gz")):
         scale = 7.0
     else:
         scale = 10.0
-    orig_size = os.path.getsize(input_fpath) / pow(1024.0, 3)
+    orig_size = os.path.getsize(input_fpaths[0]) / pow(1024.0, 3)
     out_size = os.path.getsize(output_fpath) / pow(1024.0, 3)
     if out_size < (orig_size / scale):
-        err("Output file unexpectedly small. %.1fGb for output versus "
-            "%.1fGb for the input file. This often indicates a truncated "
-            "BAM file or memory errors during the run." % (out_size, orig_size))
+        err(f'Output file unexpectedly small. {out_size}Gb for output versus '
+            f'{orig_size}Gb for the input file. This often indicates a truncated '
+            'BAM file or memory errors during the run.')
         return False
     else:
         return True
