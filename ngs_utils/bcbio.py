@@ -674,9 +674,9 @@ class BcbioProject(BaseProject):
                 if sample.phenotype == 'normal':
                     if batch_by_name[bn].normal:
                         critical('Multiple normal samples for batch ' + bn)
-                    batch_by_name[bn].normal = sample
+                    batch_by_name[bn].add_normal(sample)
                 else:
-                    batch_by_name[bn].tumor = sample
+                    batch_by_name[bn].add_tumor(sample)
 
         # Removing batches that do not have matching tumor samples
         batch_by_name = {bn: b for bn, b in batch_by_name.items() if b.tumor}

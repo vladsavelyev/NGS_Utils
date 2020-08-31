@@ -1,4 +1,5 @@
 from natsort import natsort_keygen
+from collections import Iterable
 
 
 class BaseProject:
@@ -76,15 +77,30 @@ class BaseSample:
 
 
 class BaseBatch:
-    def __init__(self, name=None, normal=None, tumor=None, parent_project=None):
+    def __init__(self, name=None, normal=None, tumor=None, rna_samples=None,
+                 parent_project=None, somatic_vcf=None, germline_vcf=None, sv_vcf=None):
         self.name = name
-        self.normal = normal
-        self.tumor = tumor
         self.parent_project = parent_project
 
-        self.somatic_vcf = None
-        self.germline_vcf = None
-        self.sv_vcf = None
+        self.normal = normal
+        self.normals = []
+        if isinstance(normal, Iterable):
+            self.normals = list(normal)
+        elif normal:
+            self.normals = [normal]
+
+        self.tumor = tumor
+        self.tumors = []
+        if isinstance(tumor, Iterable):
+            self.tumors = list(tumor)
+        elif tumor:
+            self.tumors = [tumor]
+
+        self.rna_samples = list(rna_samples) if rna_samples else []
+
+        self.somatic_vcf = somatic_vcf
+        self.germline_vcf = somatic_vcf
+        self.sv_vcf = germline_vcf
 
         self.somatic_caller = None
         self.germline_caller = None
@@ -107,6 +123,19 @@ class BaseBatch:
 
     def find_sv_vcf(self, silent=False):
         pass
+
+    def add_normal(self, sample):
+        self.normals.append(sample)
+        if not self.normal:
+            self.normal = sample
+
+    def add_tumor(self, sample):
+        self.tumors.append(sample)
+        if not self.tumor:
+            self.tumor = sample
+
+    def add_rna_sample(self, sample):
+        self.rna_samples.append(sample)
 
 
 # class Caller:
