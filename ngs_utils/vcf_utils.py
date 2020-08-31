@@ -67,8 +67,8 @@ def get_sample_ids(
         provided_n_name=None,
         return_names=False):
 
-    t_ids, n_id = [], None
-    t_names, n_name = [], None
+    t_ids, n_ids = [], []
+    t_names, n_names = [], []
 
     from cyvcf2 import VCF
     vcf_samples = VCF(vcf_path).samples
@@ -79,44 +79,44 @@ def get_sample_ids(
                 f'Tumor sample name {tn} is not in VCF {vcf_path}. Found: {vcf_samples}'
             t_names.append(tn)
     if provided_n_name:
-        assert provided_n_name in vcf_samples,\
-            f'Normal sample name {provided_n_name} is not in VCF {vcf_path}. Found: {vcf_samples}'
-        n_name = provided_n_name
-    guessed_t_name, guessed_n_name = guess_sample_names(vcf_path)
-    if not t_names:
-        if not guessed_t_name:
-            critical(f'Can\'t guess tumor sample name from the VCF {vcf_path}')
-        t_names = [guessed_t_name]
-    if not n_name:
-        if not guessed_n_name:
-            if t_names:
-                try:
-                    n_name = [s for s in vcf_samples if s not in t_names][0]
-                except:
-                    critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
-                else:
-                    pass
+        for nn in provided_n_name.split(','):
+            assert nn in vcf_samples,\
+                f'Normal sample name {nn} is not in VCF {vcf_path}. Found: {vcf_samples}'
+            n_names.append(nn)
+
+    if len(vcf_samples) == 1:
+        t_names = [vcf_samples[0]]
+        t_ids = [0]
+    else:
+        guessed_t_name, guessed_n_name = guess_sample_names(vcf_path)
+        if not t_names:
+            if not guessed_t_name:
+                critical(f'Can\'t guess tumor sample name from the VCF {vcf_path}')
+            t_names = [guessed_t_name]
+        if not n_names:
+            if guessed_n_name:
+                n_names = [guessed_n_name]
             else:
-                critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
-        else:
-            n_name = guessed_n_name
+                if t_names:
+                    n_names = [s for s in vcf_samples if s not in t_names]
+                    if not n_names:
+                        critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
+                else:
+                    critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
 
     if t_names:
         assert set(t_names) & set(vcf_samples), f't_names: {t_names}, vcf_samples: {vcf_samples}'
         t_ids = [vcf_samples.index(tn) for tn in t_names]
-    if n_name is not None and len(vcf_samples) >= 2:
-        n_id = vcf_samples.index(n_name)
+    if n_names:
+        assert set(n_names) & set(vcf_samples), f'n_names: {n_names}, vcf_samples: {vcf_samples}'
+        n_ids = [vcf_samples.index(nn) for nn in n_names]
 
     if return_names:
-        if len(t_names) == 1:
-            return t_names[0], n_name
-        else:
-            return t_names, n_name
+        return t_names[0] if len(t_names) == 1 else t_names, \
+               n_names[0] if len(n_names) == 1 else n_names
     else:
-        if len(t_names) == 1:
-            return t_ids[0], n_id
-        else:
-            return t_ids, n_id
+        return t_ids[0] if len(t_names) == 1 else t_ids, \
+               n_ids[0] if len(n_names) == 1 else n_ids
 
 
 def guess_sample_names(vcf_path):
