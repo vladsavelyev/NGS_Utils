@@ -52,7 +52,7 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
                   tibanna_cfg=None,
                   resources=None, cluster_param=None, cluster_log_dir=None,
                   local_cores=None, ncpus_per_batch=None, ncpus_per_sample=None,
-                  tmp_dirs=[]):
+                  tmp_dirs:list = None):
 
     ##########################
     #### Preparing config ####
@@ -134,7 +134,7 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
         if cluster_log_dir:
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
             logger.error(f'Review cluster job logs in {cluster_log_dir}')
-        for tmp_dir in tmp_dirs: tmp_dir.cleanup()
+        for tmp_dir in tmp_dirs or []: tmp_dir.cleanup()
         sys.exit(1)
     except KeyboardInterrupt:
         logger.error('--------')
@@ -142,14 +142,14 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
         if cluster_log_dir:
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
             logger.error(f'Review cluster job logs in {cluster_log_dir}')
-        for tmp_dir in tmp_dirs: tmp_dir.cleanup()
+        for tmp_dir in tmp_dirs or []: tmp_dir.cleanup()
         sys.exit(1)
     else:
         logger.info('--------')
         if cluster_log_dir:
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
         logger.info(f'Finished. Output directory: {output_dir}')
-        for tmp_dir in tmp_dirs: tmp_dir.cleanup()
+        for tmp_dir in tmp_dirs or []: tmp_dir.cleanup()
 
 
 def prep_resources(num_batches=None, num_samples=None,
