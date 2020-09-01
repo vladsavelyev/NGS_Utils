@@ -124,6 +124,7 @@ class BcbioSample(BaseSample):
                 s.coverage_bed = join(ref_basedir, 'coverage', 'prioritize', s.coverage_bed) + '.bed'
 
         s.is_rnaseq = 'rna' in sample_info['analysis'].lower()
+        s.assay = 'rna'
         s.min_allele_fraction = (1.0/100) * float(sample_info['algorithm'].get('min_allele_fraction', 1.0))
         if s.variant_regions_bed is None:
             s.coverage_interval = 'genome'

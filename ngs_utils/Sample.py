@@ -13,6 +13,7 @@ class BaseProject:
         self.batch_by_name = dict()
         self.is_rnaseq = False
         self.is_wgs = True
+        self.assay = None
 
 
 class BaseSample:
