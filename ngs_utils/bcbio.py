@@ -590,6 +590,7 @@ class BcbioProject(BaseProject):
                 sname = s.name
                 if s.phenotype == 'germline':
                     sname = re.sub(r'-germline$', '', s.name)
+                assert sname in metrics_by_sample, f'Need: {sname}, available: {str(metrics_by_sample.keys())}'
                 s.sample_info['metrics'] = metrics_by_sample[sname]
 
     def config_path(self, val):
