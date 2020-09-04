@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 from datetime import datetime
-from os.path import dirname, abspath, join
+from os.path import dirname, abspath, join, isdir
 from ngs_utils import logger
 from ngs_utils.file_utils import safe_mkdir
 from ngs_utils.utils import flatten
@@ -131,7 +131,7 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
     except subprocess.CalledProcessError:
         logger.error('--------')
         logger.error(f'Error: snakemake returned a non-zero status. Working directory: {output_dir}')
-        if cluster_log_dir:
+        if cluster_log_dir and isdir(cluster_log_dir):
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
             logger.error(f'Review cluster job logs in {cluster_log_dir}')
         for tmp_dir in tmp_dirs or []: tmp_dir.cleanup()
@@ -139,14 +139,14 @@ def run_snakemake(snakefile, conf, cores=None, output_dir=None, forcerun=None,
     except KeyboardInterrupt:
         logger.error('--------')
         logger.error(f'Interrupted. Fixing logs permissions. Working directory: {output_dir}')
-        if cluster_log_dir:
+        if cluster_log_dir and isdir(cluster_log_dir):
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
             logger.error(f'Review cluster job logs in {cluster_log_dir}')
         for tmp_dir in tmp_dirs or []: tmp_dir.cleanup()
         sys.exit(1)
     else:
         logger.info('--------')
-        if cluster_log_dir:
+        if cluster_log_dir and isdir(cluster_log_dir):
             run_simple(f'chmod -R a+r {cluster_log_dir}', silent=True)
         logger.info(f'Finished. Output directory: {output_dir}')
         for tmp_dir in tmp_dirs or []: tmp_dir.cleanup()
