@@ -713,12 +713,13 @@ class BcbioProject(BaseProject):
                     b.germline_caller = b.normal.germline_caller
 
         # finding vcfs
-        for b in batch_by_name.values():
-            if b.tumor:
-                b.find_somatic_vcf(silent=silent)
-                b.find_sv_vcf(silent=silent)
-            if b.normal:
-                b.find_germline_vcf(silent=silent)
+        if not self.is_rnaseq:
+            for b in batch_by_name.values():
+                if b.tumor:
+                    b.find_somatic_vcf(silent=silent)
+                    b.find_sv_vcf(silent=silent)
+                if b.normal:
+                    b.find_germline_vcf(silent=silent)
 
         return batch_by_name
 
