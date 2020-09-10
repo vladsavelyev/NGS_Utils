@@ -29,11 +29,13 @@ folder = "/Users/vsaveliev/git/NGS_Utils/ngs_utils/reference_data/key_genes/"
 predispose   <- read_tsv(str_c(folder, "sources/predispose_genes.txt"), col_names = c('symbol'))
 az300        <- read_tsv(str_c(folder, "sources/az_key_genes.300.txt"), col_names = c('symbol'))
 cacao        <- read_tsv(str_c(folder, "sources/cacao.txt"), col_names = c('symbol'))
-umccr        <- read_tsv(str_c(folder, "sources/umccr.txt"), col_names = c('symbol'))
+umccr        <- read_tsv(str_c(folder, "sources/umccr.tsv"), col_names = c('symbol', 'descr'))
+haem         <- read_tsv(str_c(folder, "sources/HAEM.txt"), col_names = c('symbol'))
 genes <- predispose %>% mutate(sources = "CPSR_panel0") %>%
   bind_rows(az300 %>% mutate(sources = "AZ300")) %>%
   bind_rows(cacao %>% mutate(sources = "CACAO")) %>%
-  bind_rows(umccr %>% mutate(sources = "UMCCR"))
+  bind_rows(umccr %>% mutate(sources = "UMCCR")) %>%
+  bind_rows(haem  %>% mutate(sources = "HAEM"))
 
 for (panel in c("PMCC", "TS500", "TEMPUS", "familial_cancer")) {
   df <- read_tsv(str_c(folder, "sources/", panel, '.genes'), col_names = c("symbol"))
@@ -185,8 +187,9 @@ genes_sum <- all_genes %>%
     cancermine = str_detect(sources, "cancermine"),
     cacao = str_detect(sources, "CACAO"),
     umccr = str_detect(sources, "UMCCR"),
+    haem = str_detect(sources, "HAEM"),
     germ = any(cos_germ, na.rm = T) | str_detect(sources, "CPSR"),
-    
+
     ngc_ts = any(ngc_ts, na.rm = T),
     cm_ts = sum(cm_ts, na.rm = T),
     cos_ts = any(cos_ts, na.rm = T),
@@ -208,7 +211,7 @@ genes_sum <- all_genes %>%
     fusion = hmf_fu | cos_fu | ngc_fu
   ) %>% 
   mutate(
-    tier1 = ngc | cosm1 | cancermine | cacao | umccr | driver | n >= 4,  # well curated cancer genes
+    tier1 = ngc | cosm1 | cancermine | cacao | umccr | haem | driver | n >= 4,  # well curated cancer genes
     is_key = tier1 | germ | n >= 2       # + not so confident + predisposition + known fusions
   ) %>% 
   select(-ends_with("_og"), -ends_with("_ts"), -starts_with("ngc_"))
@@ -248,7 +251,7 @@ genes_sum_appris %>% filter(is.na(PRINCIPAL_hg19) & is.na(PRINCIPAL_hg38), is_ke
 Comparing to the previous version:
 
 ```{r compare_to_previous}
-prev = read_tsv("archive/umccr_cancer_genes.2019-07-31.tsv")
+prev = read_tsv("archive/umccr_cancer_genes.2020-09-10.tsv")
 
 (added   <- genes_sum_appris %>% filter(is_key, !symbol %in% prev$symbol))
 (removed <- genes_sum_appris %>% filter(symbol %in% prev$symbol, !is_key))
