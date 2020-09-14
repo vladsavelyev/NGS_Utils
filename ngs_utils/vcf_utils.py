@@ -10,11 +10,14 @@ from ngs_utils.file_utils import get_ungz_gz
 def get_sample_names(
         vcf_path,
         provided_tumor_name=None,
-        provided_normal_name=None):
+        provided_normal_name=None,
+        provided_rna_name=None,
+    ):
     return get_sample_ids(
         vcf_path,
         provided_t_name=provided_tumor_name,
         provided_n_name=provided_normal_name,
+        provided_r_name=provided_rna_name,
         return_names=True
     )
 
@@ -65,24 +68,30 @@ def get_sample_ids(
         vcf_path,
         provided_t_name=None,
         provided_n_name=None,
-        return_names=False):
-
-    t_ids, n_ids = [], []
-    t_names, n_names = [], []
+        provided_r_name=None,
+        return_names=False
+    ):
+    t_ids, n_ids, r_ids = [], [], []
+    t_names, n_names, r_names = [], [], []
 
     from cyvcf2 import VCF
     vcf_samples = VCF(vcf_path).samples
 
     if provided_t_name:
-        for tn in provided_t_name.split(','):
-            assert tn in vcf_samples,\
-                f'Tumor sample name {tn} is not in VCF {vcf_path}. Found: {vcf_samples}'
-            t_names.append(tn)
+        for sname in provided_t_name.split(','):
+            assert sname in vcf_samples,\
+                f'Tumor sample name {sname} is not in VCF {vcf_path}. Found: {vcf_samples}'
+            t_names.append(sname)
     if provided_n_name:
-        for nn in provided_n_name.split(','):
-            assert nn in vcf_samples,\
-                f'Normal sample name {nn} is not in VCF {vcf_path}. Found: {vcf_samples}'
-            n_names.append(nn)
+        for sname in provided_n_name.split(','):
+            assert sname in vcf_samples,\
+                f'Normal sample name {sname} is not in VCF {vcf_path}. Found: {vcf_samples}'
+            n_names.append(sname)
+    if provided_r_name:
+        for sname in provided_r_name.split(','):
+            assert sname in vcf_samples,\
+                f'RNA sample name {sname} is not in VCF {vcf_path}. Found: {vcf_samples}'
+            r_names.append(sname)
 
     if len(vcf_samples) == 1:
         t_names = [vcf_samples[0]]
@@ -98,7 +107,7 @@ def get_sample_ids(
                 n_names = [guessed_n_name]
             else:
                 if t_names:
-                    n_names = [s for s in vcf_samples if s not in t_names]
+                    n_names = [s for s in vcf_samples if s not in t_names and s not in r_names]
                     if not n_names:
                         critical(f'Can\'t guess normal sample name from the VCF {vcf_path}')
                 else:
@@ -110,13 +119,21 @@ def get_sample_ids(
     if n_names:
         assert set(n_names) & set(vcf_samples), f'n_names: {n_names}, vcf_samples: {vcf_samples}'
         n_ids = [vcf_samples.index(nn) for nn in n_names]
+    if r_names:
+        assert set(r_names) & set(vcf_samples), f'r_names: {r_names}, vcf_samples: {vcf_samples}'
+        r_ids = [vcf_samples.index(rn) for rn in r_names]
 
     if return_names:
-        return t_names[0] if len(t_names) == 1 else t_names, \
-               n_names[0] if len(n_names) == 1 else n_names
+        ret = t_names[0] if len(t_names) == 1 else t_names, \
+              n_names[0] if len(n_names) == 1 else n_names
+        if r_names:
+            ret += (r_names[0] if len(r_names) == 1 else r_names,)
     else:
-        return t_ids[0] if len(t_names) == 1 else t_ids, \
-               n_ids[0] if len(n_names) == 1 else n_ids
+        ret = t_ids[0] if len(t_names) == 1 else t_ids, \
+              n_ids[0] if len(n_names) == 1 else n_ids
+        if r_names:
+            ret += (r_ids[0] if len(r_ids) == 1 else r_ids,)
+    return ret
 
 
 def guess_sample_names(vcf_path):
