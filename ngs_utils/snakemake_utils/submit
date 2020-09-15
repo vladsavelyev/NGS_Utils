@@ -35,6 +35,7 @@ if 'wildcards' in job_properties:
     else:
         values = wcs.values()
     if values:
+        values = [v.replace('/', '_') for v in values]
         job_name += '.' + '__'.join(values)
 
 jobid = job_properties['jobid']
@@ -57,28 +58,6 @@ with open(wrapper_sh) as inp, open(new_wrapper_sh, 'w') as out:
 cmd = f'{submit_cmd} {new_wrapper_sh}'
 sys.stderr.write(cmd + '\n')
 os.system(cmd)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
