@@ -22,7 +22,7 @@ if refdata.cluster_cmd:
 # Replace submit command wildcards with current job properties
 job_properties = read_job_properties(wrapper_sh)
 submit_cmd = submit_cmd\
-    .replace('{threads}', str(max(job_properties.get('threads', 1), 48)))\
+    .replace('{threads}', str(job_properties.get('threads', 1)))\
     .replace('{resources.mem_mb}', str(job_properties.get('resources', {}).get('mem_mb', 2000)))\
     .replace('{resources.disk_mb}', str(job_properties.get('resources', {}).get('disk_mb', 2000)))\
     .replace('{resources.hours}', str(job_properties.get('resources', {}).get('hours', 24)))
