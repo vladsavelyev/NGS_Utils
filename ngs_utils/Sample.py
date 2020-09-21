@@ -21,7 +21,7 @@ class BaseSample:
 
     def __init__(self, name=None, dirpath=None, work_dir=None, bam=None, bed=None, genome=None,
                  targqc_dirpath=None, clinical_report_dirpath=None,
-                 normal_match=None, sv_fpath=None, sv_bed=None,
+                 normal_matches=None, sv_fpath=None, sv_bed=None,
                  l_fpath=None, r_fpath=None, phenotype=None, rgid=None,
                  parent_project=None, **kwargs):
         self.name = name
@@ -37,7 +37,7 @@ class BaseSample:
         self.gender = None
         self.genome = genome
         self.var_dirpath = None
-        self.normal_match = normal_match
+        self.normal_matches = normal_matches or []
         self.min_af = None
         self.sv_fpath = sv_fpath
         self.targqc_dirpath = targqc_dirpath
@@ -83,14 +83,12 @@ class BaseBatch:
         self.name = name
         self.parent_project = parent_project
 
-        self.normal = normal
         self.normals = []
         if isinstance(normal, Iterable):
             self.normals = list(normal)
         elif normal:
             self.normals = [normal]
 
-        self.tumor = tumor
         self.tumors = []
         if isinstance(tumor, Iterable):
             self.tumors = list(tumor)
@@ -108,10 +106,10 @@ class BaseBatch:
         self.sv_caller = None
 
     def is_paired(self):
-        return self.normal and self.tumor
+        return self.normals and self.tumors
 
     def is_germline(self):
-        return self.tumor and self.tumor.phenotype == 'germline'
+        return self.tumors and self.tumors[0].phenotype == 'germline'
 
     def __str__(self):
         return self.name
@@ -127,13 +125,9 @@ class BaseBatch:
 
     def add_normal(self, sample):
         self.normals.append(sample)
-        if not self.normal:
-            self.normal = sample
 
     def add_tumor(self, sample):
         self.tumors.append(sample)
-        if not self.tumor:
-            self.tumor = sample
 
     def add_rna_sample(self, sample):
         self.rna_samples.append(sample)

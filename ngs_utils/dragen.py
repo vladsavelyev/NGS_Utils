@@ -46,12 +46,12 @@ class DragenBatch(BaseBatch):
                 info(f'Found SV VCF in <dragen-dir>/<tumor-name>.sv.vcf.gz: ' + self.sv_vcf)
 
     def all_qc_files(self):
-        return self.batch_qc_files + self.tumor.qc_files + self.normal.qc_files
+        return self.batch_qc_files + self.tumors[0].qc_files + self.normals[0].qc_files
 
     def add_tumor(self, name, rgid=None):
         sample = DragenSample(name=name, phenotype='tumor', batch=self, rgid=rgid)
         sample.bam = join(self.parent_project.dir, self.name + '_tumor.bam')
-        self.tumor = sample
+        self.tumors = [sample]
         if sample.name not in [s.name for s in self.parent_project.samples]:
             self.parent_project.samples.append(sample)
         return sample
@@ -59,7 +59,7 @@ class DragenBatch(BaseBatch):
     def add_normal(self, name, rgid=None):
         sample = DragenSample(name=name, phenotype='normal', batch=self, rgid=rgid)
         sample.bam = join(self.parent_project.dir, self.name + '.bam')
-        self.normal = sample
+        self.normals = [sample]
         if sample.name not in [s.name for s in self.parent_project.samples]:
             self.parent_project.samples.append(sample)
         return sample
@@ -186,10 +186,10 @@ class DragenProject(BaseProject):
             batch_by_name[batch_name] = batch
             batch.add_tumor(batch_name, rgid=rgsm_t)
             batch.add_normal(batch_name + '_normal', rgid=rgsm_n)
-            if exclude_samples and batch.normal.name in exclude_samples:
+            if exclude_samples and batch.normals[0].name in exclude_samples:
                 continue
-            batch.tumor.bam = join(input_dir, batch_name + '_tumor.bam')
-            batch.normal.bam = join(input_dir, batch_name + '.bam')
+            batch.tumors[0].bam = join(input_dir, batch_name + '_tumor.bam')
+            batch.normals[0].bam = join(input_dir, batch_name + '.bam')
             batch_by_name[batch_name] = batch
 
             batch.find_somatic_vcf(silent=silent)
@@ -220,18 +220,18 @@ class DragenProject(BaseProject):
                 qc_fpath = join(input_dir, f'{batch_name}{suffix}')
                 if isfile(qc_fpath.format(phenotype="normal")):
                     debug(f'Found QC file for normal sample {qc_fpath}')
-                    batch.normal.qc_files.append(qc_fpath.format(phenotype="normal"))
+                    batch.normals[0].qc_files.append(qc_fpath.format(phenotype="normal"))
                 else:
                     debug(f'Can\'t find QC file for normal sample {qc_fpath}')
                 if isfile(qc_fpath.format(phenotype="tumor")):
                     debug(f'Found QC file for tumor sample {qc_fpath}')
-                    batch.tumor.qc_files.append(qc_fpath.format(phenotype="tumor"))
+                    batch.tumors[0].qc_files.append(qc_fpath.format(phenotype="tumor"))
                 else:
                     debug(f'Can\'t find QC file for tumor sample {qc_fpath}')
 
             debug(f'Found {len(batch.batch_qc_files)} batch QC files, '
-                  f'{len(batch.tumor.qc_files)} tumor QC files, '
-                  f'{len(batch.normal.qc_files)} normal QC files')
+                  f'{len(batch.tumors[0].qc_files)} tumor QC files, '
+                  f'{len(batch.normals[0].qc_files)} normal QC files')
         return batch_by_name
 
     def __init__(self, input_dir=None, silent=False, include_samples=None, exclude_samples=None,

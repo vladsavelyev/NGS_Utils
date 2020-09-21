@@ -281,7 +281,7 @@ class BcbioBatch(BaseBatch):
         # in datestamp. bcbio before 1.1.6
         vcf_old_fpath_gz = adjust_path(join(self.parent_project.date_dir, self.name + '-' + caller + '-annotated.vcf.gz'))
         # in sample dir. starting from bcbio 1.1.6, ~ Dec 2019
-        vcf_fpath_gz = adjust_path(join(self.tumor.dirpath, self.tumor.name + '-' + caller + '.vcf.gz'))
+        vcf_fpath_gz = adjust_path(join(self.tumors[0].dirpath, self.tumors[0].name + '-' + caller + '.vcf.gz'))
 
         if isfile(vcf_fpath_gz):
             verify_file(vcf_fpath_gz, is_critical=True)
@@ -313,9 +313,11 @@ class BcbioBatch(BaseBatch):
         assert caller
 
         # in sample dir. starting from bcbio 1.1.6, ~ Dec 2019
-        vcf_fpath_gz = adjust_path(join(self.parent_project.date_dir, f'{self.normal.name}-germline-{caller}.vcf.gz'))
+        vcf_fpath_gz = adjust_path(join(self.parent_project.date_dir,
+                f'{self.normals[0].name}-germline-{caller}.vcf.gz'))
         # in datestamp. bcbio before 1.1.6
-        vcf_old_fpath_gz = adjust_path(join(self.parent_project.date_dir, f'{self.normal.name}-germline-{caller}-annotated.vcf.gz'))
+        vcf_old_fpath_gz = adjust_path(join(self.parent_project.date_dir,
+                f'{self.normals[0].name}-germline-{caller}-annotated.vcf.gz'))
 
         if isfile(vcf_fpath_gz):
             verify_file(vcf_fpath_gz, is_critical=True)
@@ -335,11 +337,13 @@ class BcbioBatch(BaseBatch):
     def find_sv_vcf(self, silent=False, caller=False):
         caller = caller or self.sv_caller
 
-        sv_prio   = join(self.tumor.dirpath, f'{self.name}-sv-prioritize-{caller}.vcf.gz')
-        sv_unprio = join(self.tumor.dirpath, f'{self.name}-{caller}.vcf.gz')
+        sv_prio   = join(self.tumors[0].dirpath, f'{self.name}-sv-prioritize-{caller}.vcf.gz')
+        sv_unprio = join(self.tumors[0].dirpath, f'{self.name}-{caller}.vcf.gz')
         # CWL?
-        sv_cwl_prio   = join(self.parent_project.date_dir, f'{self.tumor.name}-{caller}-prioritized.vcf.gz')
-        sv_cwl_unprio = join(self.parent_project.date_dir, f'{self.tumor.name}-{caller}.vcf.gz')
+        sv_cwl_prio   = join(self.parent_project.date_dir,
+                             f'{self.tumors[0].name}-{caller}-prioritized.vcf.gz')
+        sv_cwl_unprio = join(self.parent_project.date_dir,
+                             f'{self.tumors[0].name}-{caller}.vcf.gz')
 
         if isfile(sv_prio):
             verify_file(sv_prio, is_critical=True)
@@ -674,14 +678,12 @@ class BcbioProject(BaseProject):
                 batch_by_name[bn].name = bn
                 sample.batches.append(batch_by_name[bn])
                 if sample.phenotype == 'normal':
-                    if batch_by_name[bn].normal:
-                        critical('Multiple normal samples for batch ' + bn)
                     batch_by_name[bn].add_normal(sample)
                 else:
                     batch_by_name[bn].add_tumor(sample)
 
         # Removing batches that do not have matching tumor samples
-        batch_by_name = {bn: b for bn, b in batch_by_name.items() if b.tumor}
+        batch_by_name = {bn: b for bn, b in batch_by_name.items() if b.tumors}
 
         # for batch in batch_by_name.values():
         #     if batch.normal and not batch.tumor:
@@ -693,32 +695,32 @@ class BcbioProject(BaseProject):
 
         # setting up batch properties
         for b in batch_by_name.values():
-            if b.tumor:
-                b.tumor.normal_match = b.normal
+            for t in b.tumors:
+                t.normal_matches = b.normals
 
         # setting variant caller names for batches
         for b in batch_by_name.values():
-            if b.tumor.somatic_caller is None:
+            if b.tumors[0].somatic_caller is None:
                 if not silent:
-                    warn(f'Sample {b.tumor} doesn\'t have somatic variant callers info, skip assinging '
+                    warn(f'Sample {b.name} doesn\'t have somatic variant callers info, skip assinging '
                          f'variant caller to batch {b.name}')
             else:
-                b.somatic_caller = b.tumor.somatic_caller
-            if b.normal:
-                if b.normal.germline_caller is None:
+                b.somatic_caller = b.tumors[0].somatic_caller
+            if b.normals:
+                if b.normals[0].germline_caller is None:
                     if not silent:
-                        warn(f'Sample {b.tumor} doesn\'t have germline variant callers info, skip assinging '
-                             f'germline variant caller to batch {b.name}')
+                        warn(f'Sample {b.name} doesn\'t have germline variant callers info, '
+                             f'skip assinging germline variant caller to batch {b.name}')
                 else:
-                    b.germline_caller = b.normal.germline_caller
+                    b.germline_caller = b.normals[0].germline_caller
 
         # finding vcfs
         if not self.is_rnaseq:
             for b in batch_by_name.values():
-                if b.tumor:
+                if b.tumors:
                     b.find_somatic_vcf(silent=silent)
                     b.find_sv_vcf(silent=silent)
-                if b.normal:
+                if b.normals:
                     b.find_germline_vcf(silent=silent)
 
         return batch_by_name
