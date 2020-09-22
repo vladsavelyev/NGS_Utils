@@ -22,15 +22,22 @@ def get_submit_script():
     return 'python ' + join(package_path(), 'submit')
 
 
-def make_cluster_cmdl(log_dir, refdata, app_name=''):
+def make_cluster_cmdl(log_dir, refdata, app_name, cluster_submit_cmd=None):
     """ Generates cluster command line parameters for snakemake
     """
-    if not refdata.cluster_cmd:
-        logger.critical(f'Automatic cluster submission is not supported for the machine "{refdata.name}"')
+    if not cluster_submit_cmd and not refdata.cluster_cmd:
+        logger.critical(f'Automatic cluster submission '
+            f'is not supported for the machine "{refdata.name}". '
+            f'Use exclicit --cluster-cmd')
+    if not cluster_submit_cmd:
+        cluster_submit_cmd = refdata.cluster_cmd
 
     cluster_submitter = get_submit_script()
     timestamp = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
-    cluster_cmdl = f' --cluster "{cluster_submitter} {timestamp} {log_dir} {app_name}"'
+    from reference_data import api as refdata
+    cluster_cmdl = \
+        f' --cluster "{cluster_submitter} {timestamp} {log_dir} {app_name} ' \
+        f'\'{cluster_submit_cmd}\'"'
 
     # Also overriding jobscript?
     jobscript = refdata.cluster_jobscript
