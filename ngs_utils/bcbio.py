@@ -810,8 +810,10 @@ def detect_bcbio_dir(input_dir, silent=False):
         if not silent:
             err(f'Are you running on a bcbio output?\n'
                 f'{input_dir} is not `config` or `*final*`, and '
-                f'can\'t find a `config` directory at {join(input_dir, "config")}, or {abspath(join(input_dir, pardir, "config"))}.'
-                f'Make sure that you changed to a bcbio root or final directory, or provided it as a first argument.')
+                f'can\'t find a `config` directory at {join(input_dir, "config")}, '
+                f'or {abspath(join(input_dir, pardir, "config"))}.'
+                f'Make sure that you changed to a bcbio root or final directory, '
+                f'or provided it as a first argument.')
         raise NoConfigDirException('No config dir')
 
     if not silent:
