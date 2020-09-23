@@ -30,12 +30,10 @@ predispose   <- read_tsv(str_c(folder, "sources/predispose_genes.txt"), col_name
 az300        <- read_tsv(str_c(folder, "sources/az_key_genes.300.txt"), col_names = c('symbol'))
 cacao        <- read_tsv(str_c(folder, "sources/cacao.txt"), col_names = c('symbol'))
 umccr        <- read_tsv(str_c(folder, "sources/umccr.tsv"), col_names = c('symbol', 'descr'))
-haem         <- read_tsv(str_c(folder, "sources/HAEM.txt"), col_names = c('symbol'))
 genes <- predispose %>% mutate(sources = "CPSR_panel0") %>%
   bind_rows(az300 %>% mutate(sources = "AZ300")) %>%
   bind_rows(cacao %>% mutate(sources = "CACAO")) %>%
-  bind_rows(umccr %>% mutate(sources = "UMCCR")) %>%
-  bind_rows(haem  %>% mutate(sources = "HAEM"))
+  bind_rows(umccr %>% mutate(sources = "UMCCR"))
 
 for (panel in c("PMCC", "TS500", "TEMPUS", "familial_cancer")) {
   df <- read_tsv(str_c(folder, "sources/", panel, '.genes'), col_names = c("symbol"))
