@@ -18,10 +18,10 @@ assert ' ' not in wrapper_sh, wrapper_sh
 # Replace submit command wildcards with current job properties
 job_properties = read_job_properties(wrapper_sh)
 submit_cmd = submit_cmd\
-    .replace('{threads}', str(job_properties.get('threads', 1)))\
-    .replace('{resources.mem_mb}', str(job_properties.get('resources', {}).get('mem_mb', 2000)))\
-    .replace('{resources.disk_mb}', str(job_properties.get('resources', {}).get('disk_mb', 2000)))\
-    .replace('{resources.hours}', str(job_properties.get('resources', {}).get('hours', 24)))
+    .replace('[threads]', str(job_properties.get('threads', 1)))\
+    .replace('[resources.mem_mb]', str(job_properties.get('resources', {}).get('mem_mb', 2000)))\
+    .replace('[resources.disk_mb]', str(job_properties.get('resources', {}).get('disk_mb', 2000)))\
+    .replace('[resources.hours]', str(job_properties.get('resources', {}).get('hours', 24)))
 
 job_name = job_properties.get('rule') or job_properties.get('groupid') or app_name
 if 'wildcards' in job_properties:
@@ -38,14 +38,15 @@ jobid = job_properties['jobid']
 full_job_name = f'{timestamp}_{job_name}_{jobid}'
 log_path = os.path.join(logs_dir, f'{full_job_name}.log')
 submit_cmd = submit_cmd\
-    .replace('{job_name}', job_name)\
-    .replace('{log_file}', log_path)
+    .replace('[job_name]', job_name)\
+    .replace('[log_file]', log_path)
 
 # extending shell wrapper to print PATH variable
 wrappers_dir = safe_mkdir(os.path.join(logs_dir, 'sh_wrappers'))
 new_wrapper_sh = os.path.join(wrappers_dir, full_job_name + '.sh')
 with open(wrapper_sh) as inp, open(new_wrapper_sh, 'w') as out:
     for l in inp:
+        assert 'job_name' not in l
         out.write(l)
         if l.startswith('export PATH='):
             out.write('(>&2 echo "PATH=$PATH")\n')

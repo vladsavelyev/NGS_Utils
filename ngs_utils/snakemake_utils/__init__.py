@@ -31,6 +31,8 @@ def make_cluster_cmdl(log_dir, refdata, app_name, cluster_submit_cmd=None):
             f'Use exclicit --cluster-cmd')
     if not cluster_submit_cmd:
         cluster_submit_cmd = refdata.cluster_cmd
+    # Replacing the curly braces to avoid confusing snakemake formatter which for some reason triggers
+    cluster_submit_cmd = cluster_submit_cmd.replace('{', '[').replace('}', ']')
 
     cluster_submitter = get_submit_script()
     timestamp = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
