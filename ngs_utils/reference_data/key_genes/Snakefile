@@ -18,7 +18,7 @@ else:
     predispose_bed = []
 
 
-GENOMES = ['GRCh37', 'hg38']
+GENOMES = ['hg38']
 
 
 rule all:
