@@ -249,7 +249,7 @@ genes_sum_appris %>% filter(is.na(PRINCIPAL_hg19) & is.na(PRINCIPAL_hg38), is_ke
 Comparing to the previous version:
 
 ```{r compare_to_previous}
-prev = read_tsv("archive/umccr_cancer_genes.2020-09-10.tsv")
+prev = read_tsv("umccr_cancer_genes.latest.tsv")
 
 (added   <- genes_sum_appris %>% filter(is_key, !symbol %in% prev$symbol))
 (removed <- genes_sum_appris %>% filter(symbol %in% prev$symbol, !is_key))
