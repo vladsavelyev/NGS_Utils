@@ -1,15 +1,11 @@
-from __future__ import division
-import os
 import sys
 import math
 from collections import OrderedDict
-
-import pybedtools
-from ngs_utils.call_process import run
+import os
 from os.path import isfile, join, abspath, basename, dirname, getctime, getmtime, splitext, realpath
 from subprocess import check_output
-from pybedtools import BedTool
 
+from ngs_utils.call_process import run
 from ngs_utils import call_process
 from ngs_utils.file_utils import intermediate_fname, iterate_file, splitext_plus, verify_file, adjust_path, add_suffix, \
     safe_mkdir, file_transaction, which, file_exists, open_gzipsafe, can_reuse
@@ -101,8 +97,9 @@ def merge_overlaps(work_dir, bed_fpath, distance=None):
         return output_fpath
 
     with file_transaction(work_dir, output_fpath) as tx:
+        import pybedtools
         kwargs = dict(d=distance) if distance else dict()
-        BedTool(bed_fpath).merge(**kwargs).saveas(tx)
+        pybedtools.BedTool(bed_fpath).merge(**kwargs).saveas(tx)
     return output_fpath
 
 
@@ -289,9 +286,10 @@ def calc_sum_of_regions(bed_fpath):
 
 
 def get_total_bed_size(bed_fpath, work_dir=None):
+    import pybedtools
     if work_dir:
         pybedtools.set_tempdir(safe_mkdir(join(work_dir, 'pybedtools_tmp')))
-    return sum(len(x) for x in BedTool(bed_fpath).merge())
+    return sum(len(x) for x in pybedtools.BedTool(bed_fpath).merge())
 
 
 def bedtools_version(bedtools):
@@ -333,7 +331,8 @@ def intersect_bed(work_dir, bed1, bed2):
 
 
 def verify_bed(bed, description='', is_critical=False, silent=False):
-    if isinstance(bed, BedTool):
+    import pybedtools
+    if isinstance(bed, pybedtools.BedTool):
         return bed
 
     fpath = adjust_path(bed)
@@ -353,8 +352,9 @@ def clean_bed(bed_fpath, work_dir):
     clean_fpath = intermediate_fname(work_dir, bed_fpath, 'clean')
 
     if not can_reuse(clean_fpath, bed_fpath):
+        import pybedtools
         pybedtools.set_tempdir(safe_mkdir(join(work_dir, 'pybedtools_tmp')))
-        bed = BedTool(bed_fpath)
+        bed = pybedtools.BedTool(bed_fpath)
         bed = bed.filter(lambda x: x.chrom and
                          not any(x.chrom.startswith(e) for e in ['#', ' ', 'track', 'browser']))
         bed = bed.remove_invalid()
