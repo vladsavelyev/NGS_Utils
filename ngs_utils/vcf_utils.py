@@ -193,7 +193,7 @@ def add_cyvcf2_hdr(vcf, id, number, type, descr, new_header=None, hdr='INFO'):
 
 
 def count_vars(vcf_path, filter_col=None, bcftools_filter_expr=None):
-    cmd = f'cat {vcf_path} | '
+    cmd = f'bcftools view {vcf_path} | '
     if bcftools_filter_expr:
         cmd += f'bcftools filter {bcftools_filter_expr} |'
     if filter_col:
